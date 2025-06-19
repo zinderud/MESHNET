@@ -1,4 +1,4 @@
-# Cascading Network: Ana Strateji Özeti
+# Cascading Network: Ana Strateji Özeti 
 
 Bu belge, çok katmanlı failover stratejisinin genel görünümünü ve alt bileşenlerinin organizasyonunu içermektedir.
 
