@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, OnDestroy } from '@angular/core';
+import { Component, inject, OnInit, OnDestroy, computed, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -48,71 +48,39 @@ import { EmergencyProtocolService } from '../../core/services/emergency-protocol
         </div>
       </div>
 
-      <!-- Emergency Alert Banner -->
-      <mat-card *ngIf="emergencyProtocolService.isEmergencyActive()" class="emergency-banner">
-        <mat-card-content>
-          <div class="emergency-alert">
-            <mat-icon class="emergency-icon">warning</mat-icon>
-            <div class="emergency-info">
-              <h3>ACİL DURUM AKTİF</h3>
-              <p>{{ getEmergencyStatusText() }}</p>
+      <!-- Emergency Alert Banner with Angular 20 Control Flow -->
+      @if (emergencyProtocolService.isEmergencyActive()) {
+        <mat-card class="emergency-banner">
+          <mat-card-content>
+            <div class="emergency-alert">
+              <mat-icon class="emergency-icon">warning</mat-icon>
+              <div class="emergency-info">
+                <h3>ACİL DURUM AKTİF</h3>
+                <p>{{ getEmergencyStatusText() }}</p>
+              </div>
+              <button mat-raised-button color="warn" (click)="sendEmergencyUpdate()">
+                Güncelleme Gönder
+              </button>
             </div>
-            <button mat-raised-button color="warn" (click)="sendEmergencyUpdate()">
-              Güncelleme Gönder
-            </button>
-          </div>
-        </mat-card-content>
-      </mat-card>
+          </mat-card-content>
+        </mat-card>
+      }
 
       <!-- Message Statistics -->
       <div class="message-stats">
-        <mat-card class="stat-card">
-          <mat-card-content>
-            <div class="stat-item">
-              <mat-icon>send</mat-icon>
-              <div class="stat-info">
-                <span class="stat-value">{{ messageStats().totalSent }}</span>
-                <span class="stat-label">Gönderilen</span>
+        @for (stat of messageStatsArray(); track stat.label) {
+          <mat-card class="stat-card">
+            <mat-card-content>
+              <div class="stat-item">
+                <mat-icon>{{ stat.icon }}</mat-icon>
+                <div class="stat-info">
+                  <span class="stat-value">{{ stat.value }}</span>
+                  <span class="stat-label">{{ stat.label }}</span>
+                </div>
               </div>
-            </div>
-          </mat-card-content>
-        </mat-card>
-
-        <mat-card class="stat-card">
-          <mat-card-content>
-            <div class="stat-item">
-              <mat-icon>inbox</mat-icon>
-              <div class="stat-info">
-                <span class="stat-value">{{ messageStats().totalReceived }}</span>
-                <span class="stat-label">Alınan</span>
-              </div>
-            </div>
-          </mat-card-content>
-        </mat-card>
-
-        <mat-card class="stat-card">
-          <mat-card-content>
-            <div class="stat-item">
-              <mat-icon>warning</mat-icon>
-              <div class="stat-info">
-                <span class="stat-value">{{ messageStats().emergencyMessages }}</span>
-                <span class="stat-label">Acil Durum</span>
-              </div>
-            </div>
-          </mat-card-content>
-        </mat-card>
-
-        <mat-card class="stat-card">
-          <mat-card-content>
-            <div class="stat-item">
-              <mat-icon>check_circle</mat-icon>
-              <div class="stat-info">
-                <span class="stat-value">{{ messageStats().deliveryRate.toFixed(1) }}%</span>
-                <span class="stat-label">Teslimat</span>
-              </div>
-            </div>
-          </mat-card-content>
-        </mat-card>
+            </mat-card-content>
+          </mat-card>
+        }
       </div>
       
       <!-- Message Filters -->
@@ -126,92 +94,102 @@ import { EmergencyProtocolService } from '../../core/services/emergency-protocol
         </mat-chip-listbox>
       </div>
 
-      <!-- Messages List -->
+      <!-- Messages List with Angular 20 Control Flow -->
       <div class="messages-list">
-        <mat-card *ngFor="let message of filteredMessages; trackBy: trackMessage" 
-                  class="message-card"
-                  [ngClass]="{
-                    'sent': isSentMessage(message),
-                    'received': !isSentMessage(message),
-                    'emergency': message.type === 'emergency' || message.priority === 'emergency',
-                    'unread': message.status !== 'read' && !isSentMessage(message)
-                  }">
-          <mat-card-content>
-            <div class="message-header">
-              <div class="sender-info">
-                <mat-icon class="message-type-icon" [ngClass]="getMessageTypeClass(message)">
-                  {{ getMessageTypeIcon(message) }}
-                </mat-icon>
-                <div class="sender-details">
-                  <span class="sender-name">{{ getSenderName(message) }}</span>
-                  <span class="message-time">{{ message.timestamp | date:'short':'tr' }}</span>
-                </div>
-              </div>
-              
-              <div class="message-actions">
-                <mat-chip class="priority-chip" [ngClass]="message.priority">
-                  {{ getPriorityText(message.priority) }}
-                </mat-chip>
-                <button mat-icon-button [matMenuTriggerFor]="messageMenu" 
-                        [matMenuTriggerData]="{message: message}">
-                  <mat-icon>more_vert</mat-icon>
-                </button>
-              </div>
-            </div>
-            
-            <div class="message-content">
-              <p>{{ message.content }}</p>
-              
-              <!-- Location Info -->
-              <div *ngIf="message.location" class="location-info">
-                <mat-icon>location_on</mat-icon>
-                <span>Konum: {{ formatLocation(message.location) }}</span>
-                <button mat-button size="small" (click)="showLocationOnMap(message.location)">
-                  Haritada Göster
-                </button>
-              </div>
-
-              <!-- Emergency Data -->
-              <div *ngIf="message.emergencyData" class="emergency-data">
-                <div class="emergency-details">
-                  <mat-icon>warning</mat-icon>
-                  <div class="emergency-info">
-                    <span class="emergency-type">{{ getEmergencyTypeText(message.emergencyData.emergencyType) }}</span>
-                    <span class="emergency-severity">Önem: {{ getSeverityText(message.emergencyData.severity) }}</span>
+        @for (message of filteredMessages(); track message.id) {
+          <mat-card class="message-card"
+                    [ngClass]="{
+                      'sent': isSentMessage(message),
+                      'received': !isSentMessage(message),
+                      'emergency': message.type === 'emergency' || message.priority === 'emergency',
+                      'unread': message.status !== 'read' && !isSentMessage(message)
+                    }">
+            <mat-card-content>
+              <div class="message-header">
+                <div class="sender-info">
+                  <mat-icon class="message-type-icon" [ngClass]="getMessageTypeClass(message)">
+                    {{ getMessageTypeIcon(message) }}
+                  </mat-icon>
+                  <div class="sender-details">
+                    <span class="sender-name">{{ getSenderName(message) }}</span>
+                    <span class="message-time">{{ message.timestamp | date:'short':'tr' }}</span>
                   </div>
                 </div>
-                <div class="assistance-needed" *ngIf="message.emergencyData.assistanceNeeded?.length">
-                  <span>Yardım türü: {{ message.emergencyData.assistanceNeeded.join(', ') }}</span>
+                
+                <div class="message-actions">
+                  <mat-chip class="priority-chip" [ngClass]="message.priority">
+                    {{ getPriorityText(message.priority) }}
+                  </mat-chip>
+                  <button mat-icon-button [matMenuTriggerFor]="messageMenu" 
+                          [matMenuTriggerData]="{message: message}">
+                    <mat-icon>more_vert</mat-icon>
+                  </button>
                 </div>
               </div>
-            </div>
-            
-            <div class="message-status">
-              <div class="status-info">
-                <mat-icon [ngClass]="getStatusClass(message.status)">
-                  {{ getStatusIcon(message.status) }}
-                </mat-icon>
-                <span>{{ getStatusText(message.status) }}</span>
-                <span *ngIf="message.encrypted" class="encryption-indicator">
-                  <mat-icon>lock</mat-icon>
-                </span>
+              
+              <div class="message-content">
+                <p>{{ message.content }}</p>
+                
+                <!-- Location Info -->
+                @if (message.location) {
+                  <div class="location-info">
+                    <mat-icon>location_on</mat-icon>
+                    <span>Konum: {{ formatLocation(message.location) }}</span>
+                    <button mat-button size="small" (click)="showLocationOnMap(message.location)">
+                      Haritada Göster
+                    </button>
+                  </div>
+                }
+
+                <!-- Emergency Data -->
+                @if (message.emergencyData) {
+                  <div class="emergency-data">
+                    <div class="emergency-details">
+                      <mat-icon>warning</mat-icon>
+                      <div class="emergency-info">
+                        <span class="emergency-type">{{ getEmergencyTypeText(message.emergencyData.emergencyType) }}</span>
+                        <span class="emergency-severity">Önem: {{ getSeverityText(message.emergencyData.severity) }}</span>
+                      </div>
+                    </div>
+                    @if (message.emergencyData.assistanceNeeded?.length) {
+                      <div class="assistance-needed">
+                        <span>Yardım türü: {{ message.emergencyData.assistanceNeeded.join(', ') }}</span>
+                      </div>
+                    }
+                  </div>
+                }
               </div>
               
-              <div class="message-meta">
-                <span *ngIf="message.retryCount > 0" class="retry-count">
-                  {{ message.retryCount }} yeniden deneme
-                </span>
+              <div class="message-status">
+                <div class="status-info">
+                  <mat-icon [ngClass]="getStatusClass(message.status)">
+                    {{ getStatusIcon(message.status) }}
+                  </mat-icon>
+                  <span>{{ getStatusText(message.status) }}</span>
+                  @if (message.encrypted) {
+                    <span class="encryption-indicator">
+                      <mat-icon>lock</mat-icon>
+                    </span>
+                  }
+                </div>
+                
+                <div class="message-meta">
+                  @if (message.retryCount > 0) {
+                    <span class="retry-count">
+                      {{ message.retryCount }} yeniden deneme
+                    </span>
+                  }
+                </div>
               </div>
-            </div>
-          </mat-card-content>
-        </mat-card>
-
-        <!-- Empty State -->
-        <div *ngIf="filteredMessages.length === 0" class="empty-state">
-          <mat-icon>message</mat-icon>
-          <h3>Mesaj bulunamadı</h3>
-          <p>{{ getEmptyStateText() }}</p>
-        </div>
+            </mat-card-content>
+          </mat-card>
+        } @empty {
+          <div class="empty-state">
+            <mat-icon>message</mat-icon>
+            <h3>Mesaj bulunamadı</h3>
+            <p>{{ getEmptyStateText() }}</p>
+          </div>
+        }
       </div>
 
       <!-- Message Compose -->
@@ -221,55 +199,66 @@ import { EmergencyProtocolService } from '../../core/services/emergency-protocol
             <h3>Yeni Mesaj</h3>
             <div class="compose-actions">
               <button mat-icon-button (click)="toggleEmergencyMode()" 
-                      [color]="isEmergencyCompose ? 'warn' : 'primary'"
+                      [color]="isEmergencyCompose() ? 'warn' : 'primary'"
                       matTooltip="Acil durum modu">
-                <mat-icon>{{ isEmergencyCompose ? 'warning' : 'warning_amber' }}</mat-icon>
+                @if (isEmergencyCompose()) {
+                  <mat-icon>warning</mat-icon>
+                } @else {
+                  <mat-icon>warning_amber</mat-icon>
+                }
               </button>
             </div>
           </div>
 
           <mat-form-field appearance="outline" class="message-input">
-            <mat-label>{{ isEmergencyCompose ? 'Acil durum mesajı' : 'Mesaj yazın...' }}</mat-label>
+            <mat-label>{{ isEmergencyCompose() ? 'Acil durum mesajı' : 'Mesaj yazın...' }}</mat-label>
             <textarea matInput 
                       [(ngModel)]="newMessage"
                       rows="3"
-                      [placeholder]="isEmergencyCompose ? 'Acil durum detaylarını yazın...' : 'Mesajınızı buraya yazın...'"
+                      [placeholder]="isEmergencyCompose() ? 'Acil durum detaylarını yazın...' : 'Mesajınızı buraya yazın...'"
                       maxlength="500"></textarea>
-            <mat-hint align="end">{{ newMessage.length }}/500</mat-hint>
+            <mat-hint align="end">{{ newMessage().length }}/500</mat-hint>
           </mat-form-field>
 
-          <!-- Emergency Options -->
-          <div *ngIf="isEmergencyCompose" class="emergency-options">
-            <mat-form-field appearance="outline">
-              <mat-label>Acil Durum Türü</mat-label>
-              <mat-select [(ngModel)]="emergencyType">
-                <mat-option value="medical">Tıbbi</mat-option>
-                <mat-option value="fire">Yangın</mat-option>
-                <mat-option value="police">Polis</mat-option>
-                <mat-option value="natural_disaster">Doğal Afet</mat-option>
-                <mat-option value="accident">Kaza</mat-option>
-                <mat-option value="other">Diğer</mat-option>
-              </mat-select>
-            </mat-form-field>
+          <!-- Emergency Options with Angular 20 Control Flow -->
+          @if (isEmergencyCompose()) {
+            <div class="emergency-options">
+              <mat-form-field appearance="outline">
+                <mat-label>Acil Durum Türü</mat-label>
+                <mat-select [(ngModel)]="emergencyType">
+                  <mat-option value="medical">Tıbbi</mat-option>
+                  <mat-option value="fire">Yangın</mat-option>
+                  <mat-option value="police">Polis</mat-option>
+                  <mat-option value="natural_disaster">Doğal Afet</mat-option>
+                  <mat-option value="accident">Kaza</mat-option>
+                  <mat-option value="other">Diğer</mat-option>
+                </mat-select>
+              </mat-form-field>
 
-            <mat-form-field appearance="outline">
-              <mat-label>Önem Derecesi</mat-label>
-              <mat-select [(ngModel)]="emergencySeverity">
-                <mat-option value="low">Düşük</mat-option>
-                <mat-option value="medium">Orta</mat-option>
-                <mat-option value="high">Yüksek</mat-option>
-                <mat-option value="critical">Kritik</mat-option>
-              </mat-select>
-            </mat-form-field>
-          </div>
+              <mat-form-field appearance="outline">
+                <mat-label>Önem Derecesi</mat-label>
+                <mat-select [(ngModel)]="emergencySeverity">
+                  <mat-option value="low">Düşük</mat-option>
+                  <mat-option value="medium">Orta</mat-option>
+                  <mat-option value="high">Yüksek</mat-option>
+                  <mat-option value="critical">Kritik</mat-option>
+                </mat-select>
+              </mat-form-field>
+            </div>
+          }
           
           <div class="compose-buttons">
             <button mat-raised-button 
-                    [color]="isEmergencyCompose ? 'warn' : 'primary'"
+                    [color]="isEmergencyCompose() ? 'warn' : 'primary'"
                     (click)="sendMessage()"
-                    [disabled]="!newMessage.trim()">
-              <mat-icon>{{ isEmergencyCompose ? 'warning' : 'send' }}</mat-icon>
-              {{ isEmergencyCompose ? 'ACİL MESAJ GÖNDER' : 'Gönder' }}
+                    [disabled]="!newMessage().trim()">
+              @if (isEmergencyCompose()) {
+                <mat-icon>warning</mat-icon>
+                ACİL MESAJ GÖNDER
+              } @else {
+                <mat-icon>send</mat-icon>
+                Gönder
+              }
             </button>
             
             <button mat-button (click)="clearMessage()">
@@ -283,21 +272,23 @@ import { EmergencyProtocolService } from '../../core/services/emergency-protocol
 
     <!-- Template Menu -->
     <mat-menu #templateMenu="matMenu">
-      <button mat-menu-item *ngFor="let template of messageTemplates" 
-              (click)="useTemplate(template)">
-        <mat-icon>{{ getTemplateIcon(template) }}</mat-icon>
-        <span>{{ template.name }}</span>
-      </button>
+      @for (template of messageTemplates; track template.id) {
+        <button mat-menu-item (click)="useTemplate(template)">
+          <mat-icon>{{ getTemplateIcon(template) }}</mat-icon>
+          <span>{{ template.name }}</span>
+        </button>
+      }
     </mat-menu>
 
     <!-- Message Menu -->
     <mat-menu #messageMenu="matMenu">
       <ng-template matMenuContent let-message="message">
-        <button mat-menu-item (click)="markAsRead(message)" 
-                *ngIf="message.status !== 'read' && !isSentMessage(message)">
-          <mat-icon>mark_email_read</mat-icon>
-          <span>Okundu İşaretle</span>
-        </button>
+        @if (message.status !== 'read' && !isSentMessage(message)) {
+          <button mat-menu-item (click)="markAsRead(message)">
+            <mat-icon>mark_email_read</mat-icon>
+            <span>Okundu İşaretle</span>
+          </button>
+        }
         <button mat-menu-item (click)="replyToMessage(message)">
           <mat-icon>reply</mat-icon>
           <span>Yanıtla</span>
@@ -729,6 +720,16 @@ import { EmergencyProtocolService } from '../../core/services/emergency-protocol
         grid-template-columns: 1fr;
       }
     }
+
+    @media (prefers-reduced-motion: reduce) {
+      .pulse {
+        animation: none;
+      }
+      
+      .message-card {
+        transition: none;
+      }
+    }
   `]
 })
 export class MessagesComponent implements OnInit, OnDestroy {
@@ -736,19 +737,52 @@ export class MessagesComponent implements OnInit, OnDestroy {
   protected emergencyProtocolService = inject(EmergencyProtocolService);
   private dialog = inject(MatDialog);
 
-  // Component state
-  newMessage = '';
-  selectedFilter = 'all';
-  filteredMessages: Message[] = [];
-  isEmergencyCompose = false;
-  emergencyType: any = 'other';
-  emergencySeverity: any = 'high';
+  // Angular 20 Signals for reactive state
+  private _newMessage = signal('');
+  private _selectedFilter = signal('all');
+  private _filteredMessages = signal<Message[]>([]);
+  private _isEmergencyCompose = signal(false);
+  private _emergencyType = signal<any>('other');
+  private _emergencySeverity = signal<any>('high');
 
-  // Reactive signals
+  // Readonly signals
+  newMessage = this._newMessage.asReadonly();
+  selectedFilter = this._selectedFilter.asReadonly();
+  filteredMessages = this._filteredMessages.asReadonly();
+  isEmergencyCompose = this._isEmergencyCompose.asReadonly();
+
+  // Reactive signals from services
   messages = this.messagingService.messages;
   messageStats = this.messagingService.messageStats;
   unreadCount = this.messagingService.unreadMessages;
   messageTemplates = this.messagingService.getMessageTemplates();
+
+  // Computed properties
+  messageStatsArray = computed(() => [
+    {
+      icon: 'send',
+      value: this.messageStats().totalSent,
+      label: 'Gönderilen'
+    },
+    {
+      icon: 'inbox',
+      value: this.messageStats().totalReceived,
+      label: 'Alınan'
+    },
+    {
+      icon: 'warning',
+      value: this.messageStats().emergencyMessages,
+      label: 'Acil Durum'
+    },
+    {
+      icon: 'check_circle',
+      value: `${this.messageStats().deliveryRate.toFixed(1)}%`,
+      label: 'Teslimat'
+    }
+  ]);
+
+  emergencyType = this._emergencyType.asReadonly();
+  emergencySeverity = this._emergencySeverity.asReadonly();
 
   private subscriptions = new Subscription();
 
@@ -779,26 +813,27 @@ export class MessagesComponent implements OnInit, OnDestroy {
     // Listen for emergency alerts
     this.subscriptions.add(
       this.emergencyProtocolService.onEmergencyTriggered$.subscribe(session => {
-        this.isEmergencyCompose = true;
-        this.emergencyType = session.type;
-        this.emergencySeverity = session.severity;
+        this._isEmergencyCompose.set(true);
+        this._emergencyType.set(session.type);
+        this._emergencySeverity.set(session.severity);
       })
     );
   }
 
   async sendMessage(): Promise<void> {
-    if (!this.newMessage.trim()) return;
+    const messageText = this._newMessage();
+    if (!messageText.trim()) return;
 
     try {
-      if (this.isEmergencyCompose) {
+      if (this._isEmergencyCompose()) {
         await this.messagingService.sendEmergencyMessage(
-          this.emergencyType,
-          this.newMessage,
-          this.emergencySeverity
+          this._emergencyType(),
+          messageText,
+          this._emergencySeverity()
         );
       } else {
         await this.messagingService.sendMessage(
-          this.newMessage,
+          messageText,
           'text',
           'normal'
         );
@@ -832,30 +867,34 @@ export class MessagesComponent implements OnInit, OnDestroy {
 
   filterMessages(): void {
     const allMessages = this.messages();
+    const filter = this._selectedFilter();
     
-    switch (this.selectedFilter) {
+    let filtered: Message[];
+    
+    switch (filter) {
       case 'emergency':
-        this.filteredMessages = allMessages.filter(m => 
+        filtered = allMessages.filter(m => 
           m.type === 'emergency' || m.priority === 'emergency'
         );
         break;
       case 'unread':
-        this.filteredMessages = allMessages.filter(m => 
+        filtered = allMessages.filter(m => 
           m.status !== 'read' && !this.isSentMessage(m)
         );
         break;
       case 'sent':
-        this.filteredMessages = allMessages.filter(m => this.isSentMessage(m));
+        filtered = allMessages.filter(m => this.isSentMessage(m));
         break;
       case 'received':
-        this.filteredMessages = allMessages.filter(m => !this.isSentMessage(m));
+        filtered = allMessages.filter(m => !this.isSentMessage(m));
         break;
       default:
-        this.filteredMessages = allMessages;
+        filtered = allMessages;
     }
 
     // Sort by timestamp (newest first)
-    this.filteredMessages.sort((a, b) => b.timestamp - a.timestamp);
+    filtered.sort((a, b) => b.timestamp - a.timestamp);
+    this._filteredMessages.set(filtered);
   }
 
   markAsRead(message: Message): void {
@@ -870,26 +909,26 @@ export class MessagesComponent implements OnInit, OnDestroy {
   }
 
   replyToMessage(message: Message): void {
-    this.newMessage = `@${message.sender.name}: `;
+    this._newMessage.set(`@${message.sender.name}: `);
     // Focus on message input
   }
 
   forwardMessage(message: Message): void {
-    this.newMessage = `İletilen mesaj: ${message.content}`;
+    this._newMessage.set(`İletilen mesaj: ${message.content}`);
   }
 
   toggleEmergencyMode(): void {
-    this.isEmergencyCompose = !this.isEmergencyCompose;
-    if (this.isEmergencyCompose) {
-      this.newMessage = '';
+    this._isEmergencyCompose.update(current => !current);
+    if (this._isEmergencyCompose()) {
+      this._newMessage.set('');
     }
   }
 
   clearMessage(): void {
-    this.newMessage = '';
-    this.isEmergencyCompose = false;
-    this.emergencyType = 'other';
-    this.emergencySeverity = 'high';
+    this._newMessage.set('');
+    this._isEmergencyCompose.set(false);
+    this._emergencyType.set('other');
+    this._emergencySeverity.set('high');
   }
 
   showLocationOnMap(location: any): void {
@@ -1003,12 +1042,30 @@ export class MessagesComponent implements OnInit, OnDestroy {
   }
 
   getEmptyStateText(): string {
-    switch (this.selectedFilter) {
+    switch (this._selectedFilter()) {
       case 'emergency': return 'Acil durum mesajı bulunmuyor.';
       case 'unread': return 'Okunmamış mesaj bulunmuyor.';
       case 'sent': return 'Gönderilen mesaj bulunmuyor.';
       case 'received': return 'Alınan mesaj bulunmuyor.';
       default: return 'Henüz mesaj bulunmuyor.';
     }
+  }
+
+  // Update methods for template binding
+  updateNewMessage(value: string): void {
+    this._newMessage.set(value);
+  }
+
+  updateSelectedFilter(value: string): void {
+    this._selectedFilter.set(value);
+    this.filterMessages();
+  }
+
+  updateEmergencyType(value: any): void {
+    this._emergencyType.set(value);
+  }
+
+  updateEmergencySeverity(value: any): void {
+    this._emergencySeverity.set(value);
   }
 }

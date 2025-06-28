@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, OnDestroy } from '@angular/core';
+import { Component, inject, OnInit, OnDestroy, computed, signal } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatButtonModule } from '@angular/material/button';
@@ -46,23 +46,39 @@ import { AnalyticsService } from './core/services/analytics.service';
             <mat-icon>dashboard</mat-icon>
             <span>Ana Sayfa</span>
           </a>
-          <a mat-list-item routerLink="/emergency" (click)="drawer.close()"
-             [class.emergency-active]="isEmergencyActive">
-            <mat-icon [class.emergency-pulse]="isEmergencyActive">warning</mat-icon>
-            <span>Acil Durum</span>
-            <mat-icon *ngIf="isEmergencyActive" class="emergency-indicator">fiber_manual_record</mat-icon>
-          </a>
+          
+          <!-- Emergency Menu Item with Angular 20 Control Flow -->
+          @if (isEmergencyActive()) {
+            <a mat-list-item routerLink="/emergency" (click)="drawer.close()"
+               class="emergency-active">
+              <mat-icon class="emergency-pulse">warning</mat-icon>
+              <span>Acil Durum</span>
+              <mat-icon class="emergency-indicator">fiber_manual_record</mat-icon>
+            </a>
+          } @else {
+            <a mat-list-item routerLink="/emergency" (click)="drawer.close()">
+              <mat-icon>warning</mat-icon>
+              <span>Acil Durum</span>
+            </a>
+          }
+          
           <a mat-list-item routerLink="/messages" (click)="drawer.close()">
-            <mat-icon [matBadge]="unreadMessageCount" 
-                      [matBadgeHidden]="unreadMessageCount === 0"
+            <mat-icon [matBadge]="unreadMessageCount()" 
+                      [matBadgeHidden]="unreadMessageCount() === 0"
                       matBadgeColor="warn">message</mat-icon>
             <span>Mesajlar</span>
           </a>
+          
           <a mat-list-item routerLink="/network" (click)="drawer.close()">
-            <mat-icon [class.network-connected]="isNetworkConnected">network_check</mat-icon>
+            @if (isNetworkConnected()) {
+              <mat-icon class="network-connected">network_check</mat-icon>
+            } @else {
+              <mat-icon class="network-disconnected">signal_wifi_off</mat-icon>
+            }
             <span>Ağ Durumu</span>
-            <span class="network-status">{{ connectedPeerCount }} cihaz</span>
+            <span class="network-status">{{ connectedPeerCount() }} cihaz</span>
           </a>
+          
           <a mat-list-item routerLink="/settings" (click)="drawer.close()">
             <mat-icon>settings</mat-icon>
             <span>Ayarlar</span>
@@ -71,7 +87,8 @@ import { AnalyticsService } from './core/services/analytics.service';
       </mat-sidenav>
       
       <mat-sidenav-content>
-        <mat-toolbar color="primary" class="main-toolbar">
+        <mat-toolbar color="primary" class="main-toolbar"
+                     [class.emergency-mode]="isEmergencyActive()">
           <button
             type="button"
             aria-label="Toggle sidenav"
@@ -85,37 +102,40 @@ import { AnalyticsService } from './core/services/analytics.service';
           
           <span class="spacer"></span>
           
-          <!-- Network Status -->
+          <!-- Network Status with Angular 20 Control Flow -->
           <button mat-icon-button 
                   [matTooltip]="getNetworkStatusText()"
                   class="network-button">
-            <mat-icon [class.network-connected]="isNetworkConnected"
-                      [class.network-disconnected]="!isNetworkConnected">
-              {{ isNetworkConnected ? 'signal_wifi_4_bar' : 'signal_wifi_off' }}
-            </mat-icon>
+            @if (isNetworkConnected()) {
+              <mat-icon class="network-connected">signal_wifi_4_bar</mat-icon>
+            } @else {
+              <mat-icon class="network-disconnected">signal_wifi_off</mat-icon>
+            }
           </button>
 
           <!-- Emergency Status -->
-          <button mat-icon-button 
-                  *ngIf="isEmergencyActive"
-                  routerLink="/emergency"
-                  class="emergency-status-button"
-                  matTooltip="Acil durum aktif">
-            <mat-icon class="emergency-pulse">warning</mat-icon>
-          </button>
+          @if (isEmergencyActive()) {
+            <button mat-icon-button 
+                    routerLink="/emergency"
+                    class="emergency-status-button"
+                    matTooltip="Acil durum aktif">
+              <mat-icon class="emergency-pulse">warning</mat-icon>
+            </button>
+          }
 
           <!-- PWA Install/Update -->
-          <button mat-icon-button 
-                  *ngIf="showPWAButton"
-                  (click)="handlePWAAction()"
-                  [matTooltip]="pwaButtonTooltip">
-            <mat-icon>{{ pwaButtonIcon }}</mat-icon>
-          </button>
+          @if (showPWAButton()) {
+            <button mat-icon-button 
+                    (click)="handlePWAAction()"
+                    [matTooltip]="pwaButtonTooltip()">
+              <mat-icon>{{ pwaButtonIcon() }}</mat-icon>
+            </button>
+          }
         </mat-toolbar>
         
         <main class="main-content" 
-              [class.touch-device]="isTouchDevice"
-              [class.emergency-mode]="isEmergencyActive">
+              [class.touch-device]="isTouchDevice()"
+              [class.emergency-mode]="isEmergencyActive()">
           <router-outlet></router-outlet>
         </main>
       </mat-sidenav-content>
@@ -220,6 +240,10 @@ import { AnalyticsService } from './core/services/analytics.service';
       color: #4caf50;
     }
 
+    .mat-nav-list .mat-list-item mat-icon.network-disconnected {
+      color: #f44336;
+    }
+
     /* Emergency Animations */
     @keyframes emergency-pulse {
       0% { 
@@ -303,17 +327,21 @@ export class AppComponent implements OnInit, OnDestroy {
 
   title = 'Acil Durum Mesh Network';
 
-  // Reactive state
+  // Angular 20 Signals - Reactive state management
   isEmergencyActive = this.emergencyProtocolService.isEmergencyActive;
   unreadMessageCount = this.messagingService.unreadMessages;
   isNetworkConnected = this.webrtcService.isConnected;
   connectedPeerCount = computed(() => this.webrtcService.connectedPeers().length);
   isTouchDevice = this.touchService.isTouchDevice;
 
-  // PWA state
-  showPWAButton = false;
-  pwaButtonIcon = 'download';
-  pwaButtonTooltip = 'Uygulamayı yükle';
+  // PWA state signals
+  private _showPWAButton = signal(false);
+  private _pwaButtonIcon = signal('download');
+  private _pwaButtonTooltip = signal('Uygulamayı yükle');
+
+  showPWAButton = this._showPWAButton.asReadonly();
+  pwaButtonIcon = this._pwaButtonIcon.asReadonly();
+  pwaButtonTooltip = this._pwaButtonTooltip.asReadonly();
 
   private subscriptions = new Subscription();
 
@@ -341,7 +369,7 @@ export class AppComponent implements OnInit, OnDestroy {
       // Request persistent storage for emergency data
       await this.pwaService.requestPersistentStorage();
 
-      console.log('App initialized successfully');
+      console.log('Angular 20 App initialized successfully');
     } catch (error) {
       console.error('App initialization failed:', error);
       this.analyticsService.trackError('app_init', 'Initialization failed', { error });
@@ -352,18 +380,18 @@ export class AppComponent implements OnInit, OnDestroy {
     // PWA install/update events
     this.subscriptions.add(
       this.pwaService.onInstallPrompt$.subscribe(canInstall => {
-        this.showPWAButton = canInstall;
-        this.pwaButtonIcon = 'download';
-        this.pwaButtonTooltip = 'Uygulamayı yükle';
+        this._showPWAButton.set(canInstall);
+        this._pwaButtonIcon.set('download');
+        this._pwaButtonTooltip.set('Uygulamayı yükle');
       })
     );
 
     this.subscriptions.add(
       this.pwaService.onUpdateAvailable$.subscribe(updateAvailable => {
         if (updateAvailable) {
-          this.showPWAButton = true;
-          this.pwaButtonIcon = 'system_update';
-          this.pwaButtonTooltip = 'Güncelleme mevcut';
+          this._showPWAButton.set(true);
+          this._pwaButtonIcon.set('system_update');
+          this._pwaButtonTooltip.set('Güncelleme mevcut');
         }
       })
     );
