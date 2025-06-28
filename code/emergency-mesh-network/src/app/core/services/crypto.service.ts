@@ -1,4 +1,5 @@
-import { Injectable } from '@angular/core';
+import { Injectable, signal, computed } from '@angular/core';
+import { BehaviorSubject, Observable } from 'rxjs';
 
 export interface EncryptedData {
   data: string;
@@ -16,8 +17,18 @@ export interface KeyPair {
   providedIn: 'root'
 })
 export class CryptoService {
-  private keyPair: KeyPair | null = null;
-  private symmetricKey: CryptoKey | null = null;
+  // Signals for reactive crypto state
+  private _isInitialized = signal<boolean>(false);
+  private _keyPair = signal<KeyPair | null>(null);
+  private _symmetricKey = signal<CryptoKey | null>(null);
+
+  // Computed crypto indicators
+  isInitialized = computed(() => this._isInitialized());
+  hasKeyPair = computed(() => this._keyPair() !== null);
+  hasSymmetricKey = computed(() => this._symmetricKey() !== null);
+
+  // Crypto events
+  private initializationComplete$ = new BehaviorSubject<boolean>(false);
 
   constructor() {
     this.initializeCrypto();
@@ -26,19 +37,29 @@ export class CryptoService {
   private async initializeCrypto(): Promise<void> {
     try {
       // Generate RSA key pair for digital signatures
-      this.keyPair = await this.generateKeyPair();
+      const keyPair = await this.generateKeyPair();
+      this._keyPair.set(keyPair);
       
       // Generate AES key for symmetric encryption
-      this.symmetricKey = await this.generateSymmetricKey();
+      const symmetricKey = await this.generateSymmetricKey();
+      this._symmetricKey.set(symmetricKey);
+      
+      this._isInitialized.set(true);
+      this.initializationComplete$.next(true);
       
       console.log('Cryptographic keys initialized successfully');
     } catch (error) {
       console.error('Failed to initialize cryptographic keys:', error);
+      this._isInitialized.set(false);
+      this.initializationComplete$.next(false);
     }
   }
 
   async encryptMessage(message: string): Promise<EncryptedData> {
-    if (!this.symmetricKey || !this.keyPair) {
+    const symmetricKey = this._symmetricKey();
+    const keyPair = this._keyPair();
+    
+    if (!symmetricKey || !keyPair) {
       throw new Error('Cryptographic keys not initialized');
     }
 
@@ -56,7 +77,7 @@ export class CryptoService {
           name: 'AES-GCM',
           iv: iv
         },
-        this.symmetricKey,
+        symmetricKey,
         data
       );
 
@@ -80,7 +101,10 @@ export class CryptoService {
   }
 
   async decryptMessage(encryptedData: string, signature: string, iv?: string): Promise<string> {
-    if (!this.symmetricKey || !this.keyPair) {
+    const symmetricKey = this._symmetricKey();
+    const keyPair = this._keyPair();
+    
+    if (!symmetricKey || !keyPair) {
       throw new Error('Cryptographic keys not initialized');
     }
 
@@ -101,7 +125,7 @@ export class CryptoService {
           name: 'AES-GCM',
           iv: ivBuffer
         },
-        this.symmetricKey,
+        symmetricKey,
         encrypted
       );
 
@@ -115,7 +139,8 @@ export class CryptoService {
   }
 
   async signData(data: string): Promise<string> {
-    if (!this.keyPair) {
+    const keyPair = this._keyPair();
+    if (!keyPair) {
       throw new Error('Key pair not initialized');
     }
 
@@ -125,7 +150,7 @@ export class CryptoService {
 
       const signature = await crypto.subtle.sign(
         'RSASSA-PKCS1-v1_5',
-        this.keyPair.privateKey,
+        keyPair.privateKey,
         dataBuffer
       );
 
@@ -137,7 +162,8 @@ export class CryptoService {
   }
 
   async verifySignature(data: string, signature: string, publicKey?: CryptoKey): Promise<boolean> {
-    const keyToUse = publicKey || this.keyPair?.publicKey;
+    const keyPair = this._keyPair();
+    const keyToUse = publicKey || keyPair?.publicKey;
     if (!keyToUse) {
       throw new Error('Public key not available');
     }
@@ -160,7 +186,8 @@ export class CryptoService {
   }
 
   async generateSharedSecret(peerPublicKey: CryptoKey): Promise<CryptoKey> {
-    if (!this.keyPair) {
+    const keyPair = this._keyPair();
+    if (!keyPair) {
       throw new Error('Key pair not initialized');
     }
 
@@ -171,7 +198,7 @@ export class CryptoService {
           name: 'ECDH',
           public: peerPublicKey
         },
-        this.keyPair.privateKey,
+        keyPair.privateKey,
         256
       );
 
@@ -190,12 +217,13 @@ export class CryptoService {
   }
 
   async exportPublicKey(): Promise<string> {
-    if (!this.keyPair) {
+    const keyPair = this._keyPair();
+    if (!keyPair) {
       throw new Error('Key pair not initialized');
     }
 
     try {
-      const exported = await crypto.subtle.exportKey('spki', this.keyPair.publicKey);
+      const exported = await crypto.subtle.exportKey('spki', keyPair.publicKey);
       return this.arrayBufferToBase64(exported);
     } catch (error) {
       console.error('Public key export failed:', error);
@@ -245,8 +273,12 @@ export class CryptoService {
     return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
   }
 
-  // Private helper methods
+  // Observable for initialization status
+  get onInitializationComplete$(): Observable<boolean> {
+    return this.initializationComplete$.asObservable();
+  }
 
+  // Private helper methods
   private async generateKeyPair(): Promise<KeyPair> {
     const keyPair = await crypto.subtle.generateKey(
       {

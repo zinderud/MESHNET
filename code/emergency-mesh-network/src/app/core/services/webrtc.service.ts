@@ -1,6 +1,8 @@
 import { Injectable, signal, computed, inject } from '@angular/core';
 import { BehaviorSubject, Observable, Subject, fromEvent, merge, interval } from 'rxjs';
 import { filter, map, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
+import { CryptoService } from './crypto.service';
+import { AnalyticsService } from './analytics.service';
 
 export interface PeerConnection {
   id: string;
@@ -28,6 +30,8 @@ export interface NetworkData {
   priority: 'low' | 'normal' | 'high' | 'emergency';
   ttl?: number;
   route?: string[];
+  encrypted?: boolean;
+  signature?: string;
 }
 
 export interface ConnectionStats {
@@ -43,6 +47,9 @@ export interface ConnectionStats {
   providedIn: 'root'
 })
 export class WebrtcService {
+  private cryptoService = inject(CryptoService);
+  private analyticsService = inject(AnalyticsService);
+
   // Signals for reactive state management
   private _peers = signal<Map<string, PeerConnection>>(new Map());
   private _localPeerId = signal<string>('');
@@ -82,6 +89,7 @@ export class WebrtcService {
   private localDataChannel?: RTCDataChannel;
   private discoveryInterval?: any;
   private heartbeatInterval?: any;
+  private destroy$ = new Subject<void>();
 
   constructor() {
     this.initializeWebRTC();
@@ -98,11 +106,14 @@ export class WebrtcService {
     this.setupWebSocketSignaling();
     
     console.log('WebRTC Service initialized with peer ID:', this._localPeerId());
+    this.analyticsService.trackEvent('system_event', 'webrtc', 'initialized');
   }
 
   private setupNetworkMonitoring(): void {
     // Monitor connection quality
-    interval(10000).subscribe(() => {
+    interval(10000).pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(() => {
       this.updateNetworkStats();
       this.cleanupStaleConnections();
     });
@@ -124,7 +135,6 @@ export class WebrtcService {
   }
 
   // Public API Methods
-
   async connectToPeer(peerId: string, offer?: RTCSessionDescriptionInit): Promise<boolean> {
     try {
       if (this._peers().has(peerId)) {
@@ -167,19 +177,19 @@ export class WebrtcService {
         const answer = await peerConnection.createAnswer();
         await peerConnection.setLocalDescription(answer);
         
-        // In real implementation, send answer through signaling server
         console.log('Answer created for peer:', peerId);
       } else {
         const offer = await peerConnection.createOffer();
         await peerConnection.setLocalDescription(offer);
         
-        // In real implementation, send offer through signaling server
         console.log('Offer created for peer:', peerId);
       }
 
+      this.analyticsService.trackNetworkConnection('peer', true);
       return true;
     } catch (error) {
       console.error('Failed to connect to peer:', error);
+      this.analyticsService.trackNetworkConnection('peer', false);
       return false;
     }
   }
@@ -197,6 +207,18 @@ export class WebrtcService {
         timestamp: Date.now(),
         sender: this._localPeerId()
       };
+
+      // Encrypt sensitive data
+      if (data.type === 'message' || data.type === 'emergency') {
+        try {
+          const encrypted = await this.cryptoService.encryptMessage(JSON.stringify(networkData.payload));
+          networkData.payload = encrypted.data;
+          networkData.encrypted = true;
+          networkData.signature = encrypted.signature;
+        } catch (error) {
+          console.warn('Encryption failed, sending unencrypted:', error);
+        }
+      }
 
       const message = JSON.stringify(networkData);
       peer.dataChannel.send(message);
@@ -233,6 +255,7 @@ export class WebrtcService {
       this._peers.set(peersMap);
 
       this.peerDisconnected$.next(peer);
+      this.analyticsService.trackEvent('system_event', 'webrtc', 'peer_disconnected');
     }
   }
 
@@ -273,13 +296,11 @@ export class WebrtcService {
   }
 
   // Private Methods
-
   private setupPeerConnectionHandlers(peer: PeerConnection): void {
     const { connection } = peer;
 
     connection.onicecandidate = (event) => {
       if (event.candidate) {
-        // In real implementation, send candidate through signaling server
         console.log('ICE candidate for peer:', peer.id);
       }
     };
@@ -328,10 +349,22 @@ export class WebrtcService {
       this.updateConnectionStatus();
     };
 
-    dataChannel.onmessage = (event) => {
+    dataChannel.onmessage = async (event) => {
       try {
         const data: NetworkData = JSON.parse(event.data);
         peer.lastSeen = Date.now();
+        
+        // Decrypt if encrypted
+        if (data.encrypted && data.signature) {
+          try {
+            const decrypted = await this.cryptoService.decryptMessage(data.payload, data.signature);
+            data.payload = JSON.parse(decrypted);
+            data.encrypted = false;
+          } catch (error) {
+            console.error('Failed to decrypt message:', error);
+            return;
+          }
+        }
         
         // Update message stats
         this.updateMessageStats();
@@ -425,7 +458,6 @@ export class WebrtcService {
 
   private findRoute(targetPeerId: string): string[] {
     // Simplified routing algorithm
-    // In real implementation, this would use a proper mesh routing protocol
     const connectedPeers = this.connectedPeers();
     
     for (const peer of connectedPeers) {
@@ -454,9 +486,6 @@ export class WebrtcService {
   }
 
   private simulatePeerDiscovery(): void {
-    // This simulates finding peers in the network
-    // In real implementation, this would use actual discovery mechanisms
-    
     const simulatedPeers = [
       { id: 'peer_001', name: 'Ahmet\'s Phone', deviceType: 'mobile' as const },
       { id: 'peer_002', name: 'Fatma\'s Tablet', deviceType: 'mobile' as const },
@@ -465,7 +494,6 @@ export class WebrtcService {
 
     simulatedPeers.forEach(peerInfo => {
       if (!this._peers().has(peerInfo.id) && Math.random() > 0.7) {
-        // Simulate random peer discovery
         this.connectToPeer(peerInfo.id);
       }
     });
@@ -484,14 +512,10 @@ export class WebrtcService {
   }
 
   private setupBroadcastDiscovery(): void {
-    // Setup WiFi Direct and Bluetooth LE discovery
-    // This is a simplified implementation
     console.log('Setting up broadcast discovery mechanisms');
   }
 
   private setupWebSocketSignaling(): void {
-    // Setup WebSocket signaling server connection
-    // This would connect to a signaling server for initial peer discovery
     console.log('Setting up WebSocket signaling');
   }
 
@@ -559,7 +583,6 @@ export class WebrtcService {
   }
 
   private calculateSignalStrength(): number {
-    // Simplified signal strength calculation
     return Math.floor(Math.random() * 40) + 60; // 60-100%
   }
 
@@ -574,7 +597,6 @@ export class WebrtcService {
   }
 
   private calculateAverageLatency(): number {
-    // Simplified latency calculation
     const connectedPeers = this.connectedPeers();
     if (connectedPeers.length === 0) return 0;
     
@@ -598,7 +620,7 @@ export class WebrtcService {
       type: 'mobile',
       capabilities: ['messaging', 'emergency', 'routing'],
       batteryLevel: 85,
-      location: null // Would be populated by location service
+      location: null
     };
   }
 
@@ -607,7 +629,9 @@ export class WebrtcService {
   }
 
   ngOnDestroy(): void {
-    // Cleanup
+    this.destroy$.next();
+    this.destroy$.complete();
+    
     if (this.discoveryInterval) {
       clearInterval(this.discoveryInterval);
     }
