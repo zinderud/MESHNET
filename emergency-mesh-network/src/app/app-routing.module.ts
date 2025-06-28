@@ -1,7 +1,6 @@
-import { NgModule } from '@angular/core';
-import { RouterModule, Routes } from '@angular/router';
+import { Routes } from '@angular/router';
 
-const routes: Routes = [
+export const routes: Routes = [
   { path: '', redirectTo: '/dashboard', pathMatch: 'full' },
   { 
     path: 'dashboard', 
@@ -9,24 +8,15 @@ const routes: Routes = [
   },
   { 
     path: 'messages', 
-    loadChildren: () => import('./features/messages/messages.module').then(m => m.MessagesModule)
+    loadComponent: () => import('./features/messages/messages.component').then(c => c.MessagesComponent)
   },
   { 
     path: 'network', 
-    loadChildren: () => import('./features/network/network.module').then(m => m.NetworkModule)
+    loadComponent: () => import('./features/network/network.component').then(c => c.NetworkComponent)
   },
   { 
     path: 'emergency', 
-    loadChildren: () => import('./features/emergency/emergency.module').then(m => m.EmergencyModule)
+    loadComponent: () => import('./features/emergency/emergency.component').then(c => c.EmergencyComponent)
   },
   { path: '**', redirectTo: '/dashboard' }
 ];
-
-@NgModule({
-  imports: [RouterModule.forRoot(routes, {
-    enableTracing: false,
-    preloadingStrategy: undefined
-  })],
-  exports: [RouterModule]
-})
-export class AppRoutingModule { }
