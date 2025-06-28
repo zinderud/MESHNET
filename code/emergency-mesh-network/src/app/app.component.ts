@@ -18,6 +18,7 @@ import { EmergencyProtocolService } from './core/services/emergency-protocol.ser
 import { MessagingService } from './core/services/messaging.service';
 import { WebrtcService } from './core/services/webrtc.service';
 import { AnalyticsService } from './core/services/analytics.service';
+import { EmergencyMeshCoordinatorService } from './core/services/emergency-mesh-coordinator.service';
 
 @Component({
   selector: 'app-root',
@@ -61,6 +62,15 @@ import { AnalyticsService } from './core/services/analytics.service';
               <span>Acil Durum</span>
             </a>
           }
+
+          <!-- Emergency Scenario Menu Item -->
+          <a mat-list-item routerLink="/emergency-scenario" (click)="drawer.close()">
+            <mat-icon>science</mat-icon>
+            <span>Senaryo Simülasyonu</span>
+            @if (isScenarioActive()) {
+              <mat-icon class="scenario-indicator">play_circle</mat-icon>
+            }
+          </a>
           
           <a mat-list-item routerLink="/messages" (click)="drawer.close()">
             <mat-icon [matBadge]="unreadMessageCount()" 
@@ -88,7 +98,8 @@ import { AnalyticsService } from './core/services/analytics.service';
       
       <mat-sidenav-content>
         <mat-toolbar color="primary" class="main-toolbar"
-                     [class.emergency-mode]="isEmergencyActive()">
+                     [class.emergency-mode]="isEmergencyActive()"
+                     [class.scenario-mode]="isScenarioActive()">
           <button
             type="button"
             aria-label="Toggle sidenav"
@@ -98,10 +109,28 @@ import { AnalyticsService } from './core/services/analytics.service';
             <mat-icon aria-label="Side nav toggle icon">menu</mat-icon>
           </button>
           
-          <span class="app-title">Acil Durum Mesh Network</span>
+          <span class="app-title">
+            @if (isScenarioActive()) {
+              🧪 Senaryo Modu
+            } @else if (isEmergencyActive()) {
+              🚨 Acil Durum
+            } @else {
+              Acil Durum Mesh Network
+            }
+          </span>
           
           <span class="spacer"></span>
           
+          <!-- Scenario Status -->
+          @if (isScenarioActive()) {
+            <button mat-icon-button 
+                    routerLink="/emergency-scenario"
+                    class="scenario-status-button"
+                    matTooltip="Aktif senaryo">
+              <mat-icon class="scenario-pulse">science</mat-icon>
+            </button>
+          }
+
           <!-- Network Status with Angular 20 Control Flow -->
           <button mat-icon-button 
                   [matTooltip]="getNetworkStatusText()"
@@ -135,7 +164,8 @@ import { AnalyticsService } from './core/services/analytics.service';
         
         <main class="main-content" 
               [class.touch-device]="isTouchDevice()"
-              [class.emergency-mode]="isEmergencyActive()">
+              [class.emergency-mode]="isEmergencyActive()"
+              [class.scenario-mode]="isScenarioActive()">
           <router-outlet></router-outlet>
         </main>
       </mat-sidenav-content>
@@ -168,6 +198,10 @@ import { AnalyticsService } from './core/services/analytics.service';
       background: linear-gradient(135deg, #ff5722, #f44336) !important;
     }
 
+    .main-toolbar.scenario-mode {
+      background: linear-gradient(135deg, #9c27b0, #673ab7) !important;
+    }
+
     .menu-button {
       margin-right: 8px;
     }
@@ -189,12 +223,17 @@ import { AnalyticsService } from './core/services/analytics.service';
       color: #f44336;
     }
 
-    .emergency-status-button {
+    .emergency-status-button,
+    .scenario-status-button {
       animation: emergency-pulse 2s infinite;
     }
 
     .emergency-status-button mat-icon {
       color: #ffeb3b;
+    }
+
+    .scenario-status-button mat-icon {
+      color: #e1bee7;
     }
 
     .main-content {
@@ -211,6 +250,10 @@ import { AnalyticsService } from './core/services/analytics.service';
       background: linear-gradient(135deg, rgba(255, 87, 34, 0.05), rgba(244, 67, 54, 0.05));
     }
 
+    .main-content.scenario-mode {
+      background: linear-gradient(135deg, rgba(156, 39, 176, 0.05), rgba(103, 58, 183, 0.05));
+    }
+
     /* Navigation List Styles */
     .mat-nav-list .mat-list-item.emergency-active {
       background: rgba(255, 87, 34, 0.1);
@@ -222,12 +265,22 @@ import { AnalyticsService } from './core/services/analytics.service';
       color: #ff5722;
     }
 
-    .emergency-indicator {
+    .mat-nav-list .mat-list-item mat-icon.scenario-pulse {
+      animation: scenario-pulse 2s infinite;
+      color: #9c27b0;
+    }
+
+    .emergency-indicator,
+    .scenario-indicator {
       color: #ff5722;
       font-size: 12px;
       width: 12px;
       height: 12px;
       margin-left: auto;
+    }
+
+    .scenario-indicator {
+      color: #9c27b0;
     }
 
     .network-status {
@@ -253,6 +306,21 @@ import { AnalyticsService } from './core/services/analytics.service';
       50% { 
         transform: scale(1.1); 
         opacity: 0.7;
+      }
+      100% { 
+        transform: scale(1); 
+        opacity: 1;
+      }
+    }
+
+    @keyframes scenario-pulse {
+      0% { 
+        transform: scale(1); 
+        opacity: 1;
+      }
+      50% { 
+        transform: scale(1.05); 
+        opacity: 0.8;
       }
       100% { 
         transform: scale(1); 
@@ -305,7 +373,9 @@ import { AnalyticsService } from './core/services/analytics.service';
     /* Reduced motion support */
     @media (prefers-reduced-motion: reduce) {
       .emergency-pulse,
-      .emergency-status-button {
+      .scenario-pulse,
+      .emergency-status-button,
+      .scenario-status-button {
         animation: none;
       }
       
@@ -324,6 +394,7 @@ export class AppComponent implements OnInit, OnDestroy {
   private messagingService = inject(MessagingService);
   private webrtcService = inject(WebrtcService);
   private analyticsService = inject(AnalyticsService);
+  private emergencyCoordinator = inject(EmergencyMeshCoordinatorService);
 
   title = 'Acil Durum Mesh Network';
 
@@ -333,6 +404,9 @@ export class AppComponent implements OnInit, OnDestroy {
   isNetworkConnected = this.webrtcService.isConnected;
   connectedPeerCount = computed(() => this.webrtcService.connectedPeers().length);
   isTouchDevice = this.touchService.isTouchDevice;
+
+  // Emergency Scenario state
+  isScenarioActive = computed(() => this.emergencyCoordinator.currentScenario() !== null);
 
   // PWA state signals
   private _showPWAButton = signal(false);
@@ -411,6 +485,13 @@ export class AppComponent implements OnInit, OnDestroy {
     this.subscriptions.add(
       this.webrtcService.connectionStatus$.subscribe(status => {
         this.analyticsService.trackNetworkConnection(status, status === 'connected');
+      })
+    );
+
+    // Emergency scenario events
+    this.subscriptions.add(
+      this.emergencyCoordinator.onEmergencyNetworkFormed$.subscribe(network => {
+        this.analyticsService.trackEvent('emergency', 'network_formed', network.name);
       })
     );
   }

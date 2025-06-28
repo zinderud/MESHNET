@@ -20,6 +20,11 @@ export const routes: Routes = [
     canDeactivate: [EmergencyGuard]
   },
   {
+    path: 'emergency-scenario',
+    loadComponent: () => import('./features/emergency-scenario/emergency-scenario.component').then(m => m.EmergencyScenarioComponent),
+    canActivate: [AuthGuard]
+  },
+  {
     path: 'messages',
     loadComponent: () => import('./features/messages/messages.component').then(m => m.MessagesComponent),
     canActivate: [AuthGuard]
