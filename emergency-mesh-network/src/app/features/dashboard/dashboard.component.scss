@@ -1,0 +1,266 @@
+.dashboard-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.status-card {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  
+  mat-card-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: white;
+  }
+  
+  .status-info {
+    h3 {
+      margin: 8px 0;
+      font-size: 1.5rem;
+      font-weight: 600;
+    }
+    
+    p {
+      margin: 4px 0;
+      opacity: 0.9;
+    }
+  }
+  
+  .connected-devices {
+    margin-top: 16px;
+    
+    mat-chip {
+      color: white;
+      
+      mat-icon {
+        margin-right: 4px;
+        font-size: 16px;
+        width: 16px;
+        height: 16px;
+      }
+    }
+  }
+  
+  mat-card-actions {
+    button {
+      background-color: rgba(255, 255, 255, 0.2);
+      color: white;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      
+      &:hover {
+        background-color: rgba(255, 255, 255, 0.3);
+      }
+    }
+  }
+}
+
+.emergency-card {
+  text-align: center;
+  padding: 24px;
+  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+  color: white;
+  transition: all 0.3s ease;
+  
+  &.emergency-active {
+    background: linear-gradient(135deg, #ff8c00 0%, #ff6b00 100%);
+    animation: pulse 2s infinite;
+  }
+  
+  .emergency-button {
+    width: 120px;
+    height: 120px;
+    margin-bottom: 16px;
+    background-color: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: 3px solid white;
+    transition: all 0.3s ease;
+    
+    mat-icon {
+      font-size: 48px;
+      width: 48px;
+      height: 48px;
+    }
+    
+    &:hover:not(:disabled) {
+      transform: scale(1.05);
+      background-color: rgba(255, 255, 255, 0.3);
+    }
+    
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    
+    &.emergency-active {
+      animation: buttonPulse 1s infinite;
+    }
+  }
+  
+  .emergency-text {
+    h2 {
+      margin: 8px 0;
+      font-size: 1.5rem;
+      font-weight: 700;
+    }
+    
+    p {
+      margin: 0;
+      opacity: 0.9;
+    }
+  }
+}
+
+.quick-actions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 16px;
+  
+  .action-card {
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: center;
+    padding: 16px;
+    
+    &:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+    }
+    
+    mat-icon {
+      font-size: 32px;
+      width: 32px;
+      height: 32px;
+      margin-bottom: 8px;
+    }
+    
+    h3 {
+      margin: 8px 0 4px 0;
+      font-size: 1rem;
+      font-weight: 600;
+    }
+    
+    p {
+      margin: 0;
+      font-size: 0.875rem;
+      color: #666;
+    }
+  }
+}
+
+.activity-card {
+  .activity-list {
+    .activity-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 12px 0;
+      border-bottom: 1px solid #eee;
+      
+      &:last-child {
+        border-bottom: none;
+      }
+      
+      mat-icon {
+        margin-top: 4px;
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+      }
+      
+      .activity-content {
+        flex: 1;
+        
+        h4 {
+          margin: 0 0 4px 0;
+          font-size: 0.95rem;
+          font-weight: 600;
+        }
+        
+        p {
+          margin: 0 0 4px 0;
+          font-size: 0.875rem;
+          color: #666;
+        }
+        
+        small {
+          color: #999;
+          font-size: 0.75rem;
+        }
+      }
+    }
+  }
+}
+
+// Animations
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7); }
+  70% { box-shadow: 0 0 0 10px rgba(255, 255, 255, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); }
+}
+
+@keyframes buttonPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+// Mobile optimizations
+@media (max-width: 768px) {
+  .dashboard-container {
+    padding: 0 8px;
+    gap: 12px;
+  }
+  
+  .emergency-card {
+    padding: 16px;
+    
+    .emergency-button {
+      width: 100px;
+      height: 100px;
+      
+      mat-icon {
+        font-size: 40px;
+        width: 40px;
+        height: 40px;
+      }
+    }
+    
+    .emergency-text h2 {
+      font-size: 1.25rem;
+    }
+  }
+  
+  .quick-actions {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    
+    .action-card {
+      padding: 12px;
+      
+      mat-icon {
+        font-size: 28px;
+        width: 28px;
+        height: 28px;
+      }
+      
+      h3 {
+        font-size: 0.9rem;
+      }
+      
+      p {
+        font-size: 0.8rem;
+      }
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .quick-actions {
+    grid-template-columns: 1fr;
+  }
+}
