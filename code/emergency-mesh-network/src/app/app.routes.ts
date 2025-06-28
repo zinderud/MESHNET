@@ -39,14 +39,8 @@ export const routes: Routes = [
     loadComponent: () => import('./features/setup/setup.component').then(m => m.SetupComponent)
   },
   {
-    path: 'security',
-    loadComponent: () => import('./features/security/security.component').then(m => m.SecurityComponent),
-    canActivate: [AuthGuard]
-  },
-  {
-    path: 'analytics',
-    loadComponent: () => import('./features/analytics/analytics.component').then(m => m.AnalyticsComponent),
-    canActivate: [AuthGuard]
+    path: 'pwa',
+    loadComponent: () => import('./features/pwa-install/pwa-install.component').then(m => m.PWAInstallComponent)
   },
   {
     path: '**',
