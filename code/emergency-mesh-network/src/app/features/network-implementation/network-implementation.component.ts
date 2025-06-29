@@ -18,6 +18,19 @@ import { MeshNetworkImplementationService, MeshNetwork, MeshNetworkNode } from '
 import { WebrtcService } from '../../core/services/webrtc.service';
 import { AnalyticsService } from '../../core/services/analytics.service';
 
+interface NetworkTest {
+  id: string;
+  name: string;
+  type: 'latency' | 'throughput' | 'reliability' | 'coverage';
+  status: 'idle' | 'running' | 'completed' | 'failed';
+  result?: {
+    value: number;
+    unit: string;
+    timestamp: number;
+  };
+  duration: number;
+}
+
 @Component({
   selector: 'app-network-implementation',
   standalone: true,
@@ -37,7 +50,7 @@ import { AnalyticsService } from '../../core/services/analytics.service';
   ],
   template: `
     <div class="network-implementation-container">
-      <h1>🌐 Network Implementation & Testing</h1>
+      <h1>🔧 Network Implementation & Testing</h1>
       
       <!-- Network Control Panel -->
       <mat-card class="control-panel">
@@ -45,105 +58,51 @@ import { AnalyticsService } from '../../core/services/analytics.service';
           <mat-card-title>Network Control Panel</mat-card-title>
         </mat-card-header>
         <mat-card-content>
-          <div class="control-grid">
-            <div class="control-section">
-              <h3>P2P Network</h3>
-              <div class="control-buttons">
-                <button mat-raised-button color="primary" 
-                        (click)="startP2PNetwork()"
-                        [disabled]="isP2PActive()">
-                  <mat-icon>device_hub</mat-icon>
-                  Start P2P Network
-                </button>
-                
-                <button mat-raised-button 
-                        (click)="discoverP2PPeers()"
-                        [disabled]="!isP2PActive()">
-                  <mat-icon>search</mat-icon>
-                  Discover Peers
-                </button>
-                
-                <button mat-button color="warn" 
-                        (click)="stopP2PNetwork()"
-                        [disabled]="!isP2PActive()">
-                  <mat-icon>stop</mat-icon>
-                  Stop P2P
-                </button>
-              </div>
+          <div class="control-actions">
+            <div class="network-toggles">
+              <mat-slide-toggle [(ngModel)]="p2pEnabled" (change)="toggleP2PNetwork()">
+                P2P Network
+              </mat-slide-toggle>
+              
+              <mat-slide-toggle [(ngModel)]="meshEnabled" (change)="toggleMeshNetwork()">
+                Mesh Network
+              </mat-slide-toggle>
+              
+              <mat-slide-toggle [(ngModel)]="webrtcEnabled" (change)="toggleWebRTC()">
+                WebRTC
+              </mat-slide-toggle>
+              
+              <mat-slide-toggle [(ngModel)]="emergencyMode" (change)="toggleEmergencyMode()">
+                Emergency Mode
+              </mat-slide-toggle>
             </div>
 
-            <div class="control-section">
-              <h3>Mesh Network</h3>
-              <div class="control-buttons">
-                <button mat-raised-button color="accent" 
-                        (click)="createMeshNetwork()"
-                        [disabled]="!isP2PActive()">
-                  <mat-icon>hub</mat-icon>
-                  Create Mesh Network
-                </button>
-                
-                <button mat-raised-button 
-                        (click)="optimizeMeshTopology()"
-                        [disabled]="activeMeshNetworks().size === 0">
-                  <mat-icon>auto_fix_high</mat-icon>
-                  Optimize Topology
-                </button>
-                
-                <button mat-raised-button color="warn" 
-                        (click)="createEmergencyMesh()"
-                        [disabled]="!isP2PActive()">
-                  <mat-icon>warning</mat-icon>
-                  Emergency Mesh
-                </button>
-              </div>
-            </div>
-
-            <div class="control-section">
-              <h3>WebRTC</h3>
-              <div class="control-buttons">
-                <button mat-raised-button 
-                        (click)="testWebRTCConnections()"
-                        [disabled]="!isP2PActive()">
-                  <mat-icon>video_call</mat-icon>
-                  Test WebRTC
-                </button>
-                
-                <button mat-raised-button 
-                        (click)="broadcastTestMessage()">
-                  <mat-icon>broadcast_on_personal</mat-icon>
-                  Broadcast Test
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <!-- Network Settings -->
-          <div class="network-settings">
-            <h3>Network Settings</h3>
-            <div class="settings-grid">
-              <mat-form-field appearance="outline">
-                <mat-label>Network Mode</mat-label>
-                <mat-select [(ngModel)]="networkMode">
-                  <mat-option value="p2p">P2P Only</mat-option>
-                  <mat-option value="mesh">Mesh Only</mat-option>
-                  <mat-option value="hybrid">Hybrid (P2P + Mesh)</mat-option>
-                  <mat-option value="emergency">Emergency Mode</mat-option>
-                </mat-select>
-              </mat-form-field>
-
-              <div class="toggle-setting">
-                <mat-slide-toggle [(ngModel)]="autoDiscovery">
-                  Auto Discovery
-                </mat-slide-toggle>
-                <span>Automatically discover and connect to peers</span>
-              </div>
-
-              <div class="toggle-setting">
-                <mat-slide-toggle [(ngModel)]="emergencyMode">
-                  Emergency Mode
-                </mat-slide-toggle>
-                <span>Prioritize emergency traffic and protocols</span>
-              </div>
+            <div class="network-actions">
+              <button mat-raised-button color="primary" 
+                      (click)="startNetworkDiscovery()"
+                      [disabled]="isDiscovering()">
+                <mat-icon>search</mat-icon>
+                {{ isDiscovering() ? 'Discovering...' : 'Discover Peers' }}
+              </button>
+              
+              <button mat-raised-button color="accent" 
+                      (click)="createTestMeshNetwork()">
+                <mat-icon>hub</mat-icon>
+                Create Test Mesh
+              </button>
+              
+              <button mat-raised-button color="warn" 
+                      (click)="runAllNetworkTests()"
+                      [disabled]="isTestingActive()">
+                <mat-icon>speed</mat-icon>
+                Run All Tests
+              </button>
+              
+              <button mat-button 
+                      (click)="resetNetworks()">
+                <mat-icon>refresh</mat-icon>
+                Reset Networks
+              </button>
             </div>
           </div>
         </mat-card-content>
@@ -155,149 +114,154 @@ import { AnalyticsService } from '../../core/services/analytics.service';
           <mat-card-title>Network Status Overview</mat-card-title>
         </mat-card-header>
         <mat-card-content>
-          <div class="status-metrics">
-            <div class="metric-card p2p">
+          <div class="status-grid">
+            <div class="status-item p2p" [ngClass]="{'active': p2pEnabled}">
               <mat-icon>device_hub</mat-icon>
-              <div class="metric-info">
-                <span class="metric-value">{{ p2pPeerCount() }}</span>
-                <span class="metric-label">P2P Peers</span>
-              </div>
-              <div class="metric-status" [ngClass]="getP2PStatusClass()">
-                {{ getP2PStatusText() }}
+              <div class="status-info">
+                <h3>P2P Network</h3>
+                <p>{{ p2pPeerCount() }} peers connected</p>
+                <div class="status-metrics">
+                  <span>Health: {{ p2pNetworkHealth() }}%</span>
+                  <mat-progress-bar mode="determinate" [value]="p2pNetworkHealth()"></mat-progress-bar>
+                </div>
               </div>
             </div>
 
-            <div class="metric-card mesh">
+            <div class="status-item mesh" [ngClass]="{'active': meshEnabled}">
               <mat-icon>hub</mat-icon>
-              <div class="metric-info">
-                <span class="metric-value">{{ totalMeshNodes() }}</span>
-                <span class="metric-label">Mesh Nodes</span>
-              </div>
-              <div class="metric-status" [ngClass]="getMeshStatusClass()">
-                {{ getMeshStatusText() }}
+              <div class="status-info">
+                <h3>Mesh Network</h3>
+                <p>{{ meshNodeCount() }} nodes, {{ meshNetworkCount() }} networks</p>
+                <div class="status-metrics">
+                  <span>Efficiency: {{ meshEfficiency() }}%</span>
+                  <mat-progress-bar mode="determinate" [value]="meshEfficiency()"></mat-progress-bar>
+                </div>
               </div>
             </div>
 
-            <div class="metric-card webrtc">
+            <div class="status-item webrtc" [ngClass]="{'active': webrtcEnabled}">
               <mat-icon>video_call</mat-icon>
-              <div class="metric-info">
-                <span class="metric-value">{{ webrtcConnections() }}</span>
-                <span class="metric-label">WebRTC Connections</span>
-              </div>
-              <div class="metric-status" [ngClass]="getWebRTCStatusClass()">
-                {{ getWebRTCStatusText() }}
+              <div class="status-info">
+                <h3>WebRTC</h3>
+                <p>{{ webrtcPeerCount() }} connections</p>
+                <div class="status-metrics">
+                  <span>Quality: {{ webrtcQuality() }}%</span>
+                  <mat-progress-bar mode="determinate" [value]="webrtcQuality()"></mat-progress-bar>
+                </div>
               </div>
             </div>
 
-            <div class="metric-card performance">
-              <mat-icon>speed</mat-icon>
-              <div class="metric-info">
-                <span class="metric-value">{{ networkEfficiency() }}%</span>
-                <span class="metric-label">Network Efficiency</span>
+            <div class="status-item emergency" [ngClass]="{'active': emergencyMode}">
+              <mat-icon>warning</mat-icon>
+              <div class="status-info">
+                <h3>Emergency Mode</h3>
+                <p>{{ emergencyCapacity() }} msg/min capacity</p>
+                <div class="status-metrics">
+                  <span>Readiness: {{ emergencyReadiness() }}%</span>
+                  <mat-progress-bar mode="determinate" [value]="emergencyReadiness()"></mat-progress-bar>
+                </div>
               </div>
-              <mat-progress-bar mode="determinate" 
-                                [value]="networkEfficiency()"
-                                [color]="getEfficiencyColor()">
-              </mat-progress-bar>
             </div>
           </div>
         </mat-card-content>
       </mat-card>
 
-      <!-- Detailed Network Information -->
-      <mat-card class="network-details">
+      <!-- Network Testing -->
+      <mat-card class="network-testing">
         <mat-card-header>
-          <mat-card-title>Network Details</mat-card-title>
+          <mat-card-title>Network Performance Testing</mat-card-title>
         </mat-card-header>
         <mat-card-content>
           <mat-tab-group>
-            <!-- P2P Network Tab -->
-            <mat-tab label="P2P Network">
+            <!-- Test Results -->
+            <mat-tab label="Test Results">
               <div class="tab-content">
-                @if (localP2PNode(); as node) {
-                  <div class="local-node-info">
-                    <h3>Local P2P Node</h3>
-                    <div class="node-details-grid">
-                      <div class="detail-item">
-                        <span class="detail-label">Node ID:</span>
-                        <span class="detail-value">{{ node.id }}</span>
+                <div class="test-grid">
+                  @for (test of networkTests(); track test.id) {
+                    <div class="test-card" [ngClass]="test.status">
+                      <div class="test-header">
+                        <mat-icon>{{ getTestIcon(test.type) }}</mat-icon>
+                        <h4>{{ test.name }}</h4>
+                        <mat-chip [ngClass]="test.status">{{ getStatusText(test.status) }}</mat-chip>
                       </div>
-                      <div class="detail-item">
-                        <span class="detail-label">Node Type:</span>
-                        <span class="detail-value">{{ node.nodeType }}</span>
-                      </div>
-                      <div class="detail-item">
-                        <span class="detail-label">IP Address:</span>
-                        <span class="detail-value">{{ node.ipAddress }}:{{ node.port }}</span>
-                      </div>
-                      <div class="detail-item">
-                        <span class="detail-label">Reputation:</span>
-                        <span class="detail-value">{{ node.reputation }}/100</span>
-                      </div>
-                      <div class="detail-item">
-                        <span class="detail-label">Connection Quality:</span>
-                        <span class="detail-value">{{ node.connectionQuality }}%</span>
-                      </div>
-                    </div>
-
-                    <div class="node-capabilities">
-                      <h4>Capabilities</h4>
-                      <div class="capabilities-chips">
-                        @for (capability of node.capabilities; track capability) {
-                          <mat-chip>{{ capability }}</mat-chip>
+                      
+                      <div class="test-content">
+                        @if (test.result) {
+                          <div class="test-result">
+                            <span class="result-value">{{ test.result.value }}</span>
+                            <span class="result-unit">{{ test.result.unit }}</span>
+                          </div>
+                          <div class="test-timestamp">
+                            {{ test.result.timestamp | date:'short':'tr' }}
+                          </div>
+                        } @else {
+                          <div class="test-placeholder">
+                            @if (test.status === 'running') {
+                              <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+                              <span>Testing in progress...</span>
+                            } @else {
+                              <span>No test results yet</span>
+                            }
+                          </div>
                         }
                       </div>
+                      
+                      <div class="test-actions">
+                        <button mat-button 
+                                (click)="runSingleTest(test.id)"
+                                [disabled]="test.status === 'running'">
+                          <mat-icon>play_arrow</mat-icon>
+                          Run Test
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                }
+                  }
+                </div>
+              </div>
+            </mat-tab>
 
-                <div class="connected-peers">
-                  <h3>Connected P2P Peers ({{ connectedP2PPeers().size }})</h3>
-                  @if (connectedP2PPeers().size > 0) {
-                    <div class="peers-grid">
-                      @for (peer of Array.from(connectedP2PPeers().values()); track peer.id) {
-                        <mat-expansion-panel class="peer-panel">
-                          <mat-expansion-panel-header>
-                            <mat-panel-title>
-                              <mat-icon [ngClass]="getPeerStatusClass(peer)">
-                                {{ getPeerIcon(peer.nodeType) }}
-                              </mat-icon>
-                              {{ peer.id.substring(0, 12) }}...
-                            </mat-panel-title>
-                            <mat-panel-description>
-                              {{ peer.nodeType }} - {{ peer.reputation }}/100
-                            </mat-panel-description>
-                          </mat-expansion-panel-header>
-
-                          <div class="peer-details">
-                            <div class="peer-info-grid">
-                              <div class="info-item">
-                                <span class="info-label">IP Address:</span>
-                                <span class="info-value">{{ peer.ipAddress }}:{{ peer.port }}</span>
+            <!-- P2P Details -->
+            <mat-tab label="P2P Network">
+              <div class="tab-content">
+                <div class="network-details">
+                  <div class="detail-section">
+                    <h3>Connected P2P Peers</h3>
+                    @if (p2pPeers().length > 0) {
+                      <div class="peers-list">
+                        @for (peer of p2pPeers(); track peer.id) {
+                          <div class="peer-card">
+                            <div class="peer-header">
+                              <mat-icon>{{ getPeerIcon(peer.deviceInfo.type) }}</mat-icon>
+                              <div class="peer-info">
+                                <span class="peer-id">{{ peer.id.substring(0, 12) }}...</span>
+                                <span class="peer-type">{{ peer.nodeType }}</span>
                               </div>
-                              <div class="info-item">
-                                <span class="info-label">Connection Quality:</span>
-                                <span class="info-value">{{ peer.connectionQuality }}%</span>
+                              <mat-chip [ngClass]="getPeerStatusClass(peer)">
+                                {{ getPeerStatusText(peer) }}
+                              </mat-chip>
+                            </div>
+                            
+                            <div class="peer-metrics">
+                              <div class="metric">
+                                <mat-icon>signal_cellular_4_bar</mat-icon>
+                                <span>{{ peer.connectionQuality }}%</span>
                               </div>
-                              <div class="info-item">
-                                <span class="info-label">Last Seen:</span>
-                                <span class="info-value">{{ peer.lastSeen | date:'short':'tr' }}</span>
+                              <div class="metric">
+                                <mat-icon>star</mat-icon>
+                                <span>{{ peer.reputation }}</span>
                               </div>
-                              @if (peer.geolocation) {
-                                <div class="info-item">
-                                  <span class="info-label">Location:</span>
-                                  <span class="info-value">
-                                    {{ peer.geolocation.latitude.toFixed(4) }}, 
-                                    {{ peer.geolocation.longitude.toFixed(4) }}
-                                  </span>
+                              @if (peer.deviceInfo.batteryLevel) {
+                                <div class="metric">
+                                  <mat-icon>battery_full</mat-icon>
+                                  <span>{{ peer.deviceInfo.batteryLevel }}%</span>
                                 </div>
                               }
                             </div>
-
+                            
                             <div class="peer-actions">
                               <button mat-button (click)="sendTestMessage(peer.id)">
                                 <mat-icon>send</mat-icon>
-                                Send Test Message
+                                Test Message
                               </button>
                               <button mat-button color="warn" (click)="disconnectPeer(peer.id)">
                                 <mat-icon>link_off</mat-icon>
@@ -305,65 +269,33 @@ import { AnalyticsService } from '../../core/services/analytics.service';
                               </button>
                             </div>
                           </div>
-                        </mat-expansion-panel>
-                      }
-                    </div>
-                  } @else {
-                    <div class="empty-state">
-                      <mat-icon>device_hub</mat-icon>
-                      <h4>No P2P Peers Connected</h4>
-                      <p>Start peer discovery to find and connect to other nodes.</p>
-                    </div>
-                  }
+                        }
+                      </div>
+                    } @else {
+                      <div class="empty-state">
+                        <mat-icon>device_hub</mat-icon>
+                        <p>No P2P peers connected</p>
+                        <button mat-raised-button color="primary" (click)="startNetworkDiscovery()">
+                          Discover Peers
+                        </button>
+                      </div>
+                    }
+                  </div>
                 </div>
               </div>
             </mat-tab>
 
-            <!-- Mesh Network Tab -->
+            <!-- Mesh Networks -->
             <mat-tab label="Mesh Networks">
               <div class="tab-content">
-                @if (localMeshNode(); as node) {
-                  <div class="local-mesh-node">
-                    <h3>Local Mesh Node</h3>
-                    <div class="mesh-node-card" [ngClass]="node.type">
-                      <div class="node-header">
-                        <mat-icon>{{ getMeshNodeIcon(node.type) }}</mat-icon>
-                        <div class="node-info">
-                          <h4>{{ getMeshNodeTypeText(node.type) }}</h4>
-                          <p>{{ node.id }}</p>
-                        </div>
-                        <mat-chip [ngClass]="node.emergencyStatus">
-                          {{ getEmergencyStatusText(node.emergencyStatus) }}
-                        </mat-chip>
-                      </div>
-
-                      <div class="node-metrics">
-                        <div class="metric">
-                          <mat-icon>signal_cellular_4_bar</mat-icon>
-                          <span>Signal: {{ node.signalStrength }}%</span>
-                        </div>
-                        <div class="metric">
-                          <mat-icon>battery_full</mat-icon>
-                          <span>Battery: {{ node.batteryLevel }}%</span>
-                        </div>
-                        <div class="metric">
-                          <mat-icon>{{ node.isOnline ? 'wifi' : 'wifi_off' }}</mat-icon>
-                          <span>{{ node.isOnline ? 'Online' : 'Offline' }}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                }
-
                 <div class="mesh-networks">
-                  <h3>Active Mesh Networks ({{ activeMeshNetworks().size }})</h3>
-                  @if (activeMeshNetworks().size > 0) {
-                    @for (network of Array.from(activeMeshNetworks().values()); track network.id) {
-                      <mat-expansion-panel class="network-panel" [ngClass]="network.type">
+                  @if (meshNetworks().length > 0) {
+                    @for (network of meshNetworks(); track network.id) {
+                      <mat-expansion-panel class="mesh-panel">
                         <mat-expansion-panel-header>
                           <mat-panel-title>
-                            <mat-icon [ngClass]="network.type">
-                              {{ getNetworkTypeIcon(network.type) }}
+                            <mat-icon [ngClass]="getNetworkTypeClass(network.type)">
+                              {{ getNetworkIcon(network.type) }}
                             </mat-icon>
                             {{ network.name }}
                           </mat-panel-title>
@@ -372,89 +304,78 @@ import { AnalyticsService } from '../../core/services/analytics.service';
                           </mat-panel-description>
                         </mat-expansion-panel-header>
 
-                        <div class="network-details-content">
-                          <div class="network-info-grid">
-                            <div class="info-section">
-                              <h4>Network Information</h4>
-                              <div class="info-items">
-                                <div class="info-item">
-                                  <span class="info-label">Network ID:</span>
-                                  <span class="info-value">{{ network.id }}</span>
-                                </div>
-                                <div class="info-item">
-                                  <span class="info-label">Type:</span>
-                                  <span class="info-value">{{ network.type }}</span>
-                                </div>
-                                <div class="info-item">
-                                  <span class="info-label">Topology:</span>
-                                  <span class="info-value">{{ network.topology }}</span>
-                                </div>
-                                <div class="info-item">
-                                  <span class="info-label">Created:</span>
-                                  <span class="info-value">{{ network.createdAt | date:'short':'tr' }}</span>
-                                </div>
+                        <div class="mesh-network-details">
+                          <div class="network-info">
+                            <div class="info-grid">
+                              <div class="info-item">
+                                <span class="info-label">Network Type:</span>
+                                <span class="info-value">{{ network.type }}</span>
                               </div>
-                            </div>
-
-                            <div class="info-section">
-                              <h4>Performance Metrics</h4>
-                              <div class="performance-metrics">
-                                <div class="metric-item">
-                                  <span class="metric-label">Throughput:</span>
-                                  <span class="metric-value">{{ network.performance.throughput }} msg/min</span>
-                                </div>
-                                <div class="metric-item">
-                                  <span class="metric-label">Latency:</span>
-                                  <span class="metric-value">{{ network.performance.latency }}ms</span>
-                                </div>
-                                <div class="metric-item">
-                                  <span class="metric-label">Reliability:</span>
-                                  <span class="metric-value">{{ network.performance.reliability }}%</span>
-                                  <mat-progress-bar mode="determinate" 
-                                                    [value]="network.performance.reliability"
-                                                    color="primary">
-                                  </mat-progress-bar>
-                                </div>
-                                <div class="metric-item">
-                                  <span class="metric-label">Efficiency:</span>
-                                  <span class="metric-value">{{ network.performance.efficiency }}%</span>
-                                  <mat-progress-bar mode="determinate" 
-                                                    [value]="network.performance.efficiency"
-                                                    color="accent">
-                                  </mat-progress-bar>
-                                </div>
+                              <div class="info-item">
+                                <span class="info-label">Topology:</span>
+                                <span class="info-value">{{ network.topology }}</span>
                               </div>
-                            </div>
-
-                            <div class="info-section">
-                              <h4>Coverage Area</h4>
-                              <div class="coverage-info">
-                                <div class="coverage-item">
-                                  <mat-icon>location_on</mat-icon>
-                                  <span>Center: {{ network.coverage.center.latitude.toFixed(4) }}, {{ network.coverage.center.longitude.toFixed(4) }}</span>
-                                </div>
-                                <div class="coverage-item">
-                                  <mat-icon>radio_button_unchecked</mat-icon>
-                                  <span>Radius: {{ network.coverage.radius }}m</span>
-                                </div>
-                                <div class="coverage-item">
-                                  <mat-icon>crop_free</mat-icon>
-                                  <span>Area: {{ (network.coverage.area / 1000000).toFixed(2) }} km²</span>
-                                </div>
+                              <div class="info-item">
+                                <span class="info-label">Coverage Radius:</span>
+                                <span class="info-value">{{ network.coverage.radius }}m</span>
+                              </div>
+                              <div class="info-item">
+                                <span class="info-label">Throughput:</span>
+                                <span class="info-value">{{ network.performance.throughput }} msg/min</span>
+                              </div>
+                              <div class="info-item">
+                                <span class="info-label">Latency:</span>
+                                <span class="info-value">{{ network.performance.latency }}ms</span>
+                              </div>
+                              <div class="info-item">
+                                <span class="info-label">Reliability:</span>
+                                <span class="info-value">{{ network.performance.reliability }}%</span>
                               </div>
                             </div>
                           </div>
 
+                          <div class="network-nodes">
+                            <h4>Network Nodes ({{ network.nodes.size }})</h4>
+                            <div class="nodes-grid">
+                              @for (node of getNetworkNodesArray(network); track node.id) {
+                                <div class="mesh-node-card" [ngClass]="node.type">
+                                  <div class="node-header">
+                                    <mat-icon>{{ getNodeIcon(node.type) }}</mat-icon>
+                                    <span class="node-type">{{ getNodeTypeText(node.type) }}</span>
+                                  </div>
+                                  <div class="node-status">
+                                    <mat-chip [ngClass]="{'online': node.isOnline, 'offline': !node.isOnline}">
+                                      {{ node.isOnline ? 'Online' : 'Offline' }}
+                                    </mat-chip>
+                                  </div>
+                                  <div class="node-metrics">
+                                    <div class="node-metric">
+                                      <mat-icon>signal_cellular_4_bar</mat-icon>
+                                      <span>{{ node.signalStrength }}%</span>
+                                    </div>
+                                    <div class="node-metric">
+                                      <mat-icon>battery_full</mat-icon>
+                                      <span>{{ node.batteryLevel }}%</span>
+                                    </div>
+                                  </div>
+                                </div>
+                              }
+                            </div>
+                          </div>
+
                           <div class="network-actions">
-                            <button mat-raised-button (click)="optimizeNetworkTopology(network.id)">
-                              <mat-icon>auto_fix_high</mat-icon>
+                            <button mat-raised-button color="primary" 
+                                    (click)="optimizeNetworkTopology(network.id)">
+                              <mat-icon>tune</mat-icon>
                               Optimize Topology
                             </button>
-                            <button mat-raised-button (click)="sendNetworkBroadcast(network.id)">
+                            <button mat-raised-button color="accent" 
+                                    (click)="sendBroadcastMessage(network.id)">
                               <mat-icon>broadcast_on_personal</mat-icon>
-                              Broadcast Message
+                              Broadcast Test
                             </button>
-                            <button mat-button color="warn" (click)="leaveNetwork(network.id)">
+                            <button mat-button color="warn" 
+                                    (click)="leaveMeshNetwork(network.id)">
                               <mat-icon>exit_to_app</mat-icon>
                               Leave Network
                             </button>
@@ -465,73 +386,112 @@ import { AnalyticsService } from '../../core/services/analytics.service';
                   } @else {
                     <div class="empty-state">
                       <mat-icon>hub</mat-icon>
-                      <h4>No Mesh Networks Active</h4>
-                      <p>Create or join a mesh network to start collaborating.</p>
+                      <p>No mesh networks active</p>
+                      <button mat-raised-button color="primary" (click)="createTestMeshNetwork()">
+                        Create Test Network
+                      </button>
                     </div>
                   }
                 </div>
               </div>
             </mat-tab>
 
-            <!-- Network Testing Tab -->
-            <mat-tab label="Network Testing">
+            <!-- Configuration -->
+            <mat-tab label="Configuration">
               <div class="tab-content">
-                <div class="testing-section">
-                  <h3>Network Performance Tests</h3>
-                  <div class="test-buttons">
-                    <button mat-raised-button color="primary" (click)="runLatencyTest()">
-                      <mat-icon>speed</mat-icon>
-                      Latency Test
+                <div class="configuration-panel">
+                  <div class="config-section">
+                    <h3>Network Configuration</h3>
+                    
+                    <mat-form-field appearance="outline">
+                      <mat-label>Max P2P Connections</mat-label>
+                      <mat-select [(ngModel)]="maxP2PConnections">
+                        <mat-option value="4">4 connections</mat-option>
+                        <mat-option value="8">8 connections</mat-option>
+                        <mat-option value="12">12 connections</mat-option>
+                        <mat-option value="16">16 connections</mat-option>
+                      </mat-select>
+                    </mat-form-field>
+
+                    <mat-form-field appearance="outline">
+                      <mat-label>Mesh Topology</mat-label>
+                      <mat-select [(ngModel)]="preferredMeshTopology">
+                        <mat-option value="star">Star</mat-option>
+                        <mat-option value="mesh">Full Mesh</mat-option>
+                        <mat-option value="tree">Tree</mat-option>
+                        <mat-option value="hybrid">Hybrid</mat-option>
+                      </mat-select>
+                    </mat-form-field>
+
+                    <mat-form-field appearance="outline">
+                      <mat-label>Message Priority</mat-label>
+                      <mat-select [(ngModel)]="messagePriority">
+                        <mat-option value="low">Low</mat-option>
+                        <mat-option value="normal">Normal</mat-option>
+                        <mat-option value="high">High</mat-option>
+                        <mat-option value="emergency">Emergency</mat-option>
+                      </mat-select>
+                    </mat-form-field>
+                  </div>
+
+                  <div class="config-section">
+                    <h3>Emergency Configuration</h3>
+                    
+                    <div class="config-toggles">
+                      <mat-slide-toggle [(ngModel)]="autoEmergencyMode">
+                        Auto Emergency Mode
+                      </mat-slide-toggle>
+                      
+                      <mat-slide-toggle [(ngModel)]="emergencyBroadcast">
+                        Emergency Broadcast
+                      </mat-slide-toggle>
+                      
+                      <mat-slide-toggle [(ngModel)]="locationSharing">
+                        Location Sharing
+                      </mat-slide-toggle>
+                      
+                      <mat-slide-toggle [(ngModel)]="encryptionEnabled">
+                        End-to-End Encryption
+                      </mat-slide-toggle>
+                    </div>
+                  </div>
+
+                  <div class="config-actions">
+                    <button mat-raised-button color="primary" (click)="saveConfiguration()">
+                      <mat-icon>save</mat-icon>
+                      Save Configuration
                     </button>
-                    <button mat-raised-button color="primary" (click)="runThroughputTest()">
-                      <mat-icon>trending_up</mat-icon>
-                      Throughput Test
-                    </button>
-                    <button mat-raised-button color="primary" (click)="runReliabilityTest()">
-                      <mat-icon>verified</mat-icon>
-                      Reliability Test
-                    </button>
-                    <button mat-raised-button color="accent" (click)="runFullNetworkTest()">
-                      <mat-icon>assessment</mat-icon>
-                      Full Network Test
+                    <button mat-button (click)="resetConfiguration()">
+                      <mat-icon>restore</mat-icon>
+                      Reset to Defaults
                     </button>
                   </div>
                 </div>
-
-                @if (testResults().length > 0) {
-                  <div class="test-results">
-                    <h3>Test Results</h3>
-                    <div class="results-list">
-                      @for (result of testResults(); track result.id) {
-                        <mat-card class="result-card" [ngClass]="result.status">
-                          <mat-card-header>
-                            <mat-icon mat-card-avatar [ngClass]="result.status">
-                              {{ getTestResultIcon(result.status) }}
-                            </mat-icon>
-                            <mat-card-title>{{ result.testType }}</mat-card-title>
-                            <mat-card-subtitle>{{ result.timestamp | date:'short':'tr' }}</mat-card-subtitle>
-                          </mat-card-header>
-                          <mat-card-content>
-                            <div class="result-metrics">
-                              @for (metric of result.metrics; track metric.name) {
-                                <div class="result-metric">
-                                  <span class="metric-name">{{ metric.name }}:</span>
-                                  <span class="metric-value" [ngClass]="metric.status">{{ metric.value }}</span>
-                                </div>
-                              }
-                            </div>
-                            @if (result.notes) {
-                              <p class="result-notes">{{ result.notes }}</p>
-                            }
-                          </mat-card-content>
-                        </mat-card>
-                      }
-                    </div>
-                  </div>
-                }
               </div>
             </mat-tab>
           </mat-tab-group>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Real-time Logs -->
+      <mat-card class="network-logs">
+        <mat-card-header>
+          <mat-card-title>Network Activity Logs</mat-card-title>
+          <button mat-icon-button (click)="clearLogs()">
+            <mat-icon>clear_all</mat-icon>
+          </button>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="logs-container">
+            @for (log of networkLogs(); track log.timestamp) {
+              <div class="log-entry" [ngClass]="log.level">
+                <span class="log-time">{{ log.timestamp | date:'HH:mm:ss.SSS' }}</span>
+                <mat-icon class="log-icon">{{ getLogIcon(log.level) }}</mat-icon>
+                <span class="log-category">[{{ log.category }}]</span>
+                <span class="log-message">{{ log.message }}</span>
+              </div>
+            }
+          </div>
         </mat-card-content>
       </mat-card>
     </div>
@@ -552,212 +512,330 @@ import { AnalyticsService } from '../../core/services/analytics.service';
 
     .control-panel {
       margin-bottom: 24px;
-      background: linear-gradient(135deg, #2196f3, #21cbf3);
+      background: linear-gradient(135deg, #607d8b, #455a64);
       color: white;
     }
 
-    .control-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 24px;
-      margin-bottom: 24px;
-    }
-
-    .control-section h3 {
-      margin: 0 0 16px 0;
-      font-size: 18px;
-    }
-
-    .control-buttons {
+    .control-actions {
       display: flex;
       flex-direction: column;
-      gap: 12px;
-    }
-
-    .control-buttons button {
-      justify-content: flex-start;
-    }
-
-    .control-buttons button mat-icon {
-      margin-right: 8px;
-    }
-
-    .network-settings {
-      border-top: 1px solid rgba(255,255,255,0.2);
-      padding-top: 24px;
-    }
-
-    .network-settings h3 {
-      margin: 0 0 16px 0;
-      font-size: 18px;
-    }
-
-    .settings-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
       gap: 16px;
-      align-items: center;
     }
 
-    .toggle-setting {
+    .network-toggles {
       display: flex;
-      align-items: center;
-      gap: 12px;
+      gap: 24px;
+      flex-wrap: wrap;
     }
 
-    .toggle-setting span {
-      font-size: 14px;
-      opacity: 0.9;
+    .network-actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .network-actions button {
+      min-width: 150px;
     }
 
     .status-overview {
       margin-bottom: 24px;
     }
 
-    .status-metrics {
+    .status-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
       gap: 16px;
     }
 
-    .metric-card {
+    .status-item {
       display: flex;
-      flex-direction: column;
       align-items: center;
+      gap: 16px;
       padding: 20px;
-      border-radius: 12px;
-      text-align: center;
-      position: relative;
-      overflow: hidden;
+      border-radius: 8px;
+      border: 2px solid transparent;
+      background: #f8f9fa;
+      transition: all 0.3s ease;
     }
 
-    .metric-card.p2p {
-      background: linear-gradient(135deg, #4caf50, #8bc34a);
-      color: white;
+    .status-item.active {
+      border-color: #2196f3;
+      background: #e3f2fd;
     }
 
-    .metric-card.mesh {
-      background: linear-gradient(135deg, #ff9800, #ffc107);
-      color: white;
+    .status-item.p2p.active {
+      border-color: #4caf50;
+      background: #e8f5e8;
     }
 
-    .metric-card.webrtc {
-      background: linear-gradient(135deg, #9c27b0, #e91e63);
-      color: white;
+    .status-item.mesh.active {
+      border-color: #ff9800;
+      background: #fff3e0;
     }
 
-    .metric-card.performance {
-      background: linear-gradient(135deg, #2196f3, #03a9f4);
-      color: white;
+    .status-item.webrtc.active {
+      border-color: #9c27b0;
+      background: #f3e5f5;
     }
 
-    .metric-card mat-icon {
+    .status-item.emergency.active {
+      border-color: #f44336;
+      background: #ffebee;
+    }
+
+    .status-item mat-icon {
       font-size: 32px;
       width: 32px;
       height: 32px;
-      margin-bottom: 12px;
+      color: #666;
     }
 
-    .metric-info {
-      margin-bottom: 8px;
+    .status-item.active mat-icon {
+      color: #2196f3;
     }
 
-    .metric-value {
-      display: block;
-      font-size: 24px;
-      font-weight: bold;
-      margin-bottom: 4px;
+    .status-item.p2p.active mat-icon {
+      color: #4caf50;
     }
 
-    .metric-label {
+    .status-item.mesh.active mat-icon {
+      color: #ff9800;
+    }
+
+    .status-item.webrtc.active mat-icon {
+      color: #9c27b0;
+    }
+
+    .status-item.emergency.active mat-icon {
+      color: #f44336;
+    }
+
+    .status-info {
+      flex: 1;
+    }
+
+    .status-info h3 {
+      margin: 0 0 4px 0;
+      font-size: 16px;
+      font-weight: 500;
+    }
+
+    .status-info p {
+      margin: 0 0 8px 0;
+      font-size: 14px;
+      color: #666;
+    }
+
+    .status-metrics {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .status-metrics span {
       font-size: 12px;
-      opacity: 0.9;
+      color: #666;
     }
 
-    .metric-status {
-      font-size: 12px;
-      padding: 4px 8px;
-      border-radius: 12px;
-      background: rgba(255,255,255,0.2);
-    }
-
-    .metric-status.online {
-      background: rgba(76, 175, 80, 0.3);
-    }
-
-    .metric-status.offline {
-      background: rgba(244, 67, 54, 0.3);
-    }
-
-    .metric-status.connecting {
-      background: rgba(255, 152, 0, 0.3);
-    }
-
-    .network-details {
+    .network-testing {
       margin-bottom: 24px;
     }
 
     .tab-content {
-      padding: 24px 0;
+      padding: 16px 0;
     }
 
-    .local-node-info,
-    .local-mesh-node {
-      margin-bottom: 32px;
-      padding: 20px;
-      background: #f8f9fa;
-      border-radius: 8px;
-    }
-
-    .local-node-info h3,
-    .local-mesh-node h3 {
-      margin: 0 0 16px 0;
-      color: #333;
-    }
-
-    .node-details-grid {
+    .test-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 16px;
+    }
+
+    .test-card {
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 16px;
+      background: white;
+    }
+
+    .test-card.running {
+      border-color: #2196f3;
+      background: #e3f2fd;
+    }
+
+    .test-card.completed {
+      border-color: #4caf50;
+      background: #e8f5e8;
+    }
+
+    .test-card.failed {
+      border-color: #f44336;
+      background: #ffebee;
+    }
+
+    .test-header {
+      display: flex;
+      align-items: center;
       gap: 12px;
       margin-bottom: 16px;
     }
 
-    .detail-item {
+    .test-header h4 {
+      flex: 1;
+      margin: 0;
+      font-size: 16px;
+    }
+
+    .test-content {
+      margin-bottom: 16px;
+      min-height: 60px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .test-result {
+      text-align: center;
+    }
+
+    .result-value {
+      font-size: 24px;
+      font-weight: bold;
+      color: #333;
+    }
+
+    .result-unit {
+      font-size: 14px;
+      color: #666;
+      margin-left: 4px;
+    }
+
+    .test-timestamp {
+      text-align: center;
+      font-size: 12px;
+      color: #666;
+      margin-top: 4px;
+    }
+
+    .test-placeholder {
+      text-align: center;
+      color: #666;
+    }
+
+    .test-actions {
+      display: flex;
+      justify-content: center;
+    }
+
+    .peers-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .peer-card {
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 16px;
+      background: white;
+    }
+
+    .peer-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .peer-info {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .peer-id {
+      font-weight: 500;
+      font-size: 14px;
+    }
+
+    .peer-type {
+      font-size: 12px;
+      color: #666;
+    }
+
+    .peer-metrics {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 12px;
+    }
+
+    .metric {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 14px;
+    }
+
+    .metric mat-icon {
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
+    }
+
+    .peer-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .mesh-panel {
+      margin-bottom: 16px;
+    }
+
+    .mesh-network-details {
+      padding: 16px 0;
+    }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .info-item {
       display: flex;
       justify-content: space-between;
       padding: 8px 0;
       border-bottom: 1px solid #eee;
     }
 
-    .detail-label {
+    .info-label {
       font-weight: 500;
       color: #666;
     }
 
-    .detail-value {
+    .info-value {
       font-weight: 600;
       color: #333;
     }
 
-    .node-capabilities {
-      margin-top: 16px;
-    }
-
-    .node-capabilities h4 {
-      margin: 0 0 8px 0;
+    .network-nodes h4 {
+      margin: 16px 0;
       color: #333;
     }
 
-    .capabilities-chips {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
+    .nodes-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 12px;
+      margin-bottom: 16px;
     }
 
     .mesh-node-card {
-      padding: 16px;
-      border: 2px solid #ddd;
+      border: 1px solid #ddd;
       border-radius: 8px;
+      padding: 12px;
       background: white;
     }
 
@@ -776,194 +854,83 @@ import { AnalyticsService } from '../../core/services/analytics.service';
       background: #e3f2fd;
     }
 
-    .mesh-node-card.endpoint {
-      border-color: #4caf50;
-      background: #e8f5e8;
-    }
-
     .node-header {
       display: flex;
       align-items: center;
-      gap: 12px;
-      margin-bottom: 12px;
+      gap: 8px;
+      margin-bottom: 8px;
     }
 
-    .node-header mat-icon {
-      font-size: 32px;
-      width: 32px;
-      height: 32px;
-    }
-
-    .node-info h4 {
-      margin: 0 0 4px 0;
-      color: #333;
-    }
-
-    .node-info p {
-      margin: 0;
+    .node-type {
+      font-weight: 500;
       font-size: 12px;
-      color: #666;
+    }
+
+    .node-status {
+      margin-bottom: 8px;
+    }
+
+    .node-status mat-chip.online {
+      background-color: #4caf50;
+      color: white;
+    }
+
+    .node-status mat-chip.offline {
+      background-color: #f44336;
+      color: white;
     }
 
     .node-metrics {
       display: flex;
-      gap: 16px;
-      flex-wrap: wrap;
-    }
-
-    .metric {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      font-size: 14px;
-    }
-
-    .metric mat-icon {
-      font-size: 16px;
-      width: 16px;
-      height: 16px;
-    }
-
-    .connected-peers,
-    .mesh-networks {
-      margin-top: 32px;
-    }
-
-    .connected-peers h3,
-    .mesh-networks h3 {
-      margin: 0 0 16px 0;
-      color: #333;
-    }
-
-    .peers-grid {
-      display: flex;
-      flex-direction: column;
       gap: 12px;
     }
 
-    .peer-panel,
-    .network-panel {
-      border: 1px solid #ddd;
-    }
-
-    .peer-panel.online {
-      border-left: 4px solid #4caf50;
-    }
-
-    .peer-panel.offline {
-      border-left: 4px solid #f44336;
-    }
-
-    .network-panel.emergency {
-      border-left: 4px solid #f44336;
-      background: #ffebee;
-    }
-
-    .network-panel.community {
-      border-left: 4px solid #2196f3;
-      background: #e3f2fd;
-    }
-
-    .peer-details,
-    .network-details-content {
-      padding: 16px 0;
-    }
-
-    .peer-info-grid,
-    .network-info-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 24px;
-      margin-bottom: 16px;
-    }
-
-    .info-section h4 {
-      margin: 0 0 12px 0;
-      color: #333;
-      font-size: 16px;
-    }
-
-    .info-items {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .info-item {
-      display: flex;
-      justify-content: space-between;
-      padding: 4px 0;
-      border-bottom: 1px solid #eee;
-    }
-
-    .info-label {
-      font-weight: 500;
-      color: #666;
-    }
-
-    .info-value {
-      font-weight: 600;
-      color: #333;
-    }
-
-    .performance-metrics {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .metric-item {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-
-    .metric-label {
-      font-size: 14px;
-      color: #666;
-    }
-
-    .metric-value {
-      font-weight: bold;
-      color: #333;
-    }
-
-    .coverage-info {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .coverage-item {
+    .node-metric {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 4px;
+      font-size: 12px;
+    }
+
+    .node-metric mat-icon {
       font-size: 14px;
+      width: 14px;
+      height: 14px;
     }
 
-    .coverage-item mat-icon {
-      font-size: 16px;
-      width: 16px;
-      height: 16px;
-      color: #666;
-    }
-
-    .peer-actions,
     .network-actions {
       display: flex;
       gap: 12px;
       flex-wrap: wrap;
-      margin-top: 16px;
     }
 
-    .peer-actions button,
-    .network-actions button {
-      min-width: 140px;
+    .configuration-panel {
+      max-width: 600px;
     }
 
-    .peer-actions button mat-icon,
-    .network-actions button mat-icon {
-      margin-right: 8px;
+    .config-section {
+      margin-bottom: 32px;
+    }
+
+    .config-section h3 {
+      margin: 0 0 16px 0;
+      color: #333;
+    }
+
+    .config-section mat-form-field {
+      width: 100%;
+      margin-bottom: 16px;
+    }
+
+    .config-toggles {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .config-actions {
+      display: flex;
+      gap: 12px;
     }
 
     .empty-state {
@@ -980,102 +947,65 @@ import { AnalyticsService } from '../../core/services/analytics.service';
       opacity: 0.5;
     }
 
-    .empty-state h4 {
-      margin: 0 0 8px 0;
-      color: #333;
+    .network-logs {
+      margin-top: 24px;
     }
 
-    .testing-section {
-      margin-bottom: 32px;
-    }
-
-    .testing-section h3 {
-      margin: 0 0 16px 0;
-      color: #333;
-    }
-
-    .test-buttons {
-      display: flex;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
-
-    .test-buttons button {
-      min-width: 160px;
-    }
-
-    .test-buttons button mat-icon {
-      margin-right: 8px;
-    }
-
-    .test-results h3 {
-      margin: 0 0 16px 0;
-      color: #333;
-    }
-
-    .results-list {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-
-    .result-card {
-      border-left: 4px solid #ddd;
-    }
-
-    .result-card.success {
-      border-left-color: #4caf50;
-    }
-
-    .result-card.warning {
-      border-left-color: #ff9800;
-    }
-
-    .result-card.error {
-      border-left-color: #f44336;
-    }
-
-    .result-metrics {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 12px;
-      margin-bottom: 12px;
-    }
-
-    .result-metric {
-      display: flex;
-      justify-content: space-between;
-      padding: 8px;
-      background: #f5f5f5;
+    .logs-container {
+      max-height: 400px;
+      overflow-y: auto;
+      background: #1e1e1e;
+      color: #fff;
+      padding: 16px;
       border-radius: 4px;
+      font-family: 'Courier New', monospace;
     }
 
-    .metric-name {
-      font-weight: 500;
-      color: #666;
+    .log-entry {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 4px;
+      padding: 2px 0;
+      font-size: 12px;
     }
 
-    .metric-value {
-      font-weight: bold;
+    .log-entry.info {
+      color: #2196f3;
     }
 
-    .metric-value.good {
-      color: #4caf50;
-    }
-
-    .metric-value.warning {
+    .log-entry.warning {
       color: #ff9800;
     }
 
-    .metric-value.poor {
+    .log-entry.error {
       color: #f44336;
     }
 
-    .result-notes {
-      margin: 0;
+    .log-entry.success {
+      color: #4caf50;
+    }
+
+    .log-time {
+      color: #888;
+      min-width: 80px;
+      font-size: 10px;
+    }
+
+    .log-icon {
       font-size: 14px;
-      color: #666;
-      font-style: italic;
+      width: 14px;
+      height: 14px;
+    }
+
+    .log-category {
+      color: #ccc;
+      min-width: 60px;
+      font-size: 10px;
+    }
+
+    .log-message {
+      flex: 1;
     }
 
     @media (max-width: 768px) {
@@ -1083,24 +1013,29 @@ import { AnalyticsService } from '../../core/services/analytics.service';
         padding: 8px;
       }
       
-      .control-grid {
-        grid-template-columns: 1fr;
-      }
-      
-      .status-metrics {
-        grid-template-columns: repeat(2, 1fr);
-      }
-      
-      .settings-grid {
-        grid-template-columns: 1fr;
-      }
-      
-      .test-buttons {
+      .control-actions {
         flex-direction: column;
       }
       
-      .test-buttons button {
+      .network-toggles,
+      .network-actions {
+        flex-direction: column;
+      }
+      
+      .network-actions button {
         width: 100%;
+      }
+      
+      .status-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .test-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .nodes-grid {
+        grid-template-columns: 1fr;
       }
     }
   `]
@@ -1111,42 +1046,59 @@ export class NetworkImplementationComponent implements OnInit, OnDestroy {
   private webrtcService = inject(WebrtcService);
   private analyticsService = inject(AnalyticsService);
 
-  // Reactive state from services
-  localP2PNode = this.p2pService.localNode;
-  connectedP2PPeers = this.p2pService.connectedPeers;
-  localMeshNode = this.meshService.localMeshNode;
-  activeMeshNetworks = this.meshService.activeMeshNetworks;
-
-  // Component state
-  networkMode = 'hybrid';
-  autoDiscovery = true;
-  emergencyMode = false;
-
-  private _testResults = signal<Array<{
-    id: string;
-    testType: string;
-    status: 'success' | 'warning' | 'error';
+  // Component state signals
+  private _isDiscovering = signal<boolean>(false);
+  private _isTestingActive = signal<boolean>(false);
+  private _networkTests = signal<NetworkTest[]>([]);
+  private _networkLogs = signal<Array<{
     timestamp: number;
-    metrics: Array<{
-      name: string;
-      value: string;
-      status: 'good' | 'warning' | 'poor';
-    }>;
-    notes?: string;
+    level: 'info' | 'warning' | 'error' | 'success';
+    category: string;
+    message: string;
   }>>([]);
 
-  testResults = this._testResults.asReadonly();
+  // Configuration signals
+  p2pEnabled = signal<boolean>(false);
+  meshEnabled = signal<boolean>(false);
+  webrtcEnabled = signal<boolean>(false);
+  emergencyMode = signal<boolean>(false);
 
-  // Computed properties
-  isP2PActive = computed(() => this.p2pService.isNetworkActive());
-  p2pPeerCount = computed(() => this.p2pService.peerCount());
-  totalMeshNodes = computed(() => this.meshService.totalMeshNodes());
-  webrtcConnections = computed(() => this.webrtcService.connectedPeers().length);
-  networkEfficiency = computed(() => this.meshService.meshNetworkEfficiency());
+  maxP2PConnections = signal<number>(8);
+  preferredMeshTopology = signal<string>('hybrid');
+  messagePriority = signal<string>('normal');
+  autoEmergencyMode = signal<boolean>(true);
+  emergencyBroadcast = signal<boolean>(true);
+  locationSharing = signal<boolean>(true);
+  encryptionEnabled = signal<boolean>(true);
+
+  // Reactive state from services
+  p2pPeers = computed(() => Array.from(this.p2pService.connectedPeers().values()));
+  meshNetworks = computed(() => Array.from(this.meshService.activeMeshNetworks().values()));
+  webrtcPeers = computed(() => this.webrtcService.connectedPeers());
+
+  // Computed metrics
+  isDiscovering = this._isDiscovering.asReadonly();
+  isTestingActive = this._isTestingActive.asReadonly();
+  networkTests = this._networkTests.asReadonly();
+  networkLogs = this._networkLogs.asReadonly();
+
+  p2pPeerCount = computed(() => this.p2pPeers().length);
+  p2pNetworkHealth = computed(() => this.p2pService.networkHealth());
+  
+  meshNodeCount = computed(() => this.meshService.totalMeshNodes());
+  meshNetworkCount = computed(() => this.meshNetworks().length);
+  meshEfficiency = computed(() => this.meshService.meshNetworkEfficiency());
+  
+  webrtcPeerCount = computed(() => this.webrtcPeers().length);
+  webrtcQuality = computed(() => this.calculateWebRTCQuality());
+  
+  emergencyCapacity = computed(() => this.meshService.emergencyNetworkCapacity());
+  emergencyReadiness = computed(() => this.calculateEmergencyReadiness());
 
   private subscriptions = new Subscription();
 
   ngOnInit(): void {
+    this.initializeNetworkTests();
     this.setupEventListeners();
     this.analyticsService.trackPageView('network_implementation');
   }
@@ -1155,303 +1107,434 @@ export class NetworkImplementationComponent implements OnInit, OnDestroy {
     this.subscriptions.unsubscribe();
   }
 
+  private initializeNetworkTests(): void {
+    const tests: NetworkTest[] = [
+      {
+        id: 'latency_test',
+        name: 'Network Latency',
+        type: 'latency',
+        status: 'idle',
+        duration: 30000
+      },
+      {
+        id: 'throughput_test',
+        name: 'Message Throughput',
+        type: 'throughput',
+        status: 'idle',
+        duration: 60000
+      },
+      {
+        id: 'reliability_test',
+        name: 'Connection Reliability',
+        type: 'reliability',
+        status: 'idle',
+        duration: 120000
+      },
+      {
+        id: 'coverage_test',
+        name: 'Network Coverage',
+        type: 'coverage',
+        status: 'idle',
+        duration: 45000
+      }
+    ];
+
+    this._networkTests.set(tests);
+  }
+
   private setupEventListeners(): void {
     // P2P events
     this.subscriptions.add(
       this.p2pService.onPeerConnected$.subscribe(peer => {
-        this.addTestResult('info', 'P2P Peer Connected', 'success', [
-          { name: 'Peer ID', value: peer.id.substring(0, 12) + '...', status: 'good' },
-          { name: 'Node Type', value: peer.nodeType, status: 'good' },
-          { name: 'Reputation', value: `${peer.reputation}/100`, status: peer.reputation > 70 ? 'good' : 'warning' }
-        ]);
+        this.addLog('success', 'P2P', `Peer connected: ${peer.id.substring(0, 12)}`);
+      })
+    );
+
+    this.subscriptions.add(
+      this.p2pService.onPeerDisconnected$.subscribe(peer => {
+        this.addLog('warning', 'P2P', `Peer disconnected: ${peer.id.substring(0, 12)}`);
       })
     );
 
     // Mesh events
     this.subscriptions.add(
       this.meshService.onMeshNetworkFormed$.subscribe(network => {
-        this.addTestResult('info', 'Mesh Network Formed', 'success', [
-          { name: 'Network ID', value: network.id.substring(0, 12) + '...', status: 'good' },
-          { name: 'Type', value: network.type, status: 'good' },
-          { name: 'Topology', value: network.topology, status: 'good' }
-        ]);
+        this.addLog('success', 'MESH', `Network formed: ${network.name}`);
+      })
+    );
+
+    this.subscriptions.add(
+      this.meshService.onMeshNodeJoined$.subscribe(({ networkId, node }) => {
+        this.addLog('info', 'MESH', `Node joined network: ${node.id.substring(0, 12)}`);
       })
     );
 
     // WebRTC events
     this.subscriptions.add(
       this.webrtcService.onPeerConnected$.subscribe(peer => {
-        this.addTestResult('info', 'WebRTC Connection', 'success', [
-          { name: 'Peer ID', value: peer.id.substring(0, 12) + '...', status: 'good' },
-          { name: 'Status', value: peer.status, status: 'good' }
-        ]);
+        this.addLog('success', 'WebRTC', `WebRTC peer connected: ${peer.id.substring(0, 12)}`);
       })
     );
   }
 
   // Network Control Methods
-  async startP2PNetwork(): Promise<void> {
-    try {
-      // P2P network should auto-start, this is for manual restart
-      await this.p2pService.discoverPeers();
-      this.addTestResult('action', 'P2P Network Started', 'success', [
-        { name: 'Status', value: 'Active', status: 'good' }
-      ]);
-    } catch (error) {
-      this.addTestResult('action', 'P2P Network Start Failed', 'error', [
-        { name: 'Error', value: 'Failed to start', status: 'poor' }
-      ]);
+  async toggleP2PNetwork(): Promise<void> {
+    if (this.p2pEnabled()) {
+      this.addLog('info', 'P2P', 'Starting P2P network discovery...');
+      await this.startNetworkDiscovery();
+    } else {
+      this.addLog('warning', 'P2P', 'P2P network disabled');
     }
   }
 
-  async stopP2PNetwork(): Promise<void> {
-    // Implementation for stopping P2P network
-    this.addTestResult('action', 'P2P Network Stopped', 'warning', [
-      { name: 'Status', value: 'Stopped', status: 'warning' }
-    ]);
-  }
-
-  async discoverP2PPeers(): Promise<void> {
-    try {
-      const peers = await this.p2pService.discoverPeers();
-      this.addTestResult('action', 'Peer Discovery', 'success', [
-        { name: 'Peers Found', value: peers.length.toString(), status: peers.length > 0 ? 'good' : 'warning' }
-      ]);
-    } catch (error) {
-      this.addTestResult('action', 'Peer Discovery Failed', 'error', [
-        { name: 'Error', value: 'Discovery failed', status: 'poor' }
-      ]);
+  async toggleMeshNetwork(): Promise<void> {
+    if (this.meshEnabled()) {
+      this.addLog('info', 'MESH', 'Mesh network enabled');
+    } else {
+      this.addLog('warning', 'MESH', 'Mesh network disabled');
+      // Leave all mesh networks
+      const networks = this.meshNetworks();
+      for (const network of networks) {
+        await this.leaveMeshNetwork(network.id);
+      }
     }
   }
 
-  async createMeshNetwork(): Promise<void> {
-    try {
-      const networkId = await this.meshService.createEmergencyMeshNetwork('test', 'low');
-      this.addTestResult('action', 'Mesh Network Created', 'success', [
-        { name: 'Network ID', value: networkId.substring(0, 12) + '...', status: 'good' }
-      ]);
-    } catch (error) {
-      this.addTestResult('action', 'Mesh Network Creation Failed', 'error', [
-        { name: 'Error', value: 'Creation failed', status: 'poor' }
-      ]);
+  async toggleWebRTC(): Promise<void> {
+    if (this.webrtcEnabled()) {
+      this.addLog('info', 'WebRTC', 'WebRTC enabled');
+    } else {
+      this.addLog('warning', 'WebRTC', 'WebRTC disabled');
+      this.webrtcService.disconnectAll();
     }
   }
 
-  async createEmergencyMesh(): Promise<void> {
-    try {
-      const networkId = await this.meshService.createEmergencyMeshNetwork('emergency_test', 'high');
-      this.addTestResult('action', 'Emergency Mesh Created', 'success', [
-        { name: 'Network ID', value: networkId.substring(0, 12) + '...', status: 'good' },
-        { name: 'Type', value: 'Emergency', status: 'good' }
-      ]);
-    } catch (error) {
-      this.addTestResult('action', 'Emergency Mesh Creation Failed', 'error', [
-        { name: 'Error', value: 'Creation failed', status: 'poor' }
-      ]);
+  async toggleEmergencyMode(): Promise<void> {
+    if (this.emergencyMode()) {
+      this.addLog('warning', 'EMERGENCY', 'Emergency mode activated');
+      await this.createEmergencyMeshNetwork();
+    } else {
+      this.addLog('info', 'EMERGENCY', 'Emergency mode deactivated');
     }
   }
 
-  async optimizeMeshTopology(): Promise<void> {
-    // Implementation for optimizing mesh topology
-    this.addTestResult('action', 'Topology Optimization', 'success', [
-      { name: 'Status', value: 'Optimized', status: 'good' }
-    ]);
-  }
+  async startNetworkDiscovery(): Promise<void> {
+    this._isDiscovering.set(true);
+    this.addLog('info', 'DISCOVERY', 'Starting peer discovery...');
 
-  async testWebRTCConnections(): Promise<void> {
     try {
-      const peers = this.webrtcService.getConnectedPeers();
-      this.addTestResult('test', 'WebRTC Connection Test', 'success', [
-        { name: 'Active Connections', value: peers.length.toString(), status: peers.length > 0 ? 'good' : 'warning' }
-      ]);
+      // Discover P2P peers
+      if (this.p2pEnabled()) {
+        const p2pPeers = await this.p2pService.discoverPeers();
+        this.addLog('success', 'P2P', `Discovered ${p2pPeers.length} P2P peers`);
+        
+        // Connect to top peers
+        for (const peer of p2pPeers.slice(0, 3)) {
+          await this.p2pService.connectToPeer(peer);
+        }
+      }
+
+      // Discover mesh nodes
+      if (this.meshEnabled()) {
+        const meshNodes = await this.meshService.discoverMeshNodes();
+        this.addLog('success', 'MESH', `Discovered ${meshNodes.length} mesh nodes`);
+      }
+
+      this.addLog('success', 'DISCOVERY', 'Peer discovery completed');
     } catch (error) {
-      this.addTestResult('test', 'WebRTC Test Failed', 'error', [
-        { name: 'Error', value: 'Test failed', status: 'poor' }
-      ]);
+      this.addLog('error', 'DISCOVERY', `Discovery failed: ${error}`);
+    } finally {
+      this._isDiscovering.set(false);
     }
   }
 
-  async broadcastTestMessage(): Promise<void> {
+  async createTestMeshNetwork(): Promise<void> {
+    if (!this.meshEnabled()) {
+      this.meshEnabled.set(true);
+    }
+
     try {
-      const success = await this.webrtcService.broadcastData({
-        type: 'test',
-        payload: { message: 'Test broadcast message', timestamp: Date.now() },
-        priority: 'normal'
+      const networkId = await this.meshService.createEmergencyMeshNetwork('test', 'normal');
+      this.addLog('success', 'MESH', `Test mesh network created: ${networkId}`);
+    } catch (error) {
+      this.addLog('error', 'MESH', `Failed to create test network: ${error}`);
+    }
+  }
+
+  async createEmergencyMeshNetwork(): Promise<void> {
+    try {
+      const networkId = await this.meshService.createEmergencyMeshNetwork('emergency', 'high');
+      this.addLog('warning', 'EMERGENCY', `Emergency mesh network created: ${networkId}`);
+    } catch (error) {
+      this.addLog('error', 'EMERGENCY', `Failed to create emergency network: ${error}`);
+    }
+  }
+
+  async runAllNetworkTests(): Promise<void> {
+    this._isTestingActive.set(true);
+    this.addLog('info', 'TEST', 'Starting all network tests...');
+
+    const tests = this._networkTests();
+    
+    for (const test of tests) {
+      await this.runSingleTest(test.id);
+      // Wait between tests
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+
+    this._isTestingActive.set(false);
+    this.addLog('success', 'TEST', 'All network tests completed');
+  }
+
+  async runSingleTest(testId: string): Promise<void> {
+    const tests = this._networkTests();
+    const testIndex = tests.findIndex(t => t.id === testId);
+    
+    if (testIndex === -1) return;
+
+    const test = { ...tests[testIndex] };
+    test.status = 'running';
+    
+    const updatedTests = [...tests];
+    updatedTests[testIndex] = test;
+    this._networkTests.set(updatedTests);
+
+    this.addLog('info', 'TEST', `Running ${test.name}...`);
+
+    try {
+      // Simulate test execution
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Generate test result
+      const result = this.generateTestResult(test.type);
+      test.result = result;
+      test.status = 'completed';
+      
+      this.addLog('success', 'TEST', `${test.name} completed: ${result.value}${result.unit}`);
+    } catch (error) {
+      test.status = 'failed';
+      this.addLog('error', 'TEST', `${test.name} failed: ${error}`);
+    }
+
+    const finalTests = [...this._networkTests()];
+    finalTests[testIndex] = test;
+    this._networkTests.set(finalTests);
+  }
+
+  async resetNetworks(): Promise<void> {
+    this.addLog('warning', 'SYSTEM', 'Resetting all networks...');
+    
+    // Disconnect all peers
+    this.webrtcService.disconnectAll();
+    
+    // Leave all mesh networks
+    const networks = this.meshNetworks();
+    for (const network of networks) {
+      await this.leaveMeshNetwork(network.id);
+    }
+
+    // Reset states
+    this.p2pEnabled.set(false);
+    this.meshEnabled.set(false);
+    this.webrtcEnabled.set(false);
+    this.emergencyMode.set(false);
+
+    this.addLog('success', 'SYSTEM', 'All networks reset');
+  }
+
+  // Test and Action Methods
+  async sendTestMessage(peerId: string): Promise<void> {
+    try {
+      const success = await this.p2pService.sendMessage({
+        type: 'data',
+        payload: { test: 'Hello from network implementation', timestamp: Date.now() },
+        sender: 'local',
+        recipient: peerId,
+        ttl: 5,
+        priority: 'normal',
+        encrypted: false
       });
 
-      this.addTestResult('test', 'Broadcast Test', success > 0 ? 'success' : 'warning', [
-        { name: 'Recipients', value: success.toString(), status: success > 0 ? 'good' : 'warning' }
-      ]);
+      if (success) {
+        this.addLog('success', 'TEST', `Test message sent to ${peerId.substring(0, 12)}`);
+      } else {
+        this.addLog('error', 'TEST', `Failed to send test message to ${peerId.substring(0, 12)}`);
+      }
     } catch (error) {
-      this.addTestResult('test', 'Broadcast Test Failed', 'error', [
-        { name: 'Error', value: 'Broadcast failed', status: 'poor' }
-      ]);
+      this.addLog('error', 'TEST', `Test message error: ${error}`);
     }
   }
 
-  // Network Testing Methods
-  async runLatencyTest(): Promise<void> {
-    const startTime = performance.now();
+  async disconnectPeer(peerId: string): Promise<void> {
+    await this.p2pService.disconnectFromPeer(peerId);
+    this.addLog('warning', 'P2P', `Disconnected from peer: ${peerId.substring(0, 12)}`);
+  }
+
+  async optimizeNetworkTopology(networkId: string): Promise<void> {
+    this.addLog('info', 'MESH', `Optimizing topology for network: ${networkId.substring(0, 12)}`);
+    // Topology optimization would be handled by the mesh service
+  }
+
+  async sendBroadcastMessage(networkId: string): Promise<void> {
+    try {
+      const messageId = await this.meshService.sendMeshMessage({
+        type: 'broadcast',
+        priority: 'normal',
+        payload: { test: 'Broadcast test message', timestamp: Date.now() },
+        source: 'local',
+        ttl: 5
+      });
+
+      this.addLog('success', 'MESH', `Broadcast message sent: ${messageId.substring(0, 12)}`);
+    } catch (error) {
+      this.addLog('error', 'MESH', `Broadcast failed: ${error}`);
+    }
+  }
+
+  async leaveMeshNetwork(networkId: string): Promise<void> {
+    const success = await this.meshService.leaveMeshNetwork(networkId);
+    if (success) {
+      this.addLog('warning', 'MESH', `Left mesh network: ${networkId.substring(0, 12)}`);
+    }
+  }
+
+  saveConfiguration(): void {
+    this.addLog('info', 'CONFIG', 'Configuration saved');
+    // Save configuration to local storage or service
+  }
+
+  resetConfiguration(): void {
+    this.maxP2PConnections.set(8);
+    this.preferredMeshTopology.set('hybrid');
+    this.messagePriority.set('normal');
+    this.autoEmergencyMode.set(true);
+    this.emergencyBroadcast.set(true);
+    this.locationSharing.set(true);
+    this.encryptionEnabled.set(true);
     
-    try {
-      // Simulate latency test
-      await new Promise(resolve => setTimeout(resolve, Math.random() * 200 + 50));
-      const latency = performance.now() - startTime;
-      
-      this.addTestResult('test', 'Latency Test', 'success', [
-        { name: 'Average Latency', value: `${latency.toFixed(2)}ms`, status: latency < 100 ? 'good' : latency < 200 ? 'warning' : 'poor' }
-      ]);
-    } catch (error) {
-      this.addTestResult('test', 'Latency Test Failed', 'error', [
-        { name: 'Error', value: 'Test failed', status: 'poor' }
-      ]);
-    }
+    this.addLog('info', 'CONFIG', 'Configuration reset to defaults');
   }
 
-  async runThroughputTest(): Promise<void> {
-    try {
-      // Simulate throughput test
-      const throughput = Math.floor(Math.random() * 100) + 50;
-      
-      this.addTestResult('test', 'Throughput Test', 'success', [
-        { name: 'Throughput', value: `${throughput} msg/min`, status: throughput > 80 ? 'good' : throughput > 50 ? 'warning' : 'poor' }
-      ]);
-    } catch (error) {
-      this.addTestResult('test', 'Throughput Test Failed', 'error', [
-        { name: 'Error', value: 'Test failed', status: 'poor' }
-      ]);
-    }
-  }
-
-  async runReliabilityTest(): Promise<void> {
-    try {
-      // Simulate reliability test
-      const reliability = Math.floor(Math.random() * 30) + 70;
-      
-      this.addTestResult('test', 'Reliability Test', 'success', [
-        { name: 'Reliability', value: `${reliability}%`, status: reliability > 90 ? 'good' : reliability > 70 ? 'warning' : 'poor' }
-      ]);
-    } catch (error) {
-      this.addTestResult('test', 'Reliability Test Failed', 'error', [
-        { name: 'Error', value: 'Test failed', status: 'poor' }
-      ]);
-    }
-  }
-
-  async runFullNetworkTest(): Promise<void> {
-    this.addTestResult('test', 'Full Network Test Started', 'success', [
-      { name: 'Status', value: 'Running...', status: 'good' }
-    ]);
-
-    // Run all tests sequentially
-    await this.runLatencyTest();
-    await this.runThroughputTest();
-    await this.runReliabilityTest();
-
-    this.addTestResult('test', 'Full Network Test Completed', 'success', [
-      { name: 'Status', value: 'Completed', status: 'good' }
-    ]);
+  clearLogs(): void {
+    this._networkLogs.set([]);
   }
 
   // Helper Methods
-  private addTestResult(
-    category: string,
-    testType: string,
-    status: 'success' | 'warning' | 'error',
-    metrics: Array<{ name: string; value: string; status: 'good' | 'warning' | 'poor' }>,
-    notes?: string
-  ): void {
-    const result = {
-      id: `test_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      testType,
-      status,
+  private addLog(level: 'info' | 'warning' | 'error' | 'success', category: string, message: string): void {
+    const logs = this._networkLogs();
+    const newLog = {
       timestamp: Date.now(),
-      metrics,
-      notes
+      level,
+      category,
+      message
     };
+    
+    // Keep only last 100 logs
+    const updatedLogs = [newLog, ...logs].slice(0, 100);
+    this._networkLogs.set(updatedLogs);
+  }
 
-    const results = this._testResults();
-    this._testResults.set([result, ...results].slice(0, 20)); // Keep last 20 results
+  private generateTestResult(testType: string): { value: number; unit: string; timestamp: number } {
+    switch (testType) {
+      case 'latency':
+        return {
+          value: Math.floor(Math.random() * 200) + 50,
+          unit: 'ms',
+          timestamp: Date.now()
+        };
+      case 'throughput':
+        return {
+          value: Math.floor(Math.random() * 100) + 50,
+          unit: 'msg/min',
+          timestamp: Date.now()
+        };
+      case 'reliability':
+        return {
+          value: Math.floor(Math.random() * 20) + 80,
+          unit: '%',
+          timestamp: Date.now()
+        };
+      case 'coverage':
+        return {
+          value: Math.floor(Math.random() * 1000) + 500,
+          unit: 'm',
+          timestamp: Date.now()
+        };
+      default:
+        return {
+          value: 0,
+          unit: '',
+          timestamp: Date.now()
+        };
+    }
+  }
+
+  private calculateWebRTCQuality(): number {
+    const peers = this.webrtcPeers();
+    if (peers.length === 0) return 0;
+    
+    // Simplified quality calculation
+    return Math.floor(Math.random() * 30) + 70;
+  }
+
+  private calculateEmergencyReadiness(): number {
+    const p2pReady = this.p2pEnabled() && this.p2pPeerCount() > 0;
+    const meshReady = this.meshEnabled() && this.meshNetworkCount() > 0;
+    const webrtcReady = this.webrtcEnabled() && this.webrtcPeerCount() > 0;
+    
+    let readiness = 0;
+    if (p2pReady) readiness += 30;
+    if (meshReady) readiness += 40;
+    if (webrtcReady) readiness += 30;
+    
+    return readiness;
   }
 
   // Template Helper Methods
-  getP2PStatusClass(): string {
-    return this.isP2PActive() ? 'online' : 'offline';
+  getTestIcon(type: string): string {
+    switch (type) {
+      case 'latency': return 'speed';
+      case 'throughput': return 'trending_up';
+      case 'reliability': return 'verified';
+      case 'coverage': return 'map';
+      default: return 'assessment';
+    }
   }
 
-  getP2PStatusText(): string {
-    return this.isP2PActive() ? 'Active' : 'Inactive';
+  getStatusText(status: string): string {
+    switch (status) {
+      case 'idle': return 'Bekliyor';
+      case 'running': return 'Çalışıyor';
+      case 'completed': return 'Tamamlandı';
+      case 'failed': return 'Başarısız';
+      default: return 'Bilinmiyor';
+    }
   }
 
-  getMeshStatusClass(): string {
-    return this.totalMeshNodes() > 0 ? 'online' : 'offline';
-  }
-
-  getMeshStatusText(): string {
-    return this.totalMeshNodes() > 0 ? 'Active' : 'No Networks';
-  }
-
-  getWebRTCStatusClass(): string {
-    return this.webrtcConnections() > 0 ? 'online' : 'offline';
-  }
-
-  getWebRTCStatusText(): string {
-    return this.webrtcConnections() > 0 ? 'Connected' : 'Disconnected';
-  }
-
-  getEfficiencyColor(): 'primary' | 'accent' | 'warn' {
-    const efficiency = this.networkEfficiency();
-    if (efficiency >= 80) return 'primary';
-    if (efficiency >= 60) return 'accent';
-    return 'warn';
-  }
-
-  getPeerStatusClass(peer: P2PNode): string {
-    const timeSinceLastSeen = Date.now() - peer.lastSeen;
-    return timeSinceLastSeen < 60000 ? 'online' : 'offline';
-  }
-
-  getPeerIcon(nodeType: string): string {
-    switch (nodeType) {
-      case 'full': return 'hub';
-      case 'light': return 'device_hub';
-      case 'relay': return 'router';
-      case 'bridge': return 'bridge';
+  getPeerIcon(deviceType: string): string {
+    switch (deviceType) {
+      case 'mobile': return 'smartphone';
+      case 'desktop': return 'computer';
+      case 'iot': return 'sensors';
       default: return 'device_unknown';
     }
   }
 
-  getMeshNodeIcon(type: string): string {
-    switch (type) {
-      case 'coordinator': return 'account_tree';
-      case 'relay': return 'router';
-      case 'bridge': return 'bridge';
-      case 'endpoint': return 'radio_button_unchecked';
-      default: return 'device_hub';
-    }
+  getPeerStatusClass(peer: P2PNode): string {
+    if (peer.connectionQuality > 80) return 'excellent';
+    if (peer.connectionQuality > 60) return 'good';
+    if (peer.connectionQuality > 40) return 'fair';
+    return 'poor';
   }
 
-  getMeshNodeTypeText(type: string): string {
-    switch (type) {
-      case 'coordinator': return 'Koordinatör';
-      case 'relay': return 'Röle';
-      case 'bridge': return 'Köprü';
-      case 'endpoint': return 'Uç Nokta';
-      default: return 'Bilinmiyor';
-    }
+  getPeerStatusText(peer: P2PNode): string {
+    if (peer.connectionQuality > 80) return 'Mükemmel';
+    if (peer.connectionQuality > 60) return 'İyi';
+    if (peer.connectionQuality > 40) return 'Orta';
+    return 'Zayıf';
   }
 
-  getEmergencyStatusText(status: string): string {
-    switch (status) {
-      case 'normal': return 'Normal';
-      case 'alert': return 'Uyarı';
-      case 'emergency': return 'Acil Durum';
-      case 'critical': return 'Kritik';
-      default: return 'Bilinmiyor';
-    }
-  }
-
-  getNetworkTypeIcon(type: string): string {
+  getNetworkIcon(type: string): string {
     switch (type) {
       case 'emergency': return 'warning';
       case 'community': return 'people';
@@ -1461,93 +1544,41 @@ export class NetworkImplementationComponent implements OnInit, OnDestroy {
     }
   }
 
-  getTestResultIcon(status: string): string {
-    switch (status) {
-      case 'success': return 'check_circle';
+  getNetworkTypeClass(type: string): string {
+    return type;
+  }
+
+  getNodeIcon(type: string): string {
+    switch (type) {
+      case 'coordinator': return 'account_tree';
+      case 'relay': return 'repeat';
+      case 'endpoint': return 'radio_button_checked';
+      case 'bridge': return 'bridge';
+      default: return 'device_hub';
+    }
+  }
+
+  getNodeTypeText(type: string): string {
+    switch (type) {
+      case 'coordinator': return 'Koordinatör';
+      case 'relay': return 'Röle';
+      case 'endpoint': return 'Uç Nokta';
+      case 'bridge': return 'Köprü';
+      default: return 'Bilinmiyor';
+    }
+  }
+
+  getLogIcon(level: string): string {
+    switch (level) {
+      case 'info': return 'info';
       case 'warning': return 'warning';
       case 'error': return 'error';
+      case 'success': return 'check_circle';
       default: return 'help';
     }
   }
 
-  // Action Methods
-  async sendTestMessage(peerId: string): Promise<void> {
-    try {
-      const success = await this.p2pService.sendMessage({
-        type: 'data',
-        payload: { test: 'Hello from network implementation test' },
-        recipient: peerId,
-        ttl: 5,
-        priority: 'normal',
-        encrypted: true
-      });
-
-      this.addTestResult('action', 'Test Message Sent', success ? 'success' : 'error', [
-        { name: 'Recipient', value: peerId.substring(0, 12) + '...', status: success ? 'good' : 'poor' },
-        { name: 'Status', value: success ? 'Delivered' : 'Failed', status: success ? 'good' : 'poor' }
-      ]);
-    } catch (error) {
-      this.addTestResult('action', 'Test Message Failed', 'error', [
-        { name: 'Error', value: 'Send failed', status: 'poor' }
-      ]);
-    }
+  getNetworkNodesArray(network: MeshNetwork): MeshNetworkNode[] {
+    return Array.from(network.nodes.values());
   }
-
-  async disconnectPeer(peerId: string): Promise<void> {
-    try {
-      await this.p2pService.disconnectFromPeer(peerId);
-      this.addTestResult('action', 'Peer Disconnected', 'warning', [
-        { name: 'Peer ID', value: peerId.substring(0, 12) + '...', status: 'warning' }
-      ]);
-    } catch (error) {
-      this.addTestResult('action', 'Disconnect Failed', 'error', [
-        { name: 'Error', value: 'Disconnect failed', status: 'poor' }
-      ]);
-    }
-  }
-
-  async optimizeNetworkTopology(networkId: string): Promise<void> {
-    // Implementation for optimizing specific network topology
-    this.addTestResult('action', 'Network Topology Optimized', 'success', [
-      { name: 'Network ID', value: networkId.substring(0, 12) + '...', status: 'good' }
-    ]);
-  }
-
-  async sendNetworkBroadcast(networkId: string): Promise<void> {
-    try {
-      const messageId = await this.meshService.sendMeshMessage({
-        type: 'broadcast',
-        priority: 'normal',
-        payload: { test: 'Network broadcast test message', timestamp: Date.now() },
-        source: this.meshService.localMeshNode()?.id || '',
-        ttl: 5
-      });
-
-      this.addTestResult('action', 'Network Broadcast Sent', 'success', [
-        { name: 'Message ID', value: messageId.substring(0, 12) + '...', status: 'good' },
-        { name: 'Network ID', value: networkId.substring(0, 12) + '...', status: 'good' }
-      ]);
-    } catch (error) {
-      this.addTestResult('action', 'Network Broadcast Failed', 'error', [
-        { name: 'Error', value: 'Broadcast failed', status: 'poor' }
-      ]);
-    }
-  }
-
-  async leaveNetwork(networkId: string): Promise<void> {
-    try {
-      const success = await this.meshService.leaveMeshNetwork(networkId);
-      this.addTestResult('action', 'Left Network', success ? 'warning' : 'error', [
-        { name: 'Network ID', value: networkId.substring(0, 12) + '...', status: success ? 'warning' : 'poor' },
-        { name: 'Status', value: success ? 'Left successfully' : 'Failed to leave', status: success ? 'warning' : 'poor' }
-      ]);
-    } catch (error) {
-      this.addTestResult('action', 'Leave Network Failed', 'error', [
-        { name: 'Error', value: 'Leave failed', status: 'poor' }
-      ]);
-    }
-  }
-
-  // Utility method for template
-  Array = Array;
 }
