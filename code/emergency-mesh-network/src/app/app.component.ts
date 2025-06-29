@@ -87,18 +87,6 @@ import { EmergencyMeshCoordinatorService } from './core/services/emergency-mesh-
             <span>Network Visualization</span>
           </a>
           
-          <!-- Network Simulation Menu Item -->
-          <a mat-list-item routerLink="/network-simulation" (click)="drawer.close()">
-            <mat-icon>auto_graph</mat-icon>
-            <span>Network Simulation</span>
-          </a>
-          
-          <!-- Network Testing Menu Item -->
-          <a mat-list-item routerLink="/network-testing" (click)="drawer.close()">
-            <mat-icon>speed</mat-icon>
-            <span>Network Testing</span>
-          </a>
-          
           <a mat-list-item routerLink="/messages" (click)="drawer.close()">
             <mat-icon [matBadge]="unreadMessageCount()" 
                       [matBadgeHidden]="unreadMessageCount() === 0"
@@ -119,6 +107,11 @@ import { EmergencyMeshCoordinatorService } from './core/services/emergency-mesh-
           <a mat-list-item routerLink="/settings" (click)="drawer.close()">
             <mat-icon>settings</mat-icon>
             <span>Ayarlar</span>
+          </a>
+          
+          <a mat-list-item routerLink="/deployment" (click)="drawer.close()">
+            <mat-icon>cloud_upload</mat-icon>
+            <span>Dağıtım</span>
           </a>
         </mat-nav-list>
       </mat-sidenav>

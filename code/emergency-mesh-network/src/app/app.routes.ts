@@ -35,16 +35,6 @@ export const routes: Routes = [
     canActivate: [AuthGuard]
   },
   {
-    path: 'network-simulation',
-    loadComponent: () => import('./features/network-simulation/network-simulation.component').then(m => m.NetworkSimulationComponent),
-    canActivate: [AuthGuard]
-  },
-  {
-    path: 'network-testing',
-    loadComponent: () => import('./features/network-testing/network-testing.component').then(m => m.NetworkTestingComponent),
-    canActivate: [AuthGuard]
-  },
-  {
     path: 'messages',
     loadComponent: () => import('./features/messages/messages.component').then(m => m.MessagesComponent),
     canActivate: [AuthGuard]
@@ -66,6 +56,11 @@ export const routes: Routes = [
   {
     path: 'pwa',
     loadComponent: () => import('./features/pwa-install/pwa-install.component').then(m => m.PWAInstallComponent)
+  },
+  {
+    path: 'deployment',
+    loadComponent: () => import('./features/deployment/deployment.component').then(m => m.DeploymentComponent),
+    canActivate: [AuthGuard]
   },
   {
     path: '**',
