@@ -87,6 +87,12 @@ import { EmergencyMeshCoordinatorService } from './core/services/emergency-mesh-
             <span>Network Visualization</span>
           </a>
           
+          <!-- Network Testing Menu Item -->
+          <a mat-list-item routerLink="/network-testing" (click)="drawer.close()">
+            <mat-icon>speed</mat-icon>
+            <span>Network Testing</span>
+          </a>
+          
           <a mat-list-item routerLink="/messages" (click)="drawer.close()">
             <mat-icon [matBadge]="unreadMessageCount()" 
                       [matBadgeHidden]="unreadMessageCount() === 0"

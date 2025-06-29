@@ -35,6 +35,11 @@ export const routes: Routes = [
     canActivate: [AuthGuard]
   },
   {
+    path: 'network-testing',
+    loadComponent: () => import('./features/network-testing/network-testing.component').then(m => m.NetworkTestingComponent),
+    canActivate: [AuthGuard]
+  },
+  {
     path: 'messages',
     loadComponent: () => import('./features/messages/messages.component').then(m => m.MessagesComponent),
     canActivate: [AuthGuard]
@@ -47,11 +52,6 @@ export const routes: Routes = [
   {
     path: 'settings',
     loadComponent: () => import('./features/settings/settings.component').then(m => m.SettingsComponent),
-    canActivate: [AuthGuard]
-  },
-  {
-    path: 'deployment',
-    loadComponent: () => import('./features/deployment/deployment.component').then(m => m.DeploymentComponent),
     canActivate: [AuthGuard]
   },
   {
