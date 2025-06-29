@@ -71,6 +71,15 @@ import { EmergencyMeshCoordinatorService } from './core/services/emergency-mesh-
               <mat-icon class="scenario-indicator">play_circle</mat-icon>
             }
           </a>
+
+          <!-- Network Implementation Menu Item -->
+          <a mat-list-item routerLink="/network-implementation" (click)="drawer.close()">
+            <mat-icon>hub</mat-icon>
+            <span>Network Implementation</span>
+            @if (isNetworkTestActive()) {
+              <mat-icon class="test-indicator">engineering</mat-icon>
+            }
+          </a>
           
           <a mat-list-item routerLink="/messages" (click)="drawer.close()">
             <mat-icon [matBadge]="unreadMessageCount()" 
@@ -99,7 +108,8 @@ import { EmergencyMeshCoordinatorService } from './core/services/emergency-mesh-
       <mat-sidenav-content>
         <mat-toolbar color="primary" class="main-toolbar"
                      [class.emergency-mode]="isEmergencyActive()"
-                     [class.scenario-mode]="isScenarioActive()">
+                     [class.scenario-mode]="isScenarioActive()"
+                     [class.network-test-mode]="isNetworkTestActive()">
           <button
             type="button"
             aria-label="Toggle sidenav"
@@ -110,7 +120,9 @@ import { EmergencyMeshCoordinatorService } from './core/services/emergency-mesh-
           </button>
           
           <span class="app-title">
-            @if (isScenarioActive()) {
+            @if (isNetworkTestActive()) {
+              🔧 Network Test Modu
+            } @else if (isScenarioActive()) {
               🧪 Senaryo Modu
             } @else if (isEmergencyActive()) {
               🚨 Acil Durum
@@ -121,6 +133,16 @@ import { EmergencyMeshCoordinatorService } from './core/services/emergency-mesh-
           
           <span class="spacer"></span>
           
+          <!-- Network Test Status -->
+          @if (isNetworkTestActive()) {
+            <button mat-icon-button 
+                    routerLink="/network-implementation"
+                    class="network-test-status-button"
+                    matTooltip="Network test aktif">
+              <mat-icon class="test-pulse">engineering</mat-icon>
+            </button>
+          }
+
           <!-- Scenario Status -->
           @if (isScenarioActive()) {
             <button mat-icon-button 
@@ -165,7 +187,8 @@ import { EmergencyMeshCoordinatorService } from './core/services/emergency-mesh-
         <main class="main-content" 
               [class.touch-device]="isTouchDevice()"
               [class.emergency-mode]="isEmergencyActive()"
-              [class.scenario-mode]="isScenarioActive()">
+              [class.scenario-mode]="isScenarioActive()"
+              [class.network-test-mode]="isNetworkTestActive()">
           <router-outlet></router-outlet>
         </main>
       </mat-sidenav-content>
@@ -202,6 +225,10 @@ import { EmergencyMeshCoordinatorService } from './core/services/emergency-mesh-
       background: linear-gradient(135deg, #9c27b0, #673ab7) !important;
     }
 
+    .main-toolbar.network-test-mode {
+      background: linear-gradient(135deg, #607d8b, #455a64) !important;
+    }
+
     .menu-button {
       margin-right: 8px;
     }
@@ -224,7 +251,8 @@ import { EmergencyMeshCoordinatorService } from './core/services/emergency-mesh-
     }
 
     .emergency-status-button,
-    .scenario-status-button {
+    .scenario-status-button,
+    .network-test-status-button {
       animation: emergency-pulse 2s infinite;
     }
 
@@ -234,6 +262,10 @@ import { EmergencyMeshCoordinatorService } from './core/services/emergency-mesh-
 
     .scenario-status-button mat-icon {
       color: #e1bee7;
+    }
+
+    .network-test-status-button mat-icon {
+      color: #b0bec5;
     }
 
     .main-content {
@@ -254,6 +286,10 @@ import { EmergencyMeshCoordinatorService } from './core/services/emergency-mesh-
       background: linear-gradient(135deg, rgba(156, 39, 176, 0.05), rgba(103, 58, 183, 0.05));
     }
 
+    .main-content.network-test-mode {
+      background: linear-gradient(135deg, rgba(96, 125, 139, 0.05), rgba(69, 90, 100, 0.05));
+    }
+
     /* Navigation List Styles */
     .mat-nav-list .mat-list-item.emergency-active {
       background: rgba(255, 87, 34, 0.1);
@@ -270,8 +306,14 @@ import { EmergencyMeshCoordinatorService } from './core/services/emergency-mesh-
       color: #9c27b0;
     }
 
+    .mat-nav-list .mat-list-item mat-icon.test-pulse {
+      animation: test-pulse 2s infinite;
+      color: #607d8b;
+    }
+
     .emergency-indicator,
-    .scenario-indicator {
+    .scenario-indicator,
+    .test-indicator {
       color: #ff5722;
       font-size: 12px;
       width: 12px;
@@ -281,6 +323,10 @@ import { EmergencyMeshCoordinatorService } from './core/services/emergency-mesh-
 
     .scenario-indicator {
       color: #9c27b0;
+    }
+
+    .test-indicator {
+      color: #607d8b;
     }
 
     .network-status {
@@ -314,6 +360,21 @@ import { EmergencyMeshCoordinatorService } from './core/services/emergency-mesh-
     }
 
     @keyframes scenario-pulse {
+      0% { 
+        transform: scale(1); 
+        opacity: 1;
+      }
+      50% { 
+        transform: scale(1.05); 
+        opacity: 0.8;
+      }
+      100% { 
+        transform: scale(1); 
+        opacity: 1;
+      }
+    }
+
+    @keyframes test-pulse {
       0% { 
         transform: scale(1); 
         opacity: 1;
@@ -374,8 +435,10 @@ import { EmergencyMeshCoordinatorService } from './core/services/emergency-mesh-
     @media (prefers-reduced-motion: reduce) {
       .emergency-pulse,
       .scenario-pulse,
+      .test-pulse,
       .emergency-status-button,
-      .scenario-status-button {
+      .scenario-status-button,
+      .network-test-status-button {
         animation: none;
       }
       
@@ -407,6 +470,10 @@ export class AppComponent implements OnInit, OnDestroy {
 
   // Emergency Scenario state
   isScenarioActive = computed(() => this.emergencyCoordinator.currentScenario() !== null);
+  
+  // Network Test state
+  private _isNetworkTestActive = signal<boolean>(false);
+  isNetworkTestActive = this._isNetworkTestActive.asReadonly();
 
   // PWA state signals
   private _showPWAButton = signal(false);
@@ -443,7 +510,7 @@ export class AppComponent implements OnInit, OnDestroy {
       // Request persistent storage for emergency data
       await this.pwaService.requestPersistentStorage();
 
-      console.log('Angular 20 App initialized successfully');
+      console.log('🚀 Angular 20 Emergency Mesh Network başlatıldı!');
     } catch (error) {
       console.error('App initialization failed:', error);
       this.analyticsService.trackError('app_init', 'Initialization failed', { error });

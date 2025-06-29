@@ -25,6 +25,11 @@ export const routes: Routes = [
     canActivate: [AuthGuard]
   },
   {
+    path: 'network-implementation',
+    loadComponent: () => import('./features/network-implementation/network-implementation.component').then(m => m.NetworkImplementationComponent),
+    canActivate: [AuthGuard]
+  },
+  {
     path: 'messages',
     loadComponent: () => import('./features/messages/messages.component').then(m => m.MessagesComponent),
     canActivate: [AuthGuard]
