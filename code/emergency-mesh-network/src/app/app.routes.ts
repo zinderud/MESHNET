@@ -50,6 +50,11 @@ export const routes: Routes = [
     canActivate: [AuthGuard]
   },
   {
+    path: 'deployment',
+    loadComponent: () => import('./features/deployment/deployment.component').then(m => m.DeploymentComponent),
+    canActivate: [AuthGuard]
+  },
+  {
     path: 'setup',
     loadComponent: () => import('./features/setup/setup.component').then(m => m.SetupComponent)
   },
