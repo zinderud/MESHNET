@@ -81,6 +81,12 @@ import { EmergencyMeshCoordinatorService } from './core/services/emergency-mesh-
             }
           </a>
           
+          <!-- Network Visualization Menu Item -->
+          <a mat-list-item routerLink="/network-visualization" (click)="drawer.close()">
+            <mat-icon>bubble_chart</mat-icon>
+            <span>Network Visualization</span>
+          </a>
+          
           <a mat-list-item routerLink="/messages" (click)="drawer.close()">
             <mat-icon [matBadge]="unreadMessageCount()" 
                       [matBadgeHidden]="unreadMessageCount() === 0"
