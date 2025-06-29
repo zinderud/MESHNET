@@ -35,6 +35,36 @@ export const routes: Routes = [
     canActivate: [AuthGuard]
   },
   {
+    path: 'network-simulation',
+    loadComponent: () => import('./features/network-simulation/network-simulation.component').then(m => m.NetworkSimulationComponent),
+    canActivate: [AuthGuard]
+  },
+  {
+    path: 'network-testing',
+    loadComponent: () => import('./features/network-testing/network-testing.component').then(m => m.NetworkTestingComponent),
+    canActivate: [AuthGuard]
+  },
+  {
+    path: 'p2p-network',
+    loadComponent: () => import('./features/p2p-network/p2p-network-dashboard.component').then(m => m.P2PNetworkDashboardComponent),
+    canActivate: [AuthGuard]
+  },
+  {
+    path: 'blockchain',
+    loadComponent: () => import('./features/blockchain/blockchain-explorer.component').then(m => m.BlockchainExplorerComponent),
+    canActivate: [AuthGuard]
+  },
+  {
+    path: 'blockchain/transaction',
+    loadComponent: () => import('./features/blockchain/transaction-creator.component').then(m => m.TransactionCreatorComponent),
+    canActivate: [AuthGuard]
+  },
+  {
+    path: 'deployment',
+    loadComponent: () => import('./features/deployment/deployment.component').then(m => m.DeploymentComponent),
+    canActivate: [AuthGuard]
+  },
+  {
     path: 'messages',
     loadComponent: () => import('./features/messages/messages.component').then(m => m.MessagesComponent),
     canActivate: [AuthGuard]
@@ -56,11 +86,6 @@ export const routes: Routes = [
   {
     path: 'pwa',
     loadComponent: () => import('./features/pwa-install/pwa-install.component').then(m => m.PWAInstallComponent)
-  },
-  {
-    path: 'deployment',
-    loadComponent: () => import('./features/deployment/deployment.component').then(m => m.DeploymentComponent),
-    canActivate: [AuthGuard]
   },
   {
     path: '**',
