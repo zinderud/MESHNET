@@ -45,21 +45,6 @@ export const routes: Routes = [
     canActivate: [AuthGuard]
   },
   {
-    path: 'p2p-network',
-    loadComponent: () => import('./features/p2p-network/p2p-network-dashboard.component').then(m => m.P2PNetworkDashboardComponent),
-    canActivate: [AuthGuard]
-  },
-  {
-    path: 'blockchain',
-    loadComponent: () => import('./features/blockchain/blockchain-explorer.component').then(m => m.BlockchainExplorerComponent),
-    canActivate: [AuthGuard]
-  },
-  {
-    path: 'blockchain/transaction',
-    loadComponent: () => import('./features/blockchain/transaction-creator.component').then(m => m.TransactionCreatorComponent),
-    canActivate: [AuthGuard]
-  },
-  {
     path: 'deployment',
     loadComponent: () => import('./features/deployment/deployment.component').then(m => m.DeploymentComponent),
     canActivate: [AuthGuard]

@@ -19,7 +19,6 @@ import { MessagingService } from './core/services/messaging.service';
 import { WebrtcService } from './core/services/webrtc.service';
 import { AnalyticsService } from './core/services/analytics.service';
 import { EmergencyMeshCoordinatorService } from './core/services/emergency-mesh-coordinator.service';
-import { BlockchainService } from './core/services/blockchain.service';
 
 @Component({
   selector: 'app-root',
@@ -100,26 +99,10 @@ import { BlockchainService } from './core/services/blockchain.service';
             <span>Network Testing</span>
           </a>
           
-          <!-- P2P Network Menu Item -->
-          <a mat-list-item routerLink="/p2p-network" (click)="drawer.close()">
-            <mat-icon>device_hub</mat-icon>
-            <span>P2P Network</span>
-            <span class="network-status">{{ connectedPeerCount() }} cihaz</span>
-          </a>
-          
-          <!-- Blockchain Menu Item -->
-          <a mat-list-item routerLink="/blockchain" (click)="drawer.close()">
-            <mat-icon>account_tree</mat-icon>
-            <span>Blockchain</span>
-            @if (isValidator()) {
-              <mat-icon class="validator-indicator">verified</mat-icon>
-            }
-          </a>
-          
           <!-- Deployment Menu Item -->
           <a mat-list-item routerLink="/deployment" (click)="drawer.close()">
-            <mat-icon>cloud_upload</mat-icon>
-            <span>Dağıtım</span>
+            <mat-icon>rocket_launch</mat-icon>
+            <span>Deployment</span>
           </a>
           
           <a mat-list-item routerLink="/messages" (click)="drawer.close()">
@@ -202,18 +185,6 @@ import { BlockchainService } from './core/services/blockchain.service';
               <mat-icon class="network-connected">signal_wifi_4_bar</mat-icon>
             } @else {
               <mat-icon class="network-disconnected">signal_wifi_off</mat-icon>
-            }
-          </button>
-
-          <!-- Blockchain Status -->
-          <button mat-icon-button 
-                  routerLink="/blockchain"
-                  [matTooltip]="getBlockchainStatusText()"
-                  class="blockchain-button">
-            @if (isValidator()) {
-              <mat-icon class="validator-active">verified</mat-icon>
-            } @else {
-              <mat-icon>account_tree</mat-icon>
             }
           </button>
 
@@ -303,10 +274,6 @@ import { BlockchainService } from './core/services/blockchain.service';
       color: #f44336;
     }
 
-    .blockchain-button mat-icon.validator-active {
-      color: #4caf50;
-    }
-
     .emergency-status-button,
     .scenario-status-button,
     .network-test-status-button {
@@ -370,8 +337,7 @@ import { BlockchainService } from './core/services/blockchain.service';
 
     .emergency-indicator,
     .scenario-indicator,
-    .test-indicator,
-    .validator-indicator {
+    .test-indicator {
       color: #ff5722;
       font-size: 12px;
       width: 12px;
@@ -385,10 +351,6 @@ import { BlockchainService } from './core/services/blockchain.service';
 
     .test-indicator {
       color: #607d8b;
-    }
-
-    .validator-indicator {
-      color: #4caf50;
     }
 
     .network-status {
@@ -520,7 +482,6 @@ export class AppComponent implements OnInit, OnDestroy {
   private webrtcService = inject(WebrtcService);
   private analyticsService = inject(AnalyticsService);
   private emergencyCoordinator = inject(EmergencyMeshCoordinatorService);
-  private blockchainService = inject(BlockchainService);
 
   title = 'Acil Durum Mesh Network';
 
@@ -530,7 +491,6 @@ export class AppComponent implements OnInit, OnDestroy {
   isNetworkConnected = this.webrtcService.isConnected;
   connectedPeerCount = computed(() => this.webrtcService.connectedPeers().length);
   isTouchDevice = this.touchService.isTouchDevice;
-  isValidator = this.blockchainService.isValidator;
 
   // Emergency Scenario state
   isScenarioActive = computed(() => this.emergencyCoordinator.currentScenario() !== null);
@@ -693,15 +653,6 @@ export class AppComponent implements OnInit, OnDestroy {
       return `Bağlı - ${peerCount} cihaz`;
     } else {
       return 'Bağlantı yok';
-    }
-  }
-
-  getBlockchainStatusText(): string {
-    if (this.isValidator()) {
-      return 'Validator Node';
-    } else {
-      const blockCount = this.blockchainService.blockCount();
-      return `${blockCount} blocks`;
     }
   }
 }
