@@ -87,6 +87,12 @@ import { EmergencyMeshCoordinatorService } from './core/services/emergency-mesh-
             <span>Network Visualization</span>
           </a>
           
+          <!-- Network Simulation Menu Item -->
+          <a mat-list-item routerLink="/network-simulation" (click)="drawer.close()">
+            <mat-icon>auto_graph</mat-icon>
+            <span>Network Simulation</span>
+          </a>
+          
           <!-- Network Testing Menu Item -->
           <a mat-list-item routerLink="/network-testing" (click)="drawer.close()">
             <mat-icon>speed</mat-icon>

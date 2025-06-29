@@ -35,6 +35,11 @@ export const routes: Routes = [
     canActivate: [AuthGuard]
   },
   {
+    path: 'network-simulation',
+    loadComponent: () => import('./features/network-simulation/network-simulation.component').then(m => m.NetworkSimulationComponent),
+    canActivate: [AuthGuard]
+  },
+  {
     path: 'network-testing',
     loadComponent: () => import('./features/network-testing/network-testing.component').then(m => m.NetworkTestingComponent),
     canActivate: [AuthGuard]
