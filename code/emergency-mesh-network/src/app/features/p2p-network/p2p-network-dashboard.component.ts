@@ -9,6 +9,7 @@ import { MatBadgeModule } from '@angular/material/badge';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatDividerModule } from '@angular/material/divider';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { Subscription } from 'rxjs';
 
 import { P2PDiscoveryService, DiscoveredPeer } from '../../core/services/p2p-discovery.service';
@@ -686,6 +687,7 @@ export class P2PNetworkDashboardComponent implements OnInit, OnDestroy {
   private discoveryService = inject(P2PDiscoveryService);
   private webrtcService = inject(WebrtcService);
   private analyticsService = inject(AnalyticsService);
+  private snackBar = inject(MatSnackBar);
 
   // Reactive state from services
   isDiscovering = this.discoveryService.isDiscovering;
@@ -733,14 +735,32 @@ export class P2PNetworkDashboardComponent implements OnInit, OnDestroy {
     // Listen for peer discovery events
     this.subscriptions.add(
       this.discoveryService.onPeerDiscovered$.subscribe(peer => {
-        // Could add visual feedback for newly discovered peers
+        this.snackBar.open(
+          `New peer discovered: ${this.getPeerName(peer)}`,
+          'Close',
+          { duration: 3000 }
+        );
       })
     );
 
     // Listen for WebRTC connection events
     this.subscriptions.add(
       this.webrtcService.onPeerConnected$.subscribe(peer => {
-        // Could add visual feedback for new connections
+        this.snackBar.open(
+          `Connected to peer: ${peer.name}`,
+          'Close',
+          { duration: 3000 }
+        );
+      })
+    );
+
+    this.subscriptions.add(
+      this.webrtcService.onPeerDisconnected$.subscribe(peer => {
+        this.snackBar.open(
+          `Disconnected from peer: ${peer.name}`,
+          'Close',
+          { duration: 3000 }
+        );
       })
     );
   }
@@ -749,9 +769,23 @@ export class P2PNetworkDashboardComponent implements OnInit, OnDestroy {
   async startDiscovery(): Promise<void> {
     try {
       const discoveredCount = await this.discoveryService.startDiscovery();
+      
+      this.snackBar.open(
+        `Discovered ${discoveredCount} peers`,
+        'Close',
+        { duration: 3000 }
+      );
+      
       this.analyticsService.trackUserAction('p2p', 'discovery', undefined, undefined, discoveredCount);
     } catch (error) {
       console.error('Discovery failed:', error);
+      
+      this.snackBar.open(
+        'Peer discovery failed',
+        'Close',
+        { duration: 3000 }
+      );
+      
       this.analyticsService.trackError('p2p', 'Discovery failed', { error });
     }
   }
@@ -761,12 +795,31 @@ export class P2PNetworkDashboardComponent implements OnInit, OnDestroy {
       const success = await this.discoveryService.connectToPeer(peerId);
       
       if (success) {
+        this.snackBar.open(
+          'Connected to peer successfully',
+          'Close',
+          { duration: 3000 }
+        );
+        
         this.analyticsService.trackUserAction('p2p', 'connect_peer', 'success');
       } else {
+        this.snackBar.open(
+          'Failed to connect to peer',
+          'Close',
+          { duration: 3000 }
+        );
+        
         this.analyticsService.trackUserAction('p2p', 'connect_peer', 'failed');
       }
     } catch (error) {
       console.error(`Failed to connect to peer ${peerId}:`, error);
+      
+      this.snackBar.open(
+        'Connection error',
+        'Close',
+        { duration: 3000 }
+      );
+      
       this.analyticsService.trackError('p2p', 'Connection failed', { peerId, error });
     }
   }
@@ -774,9 +827,23 @@ export class P2PNetworkDashboardComponent implements OnInit, OnDestroy {
   async connectToMultiplePeers(): Promise<void> {
     try {
       const connectedCount = await this.discoveryService.connectToMultiplePeers(5);
+      
+      this.snackBar.open(
+        `Connected to ${connectedCount} peers`,
+        'Close',
+        { duration: 3000 }
+      );
+      
       this.analyticsService.trackUserAction('p2p', 'connect_multiple', undefined, undefined, connectedCount);
     } catch (error) {
       console.error('Failed to connect to multiple peers:', error);
+      
+      this.snackBar.open(
+        'Failed to connect to peers',
+        'Close',
+        { duration: 3000 }
+      );
+      
       this.analyticsService.trackError('p2p', 'Multiple connection failed', { error });
     }
   }
@@ -784,15 +851,36 @@ export class P2PNetworkDashboardComponent implements OnInit, OnDestroy {
   async disconnectFromPeer(peerId: string): Promise<void> {
     try {
       this.webrtcService.disconnectFromPeer(peerId);
+      
+      this.snackBar.open(
+        'Disconnected from peer',
+        'Close',
+        { duration: 3000 }
+      );
+      
       this.analyticsService.trackUserAction('p2p', 'disconnect_peer');
     } catch (error) {
       console.error(`Failed to disconnect from peer ${peerId}:`, error);
+      
+      this.snackBar.open(
+        'Disconnection failed',
+        'Close',
+        { duration: 3000 }
+      );
+      
       this.analyticsService.trackError('p2p', 'Disconnection failed', { peerId, error });
     }
   }
 
   removePeer(peerId: string): void {
     this.discoveryService.removePeer(peerId);
+    
+    this.snackBar.open(
+      'Peer removed from discovered list',
+      'Close',
+      { duration: 3000 }
+    );
+    
     this.analyticsService.trackUserAction('p2p', 'remove_peer');
   }
 
@@ -808,12 +896,31 @@ export class P2PNetworkDashboardComponent implements OnInit, OnDestroy {
       });
       
       if (success) {
+        this.snackBar.open(
+          'Test message sent successfully',
+          'Close',
+          { duration: 3000 }
+        );
+        
         this.analyticsService.trackUserAction('p2p', 'send_test_message', 'success');
       } else {
+        this.snackBar.open(
+          'Failed to send test message',
+          'Close',
+          { duration: 3000 }
+        );
+        
         this.analyticsService.trackUserAction('p2p', 'send_test_message', 'failed');
       }
     } catch (error) {
       console.error(`Failed to send test message to peer ${peerId}:`, error);
+      
+      this.snackBar.open(
+        'Message sending failed',
+        'Close',
+        { duration: 3000 }
+      );
+      
       this.analyticsService.trackError('p2p', 'Message sending failed', { peerId, error });
     }
   }

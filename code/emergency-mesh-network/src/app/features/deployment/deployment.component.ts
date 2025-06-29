@@ -6,8 +6,13 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Subscription } from 'rxjs';
+import { Router } from '@angular/router';
 
+import { DeploymentService, DeploymentConfig, DeploymentStatus } from '../../core/services/deployment.service';
 import { AnalyticsService } from '../../core/services/analytics.service';
+import { DeploymentConfigComponent } from './deployment-config.component';
+import { DeploymentStatusComponent } from './deployment-status.component';
+import { DeploymentHistoryComponent } from './deployment-history.component';
 
 @Component({
   selector: 'app-deployment',
@@ -17,235 +22,90 @@ import { AnalyticsService } from '../../core/services/analytics.service';
     MatCardModule,
     MatButtonModule,
     MatIconModule,
-    MatProgressBarModule
+    MatProgressBarModule,
+    DeploymentConfigComponent,
+    DeploymentStatusComponent,
+    DeploymentHistoryComponent
   ],
   template: `
     <div class="deployment-container">
-      <mat-card class="deployment-card">
-        <mat-card-header>
-          <mat-icon mat-card-avatar>cloud_upload</mat-icon>
-          <mat-card-title>Uygulama Dağıtımı</mat-card-title>
-          <mat-card-subtitle>Acil Durum Mesh Network'ünü Netlify'a dağıtın</mat-card-subtitle>
-        </mat-card-header>
-
-        <mat-card-content>
-          <div class="deployment-info">
-            <h3>Dağıtım Bilgileri</h3>
-            <p>
-              Uygulamanızı Netlify'a dağıtarak, internet bağlantısı olan herkesin erişebileceği bir web adresi alabilirsiniz.
-              Bu, acil durum planlaması için önemli bir adımdır.
-            </p>
-            
-            <div class="deployment-benefits">
-              <div class="benefit-item">
-                <mat-icon>public</mat-icon>
-                <span>Global Erişim</span>
-              </div>
-              <div class="benefit-item">
-                <mat-icon>security</mat-icon>
-                <span>HTTPS Güvenliği</span>
-              </div>
-              <div class="benefit-item">
-                <mat-icon>speed</mat-icon>
-                <span>Hızlı CDN</span>
-              </div>
-              <div class="benefit-item">
-                <mat-icon>update</mat-icon>
-                <span>Otomatik Güncellemeler</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="deployment-status" *ngIf="isDeploying">
-            <h3>Dağıtım Durumu</h3>
-            <mat-progress-bar mode="indeterminate"></mat-progress-bar>
-            <p>Uygulama dağıtılıyor, lütfen bekleyin...</p>
-          </div>
-
-          <div class="deployment-result" *ngIf="deploymentUrl">
-            <h3>Dağıtım Tamamlandı!</h3>
-            <p>Uygulamanıza aşağıdaki adresten erişebilirsiniz:</p>
-            <div class="url-container">
-              <a [href]="deploymentUrl" target="_blank" class="deployment-url">
-                {{ deploymentUrl }}
-                <mat-icon>open_in_new</mat-icon>
-              </a>
-            </div>
-            
-            <div class="qr-container" *ngIf="deploymentUrl">
-              <h4>Mobil Cihazlardan Erişim</h4>
-              <p>QR kodunu tarayarak mobil cihazınızdan erişebilirsiniz:</p>
-              <img [src]="'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + deploymentUrl" 
-                   alt="QR Code" class="qr-code">
-            </div>
-          </div>
-        </mat-card-content>
-
-        <mat-card-actions>
-          <button mat-raised-button color="primary" 
-                  (click)="deployApplication()"
-                  [disabled]="isDeploying">
-            <mat-icon>cloud_upload</mat-icon>
-            Uygulamayı Dağıt
-          </button>
-          
-          <button mat-button 
-                  [disabled]="!deploymentUrl || isDeploying"
-                  (click)="copyDeploymentUrl()">
-            <mat-icon>content_copy</mat-icon>
-            URL'yi Kopyala
-          </button>
-        </mat-card-actions>
-      </mat-card>
+      <h1>Application Deployment</h1>
+      
+      <!-- Deployment Configuration -->
+      <app-deployment-config
+        [config]="deploymentConfig"
+        [isDeploying]="isDeploying()"
+        (deploy)="deployApplication($event)"
+        (reset)="resetConfiguration()">
+      </app-deployment-config>
+      
+      <!-- Current Deployment Status -->
+      <app-deployment-status
+        *ngIf="currentDeployment()"
+        [deployment]="currentDeployment()!"
+        (cancel)="cancelDeployment()">
+      </app-deployment-status>
+      
+      <!-- Deployment History -->
+      <app-deployment-history
+        [deployments]="deploymentHistory()"
+        (viewDetails)="viewDeploymentDetails($event)"
+        (openUrl)="openDeploymentUrl($event)"
+        (redeploy)="redeployApplication($event)">
+      </app-deployment-history>
     </div>
   `,
   styles: [`
     .deployment-container {
-      max-width: 800px;
+      max-width: 1000px;
       margin: 0 auto;
       padding: 16px;
     }
 
-    .deployment-card {
-      width: 100%;
-    }
-
-    .deployment-info {
+    h1 {
+      text-align: center;
       margin-bottom: 24px;
-    }
-
-    .deployment-info h3 {
-      margin: 0 0 16px 0;
       color: #333;
-    }
-
-    .deployment-benefits {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 16px;
-      margin-top: 24px;
-    }
-
-    .benefit-item {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 12px;
-      background-color: #f5f5f5;
-      border-radius: 8px;
-    }
-
-    .benefit-item mat-icon {
-      color: #2196f3;
-    }
-
-    .deployment-status {
-      margin: 24px 0;
-      padding: 16px;
-      background-color: #e3f2fd;
-      border-radius: 8px;
-    }
-
-    .deployment-status h3 {
-      margin: 0 0 16px 0;
-      color: #2196f3;
-    }
-
-    .deployment-status p {
-      margin: 16px 0 0 0;
-      text-align: center;
-      color: #666;
-    }
-
-    .deployment-result {
-      margin: 24px 0;
-      padding: 16px;
-      background-color: #e8f5e9;
-      border-radius: 8px;
-    }
-
-    .deployment-result h3 {
-      margin: 0 0 16px 0;
-      color: #4caf50;
-    }
-
-    .url-container {
-      margin: 16px 0;
-      text-align: center;
-    }
-
-    .deployment-url {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 12px 16px;
-      background-color: #f5f5f5;
-      border-radius: 8px;
-      color: #2196f3;
-      text-decoration: none;
-      font-weight: 500;
-      transition: background-color 0.3s ease;
-    }
-
-    .deployment-url:hover {
-      background-color: #e0e0e0;
-    }
-
-    .qr-container {
-      margin-top: 24px;
-      text-align: center;
-    }
-
-    .qr-container h4 {
-      margin: 0 0 8px 0;
-      color: #333;
-    }
-
-    .qr-container p {
-      margin: 0 0 16px 0;
-      color: #666;
-    }
-
-    .qr-code {
-      max-width: 200px;
-      border: 1px solid #ddd;
-      border-radius: 8px;
-    }
-
-    mat-card-actions {
-      display: flex;
-      gap: 16px;
-      padding: 16px;
     }
 
     @media (max-width: 768px) {
       .deployment-container {
         padding: 8px;
       }
-      
-      .deployment-benefits {
-        grid-template-columns: 1fr 1fr;
-      }
-      
-      mat-card-actions {
-        flex-direction: column;
-      }
-      
-      mat-card-actions button {
-        width: 100%;
-      }
     }
   `]
 })
 export class DeploymentComponent implements OnInit, OnDestroy {
+  private deploymentService = inject(DeploymentService);
   private analyticsService = inject(AnalyticsService);
   private snackBar = inject(MatSnackBar);
+  private router = inject(Router);
 
-  isDeploying = false;
-  deploymentUrl: string | null = null;
+  // Reactive state from service
+  isDeploying = this.deploymentService.isDeploying;
+  currentDeployment = this.deploymentService.currentDeployment;
+  deploymentHistory = this.deploymentService.deploymentHistory;
+
+  // Deployment configuration
+  deploymentConfig: DeploymentConfig = {
+    target: 'production',
+    buildCommand: 'ng build --configuration production',
+    outputDir: 'dist/emergency-mesh-network',
+    environment: {
+      NODE_ENV: 'production'
+    },
+    optimizations: {
+      minify: true,
+      treeshaking: true,
+      compression: true,
+      serviceWorker: true
+    }
+  };
+
   private subscriptions = new Subscription();
 
   ngOnInit(): void {
+    this.setupEventListeners();
     this.analyticsService.trackPageView('deployment');
   }
 
@@ -253,36 +113,124 @@ export class DeploymentComponent implements OnInit, OnDestroy {
     this.subscriptions.unsubscribe();
   }
 
-  deployApplication(): void {
-    this.isDeploying = true;
-    this.analyticsService.trackUserAction('deployment', 'start');
-    
-    // This would be handled by the deployment service in a real implementation
-    setTimeout(() => {
-      this.isDeploying = false;
-      this.deploymentUrl = 'https://emergency-mesh-network.netlify.app';
-      
-      this.snackBar.open(
-        'Uygulama başarıyla dağıtıldı!', 
-        'Tamam', 
-        { duration: 5000 }
-      );
-      
-      this.analyticsService.trackUserAction('deployment', 'success');
-    }, 3000);
+  private setupEventListeners(): void {
+    // Listen for deployment completion
+    this.subscriptions.add(
+      this.deploymentService.onDeploymentCompleted$.subscribe(deployment => {
+        this.snackBar.open(
+          `Deployment to ${deployment.target} completed successfully!`,
+          'Close',
+          { duration: 5000 }
+        );
+      })
+    );
+
+    // Listen for deployment failures
+    this.subscriptions.add(
+      this.deploymentService.onDeploymentFailed$.subscribe(deployment => {
+        this.snackBar.open(
+          `Deployment to ${deployment.target} failed: ${deployment.error}`,
+          'Close',
+          { duration: 5000 }
+        );
+      })
+    );
   }
 
-  copyDeploymentUrl(): void {
-    if (!this.deploymentUrl) return;
-    
-    navigator.clipboard.writeText(this.deploymentUrl).then(() => {
+  async deployApplication(config: DeploymentConfig): Promise<void> {
+    try {
+      // Update configuration
+      this.deploymentConfig = config;
+      
+      // Start deployment
+      const deploymentId = await this.deploymentService.startDeployment(config);
+      
+      this.analyticsService.trackUserAction('deployment', 'start', config.target);
+    } catch (error) {
+      console.error('Failed to start deployment:', error);
+      
       this.snackBar.open(
-        'URL panoya kopyalandı!', 
-        'Tamam', 
+        'Failed to start deployment',
+        'Close',
         { duration: 3000 }
       );
       
-      this.analyticsService.trackUserAction('deployment', 'copy_url');
-    });
+      this.analyticsService.trackError('deployment', 'Failed to start deployment', { error });
+    }
+  }
+
+  cancelDeployment(): void {
+    const cancelled = this.deploymentService.cancelDeployment();
+    
+    if (cancelled) {
+      this.snackBar.open(
+        'Deployment cancelled',
+        'Close',
+        { duration: 3000 }
+      );
+      
+      this.analyticsService.trackUserAction('deployment', 'cancel');
+    }
+  }
+
+  resetConfiguration(): void {
+    this.deploymentConfig = {
+      target: 'production',
+      buildCommand: 'ng build --configuration production',
+      outputDir: 'dist/emergency-mesh-network',
+      environment: {
+        NODE_ENV: 'production'
+      },
+      optimizations: {
+        minify: true,
+        treeshaking: true,
+        compression: true,
+        serviceWorker: true
+      }
+    };
+    
+    this.analyticsService.trackUserAction('deployment', 'reset_config');
+  }
+
+  viewDeploymentDetails(deployment: DeploymentStatus): void {
+    // In a real implementation, this might navigate to a details page
+    // For now, we'll just show the current deployment
+    const currentDeployment = this.deploymentService.getDeploymentById(deployment.id);
+    
+    if (currentDeployment) {
+      this.analyticsService.trackUserAction('deployment', 'view_details', deployment.id);
+    }
+  }
+
+  openDeploymentUrl(deployment: DeploymentStatus): void {
+    if (deployment.url) {
+      window.open(deployment.url, '_blank');
+      this.analyticsService.trackUserAction('deployment', 'open_url', deployment.id);
+    }
+  }
+
+  async redeployApplication(deployment: DeploymentStatus): Promise<void> {
+    try {
+      // Start a new deployment with the same configuration
+      const deploymentId = await this.deploymentService.startDeployment({
+        target: deployment.target,
+        buildCommand: this.deploymentConfig.buildCommand,
+        outputDir: this.deploymentConfig.outputDir,
+        environment: this.deploymentConfig.environment,
+        optimizations: this.deploymentConfig.optimizations
+      });
+      
+      this.analyticsService.trackUserAction('deployment', 'redeploy', deployment.target);
+    } catch (error) {
+      console.error('Failed to redeploy:', error);
+      
+      this.snackBar.open(
+        'Failed to redeploy application',
+        'Close',
+        { duration: 3000 }
+      );
+      
+      this.analyticsService.trackError('deployment', 'Failed to redeploy', { error });
+    }
   }
 }
