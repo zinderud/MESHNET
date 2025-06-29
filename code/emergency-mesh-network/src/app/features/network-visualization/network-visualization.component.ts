@@ -13,6 +13,8 @@ import { P2PNetworkService } from '../../core/services/p2p-network.service';
 import { MeshNetworkImplementationService, MeshNetwork } from '../../core/services/mesh-network-implementation.service';
 import { MeshRoutingService } from '../../core/services/mesh-routing.service';
 import { AnalyticsService } from '../../core/services/analytics.service';
+import { NetworkTopologyRendererService } from './network-topology-renderer.service';
+import { NetworkGraphLayoutService } from './network-graph-layout.service';
 
 @Component({
   selector: 'app-network-visualization',
@@ -413,6 +415,8 @@ export class NetworkVisualizationComponent implements OnInit, OnDestroy, AfterVi
   private meshService = inject(MeshNetworkImplementationService);
   private routingService = inject(MeshRoutingService);
   private analyticsService = inject(AnalyticsService);
+  private rendererService = inject(NetworkTopologyRendererService);
+  private layoutService = inject(NetworkGraphLayoutService);
 
   // Canvas and rendering properties
   private canvas!: HTMLCanvasElement;
@@ -486,6 +490,9 @@ export class NetworkVisualizationComponent implements OnInit, OnDestroy, AfterVi
     this.canvas.addEventListener('wheel', this.handleWheel.bind(this));
     
     window.addEventListener('resize', this.resizeCanvas.bind(this));
+    
+    // Initialize renderer service
+    this.rendererService.initialize(this.canvasRef, this.canvasWidth, this.canvasHeight);
   }
 
   private resizeCanvas(): void {
@@ -497,6 +504,9 @@ export class NetworkVisualizationComponent implements OnInit, OnDestroy, AfterVi
     
     this.canvas.width = this.canvasWidth;
     this.canvas.height = this.canvasHeight;
+    
+    // Update renderer
+    this.rendererService.resize(this.canvasWidth, this.canvasHeight);
     
     this.updateVisualization();
   }
@@ -759,576 +769,405 @@ export class NetworkVisualizationComponent implements OnInit, OnDestroy, AfterVi
   }
 
   private drawNetworkTopology(networks: MeshNetwork[]): void {
-    // Calculate node positions
-    const nodes = this.calculateNodePositions(networks);
+    // Convert mesh networks to graph nodes and links
+    const { nodes, links } = this.convertNetworksToGraph(networks);
     
-    // Draw connections
-    this.drawConnections(nodes, networks);
+    // Apply layout algorithm
+    const layoutedNodes = this.layoutService.applyMeshLayout(nodes, links, {
+      width: this.canvasWidth,
+      height: this.canvasHeight,
+      coordinatorAtCenter: true
+    });
     
-    // Draw nodes
-    this.drawNodes(nodes);
+    // Convert to renderer format
+    const renderNodes = layoutedNodes.map(node => ({
+      id: node.id,
+      x: node.x || 0,
+      y: node.y || 0,
+      type: node.type as any,
+      signalStrength: 85, // Default value
+      batteryLevel: 75, // Default value
+      isOnline: true,
+      emergencyStatus: 'normal' as any,
+      label: node.id
+    }));
     
-    // Draw labels if enabled
-    if (this.showLabels) {
-      this.drawLabels(nodes);
-    }
+    const renderConnections = links.map(link => ({
+      source: link.source,
+      target: link.target,
+      strength: 80, // Default value
+      isEmergency: false
+    }));
+    
+    // Render the network
+    this.rendererService.renderTopology(
+      renderNodes,
+      renderConnections,
+      {
+        showLabels: this.showLabels,
+        showSignalStrength: true,
+        showBatteryLevel: true,
+        showEmergencyStatus: true,
+        nodeSize: this.nodeRadius * this.zoomLevel,
+        lineWidth: 2 * this.zoomLevel,
+        theme: 'light',
+        animateConnections: true
+      }
+    );
   }
 
   private drawSignalHeatmap(networks: MeshNetwork[]): void {
-    // Calculate node positions
-    const nodes = this.calculateNodePositions(networks);
+    // Convert mesh networks to graph nodes
+    const { nodes } = this.convertNetworksToGraph(networks);
     
-    // Draw heatmap
-    this.drawHeatmap(nodes);
+    // Apply layout algorithm
+    const layoutedNodes = this.layoutService.applyMeshLayout(nodes, [], {
+      width: this.canvasWidth,
+      height: this.canvasHeight,
+      coordinatorAtCenter: true
+    });
     
-    // Draw nodes
-    this.drawNodes(nodes);
+    // Convert to renderer format
+    const renderNodes = layoutedNodes.map(node => ({
+      id: node.id,
+      x: node.x || 0,
+      y: node.y || 0,
+      type: node.type as any,
+      signalStrength: 85, // Default value
+      batteryLevel: 75, // Default value
+      isOnline: true,
+      emergencyStatus: 'normal' as any,
+      label: node.id
+    }));
     
-    // Draw labels if enabled
-    if (this.showLabels) {
-      this.drawLabels(nodes);
-    }
+    // Render the heatmap
+    this.rendererService.renderHeatmap(
+      renderNodes,
+      {
+        showLabels: this.showLabels,
+        showSignalStrength: true,
+        showBatteryLevel: true,
+        showEmergencyStatus: true,
+        nodeSize: this.nodeRadius * this.zoomLevel,
+        lineWidth: 2 * this.zoomLevel,
+        theme: 'light',
+        animateConnections: false
+      }
+    );
   }
 
   private drawRoutingPaths(networks: MeshNetwork[]): void {
-    // Calculate node positions
-    const nodes = this.calculateNodePositions(networks);
+    // Convert mesh networks to graph nodes and links
+    const { nodes, links } = this.convertNetworksToGraph(networks);
     
-    // Draw routing paths
-    this.drawRoutes(nodes);
+    // Apply layout algorithm
+    const layoutedNodes = this.layoutService.applyMeshLayout(nodes, links, {
+      width: this.canvasWidth,
+      height: this.canvasHeight,
+      coordinatorAtCenter: true
+    });
     
-    // Draw nodes
-    this.drawNodes(nodes);
+    // Convert to renderer format
+    const renderNodes = layoutedNodes.map(node => ({
+      id: node.id,
+      x: node.x || 0,
+      y: node.y || 0,
+      type: node.type as any,
+      signalStrength: 85, // Default value
+      batteryLevel: 75, // Default value
+      isOnline: true,
+      emergencyStatus: 'normal' as any,
+      label: node.id
+    }));
     
-    // Draw labels if enabled
-    if (this.showLabels) {
-      this.drawLabels(nodes);
-    }
+    const renderConnections = links.map(link => ({
+      source: link.source,
+      target: link.target,
+      strength: 80, // Default value
+      isEmergency: false
+    }));
+    
+    // Generate some sample routes
+    const routes = this.generateSampleRoutes(nodes);
+    
+    // Render the routing paths
+    this.rendererService.renderRoutingPaths(
+      renderNodes,
+      renderConnections,
+      routes,
+      {
+        showLabels: this.showLabels,
+        showSignalStrength: true,
+        showBatteryLevel: true,
+        showEmergencyStatus: true,
+        nodeSize: this.nodeRadius * this.zoomLevel,
+        lineWidth: 2 * this.zoomLevel,
+        theme: 'light',
+        animateConnections: true
+      }
+    );
   }
 
   private drawEmergencyCoverage(networks: MeshNetwork[]): void {
-    // Calculate node positions
-    const nodes = this.calculateNodePositions(networks);
+    // Convert mesh networks to graph nodes and links
+    const { nodes, links } = this.convertNetworksToGraph(networks);
     
-    // Draw coverage areas
-    this.drawCoverageAreas(networks);
-    
-    // Draw emergency connections
-    this.drawEmergencyConnections(nodes);
-    
-    // Draw nodes
-    this.drawNodes(nodes);
-    
-    // Draw labels if enabled
-    if (this.showLabels) {
-      this.drawLabels(nodes);
-    }
-  }
-
-  private calculateNodePositions(networks: MeshNetwork[]): Map<string, { 
-    x: number; 
-    y: number; 
-    node: any; 
-    network: MeshNetwork 
-  }> {
-    const nodes = new Map();
-    const centerX = this.canvasWidth / 2 + this.panOffset.x;
-    const centerY = this.canvasHeight / 2 + this.panOffset.y;
-    
-    if (networks.length === 1) {
-      // Single network - arrange in a circle
-      const network = networks[0];
-      const nodeArray = Array.from(network.nodes.values());
-      const radius = Math.min(this.canvasWidth, this.canvasHeight) * 0.4 * this.zoomLevel;
-      
-      nodeArray.forEach((node, index) => {
-        const angle = (index / nodeArray.length) * Math.PI * 2;
-        const x = centerX + Math.cos(angle) * radius;
-        const y = centerY + Math.sin(angle) * radius;
-        
-        nodes.set(node.id, { x, y, node, network });
-      });
-    } else {
-      // Multiple networks - arrange networks in a grid
-      const gridSize = Math.ceil(Math.sqrt(networks.length));
-      const cellWidth = this.canvasWidth / gridSize;
-      const cellHeight = this.canvasHeight / gridSize;
-      
-      networks.forEach((network, networkIndex) => {
-        const gridX = networkIndex % gridSize;
-        const gridY = Math.floor(networkIndex / gridSize);
-        
-        const networkCenterX = cellWidth * (gridX + 0.5) + this.panOffset.x;
-        const networkCenterY = cellHeight * (gridY + 0.5) + this.panOffset.y;
-        
-        const nodeArray = Array.from(network.nodes.values());
-        const networkRadius = Math.min(cellWidth, cellHeight) * 0.4 * this.zoomLevel;
-        
-        nodeArray.forEach((node, index) => {
-          const angle = (index / nodeArray.length) * Math.PI * 2;
-          const x = networkCenterX + Math.cos(angle) * networkRadius;
-          const y = networkCenterY + Math.sin(angle) * networkRadius;
-          
-          nodes.set(node.id, { x, y, node, network });
-        });
-      });
-    }
-    
-    return nodes;
-  }
-
-  private drawNodes(nodes: Map<string, any>): void {
-    nodes.forEach(({ x, y, node }) => {
-      // Draw node circle
-      this.ctx.beginPath();
-      this.ctx.arc(x, y, this.nodeRadius, 0, Math.PI * 2);
-      
-      // Set color based on node type
-      switch (node.type) {
-        case 'coordinator':
-          this.ctx.fillStyle = '#f44336';
-          break;
-        case 'relay':
-          this.ctx.fillStyle = '#ff9800';
-          break;
-        case 'bridge':
-          this.ctx.fillStyle = '#2196f3';
-          break;
-        case 'endpoint':
-        default:
-          this.ctx.fillStyle = '#4caf50';
-          break;
-      }
-      
-      this.ctx.fill();
-      
-      // Draw border
-      this.ctx.strokeStyle = '#fff';
-      this.ctx.lineWidth = 2;
-      this.ctx.stroke();
-      
-      // Draw status indicator
-      if (node.isOnline) {
-        this.ctx.beginPath();
-        this.ctx.arc(x + this.nodeRadius * 0.7, y - this.nodeRadius * 0.7, this.nodeRadius * 0.3, 0, Math.PI * 2);
-        this.ctx.fillStyle = '#4caf50';
-        this.ctx.fill();
-      }
-      
-      // Draw emergency indicator
-      if (node.emergencyStatus !== 'normal') {
-        this.ctx.beginPath();
-        this.ctx.arc(x - this.nodeRadius * 0.7, y - this.nodeRadius * 0.7, this.nodeRadius * 0.3, 0, Math.PI * 2);
-        this.ctx.fillStyle = '#f44336';
-        this.ctx.fill();
-      }
+    // Apply layout algorithm
+    const layoutedNodes = this.layoutService.applyMeshLayout(nodes, links, {
+      width: this.canvasWidth,
+      height: this.canvasHeight,
+      coordinatorAtCenter: true
     });
+    
+    // Convert to renderer format
+    const renderNodes = layoutedNodes.map(node => ({
+      id: node.id,
+      x: node.x || 0,
+      y: node.y || 0,
+      type: node.type as any,
+      signalStrength: 85, // Default value
+      batteryLevel: 75, // Default value
+      isOnline: true,
+      emergencyStatus: node.type === 'coordinator' ? 'emergency' as any : 'normal' as any,
+      label: node.id
+    }));
+    
+    const renderConnections = links.map(link => ({
+      source: link.source,
+      target: link.target,
+      strength: 80, // Default value
+      isEmergency: false
+    }));
+    
+    // Generate coverage areas
+    const coverageAreas = this.generateCoverageAreas(networks);
+    
+    // Render the emergency coverage
+    this.rendererService.renderEmergencyCoverage(
+      renderNodes,
+      renderConnections,
+      coverageAreas,
+      {
+        showLabels: this.showLabels,
+        showSignalStrength: true,
+        showBatteryLevel: true,
+        showEmergencyStatus: true,
+        nodeSize: this.nodeRadius * this.zoomLevel,
+        lineWidth: 2 * this.zoomLevel,
+        theme: 'light',
+        animateConnections: true
+      }
+    );
   }
 
-  private drawConnections(nodes: Map<string, any>, networks: MeshNetwork[]): void {
-    // Draw connections based on network topology
+  private convertNetworksToGraph(networks: MeshNetwork[]): { 
+    nodes: Array<{ id: string; type: string }>;
+    links: Array<{ source: string; target: string }>;
+  } {
+    const nodes: Array<{ id: string; type: string }> = [];
+    const links: Array<{ source: string; target: string }> = [];
+    const nodeIds = new Set<string>();
+    
+    // Process each network
     networks.forEach(network => {
-      const networkNodes = Array.from(network.nodes.values());
+      // Add nodes
+      Array.from(network.nodes.entries()).forEach(([id, node]) => {
+        if (!nodeIds.has(id)) {
+          nodes.push({
+            id,
+            type: node.type
+          });
+          nodeIds.add(id);
+        }
+      });
       
+      // Add links based on topology
       switch (network.topology) {
         case 'star':
-          this.drawStarTopology(nodes, networkNodes);
+          this.addStarTopologyLinks(network, links);
           break;
         case 'mesh':
-          this.drawMeshTopology(nodes, networkNodes);
+          this.addMeshTopologyLinks(network, links);
           break;
         case 'tree':
-          this.drawTreeTopology(nodes, networkNodes);
+          this.addTreeTopologyLinks(network, links);
           break;
         case 'hybrid':
         default:
-          this.drawHybridTopology(nodes, networkNodes);
+          this.addHybridTopologyLinks(network, links);
           break;
       }
     });
+    
+    return { nodes, links };
   }
 
-  private drawStarTopology(nodes: Map<string, any>, networkNodes: any[]): void {
+  private addStarTopologyLinks(network: MeshNetwork, links: Array<{ source: string; target: string }>): void {
     // Find coordinator node
-    const coordinator = networkNodes.find(node => node.type === 'coordinator');
-    if (!coordinator) return;
+    const coordinatorNode = Array.from(network.nodes.values()).find(node => node.type === 'coordinator');
+    if (!coordinatorNode) return;
     
-    const coordinatorPos = nodes.get(coordinator.id);
-    if (!coordinatorPos) return;
-    
-    // Draw connections from coordinator to all other nodes
-    networkNodes.forEach(node => {
-      if (node.id === coordinator.id) return;
-      
-      const nodePos = nodes.get(node.id);
-      if (!nodePos) return;
-      
-      this.drawConnection(
-        coordinatorPos.x, coordinatorPos.y,
-        nodePos.x, nodePos.y,
-        node.signalStrength,
-        false
-      );
+    // Connect all nodes to coordinator
+    Array.from(network.nodes.entries()).forEach(([id, node]) => {
+      if (id !== coordinatorNode.id) {
+        links.push({
+          source: coordinatorNode.id,
+          target: id
+        });
+      }
     });
   }
 
-  private drawMeshTopology(nodes: Map<string, any>, networkNodes: any[]): void {
-    // Draw connections between all nodes
-    for (let i = 0; i < networkNodes.length; i++) {
-      const node1 = networkNodes[i];
-      const pos1 = nodes.get(node1.id);
-      if (!pos1) continue;
-      
-      for (let j = i + 1; j < networkNodes.length; j++) {
-        const node2 = networkNodes[j];
-        const pos2 = nodes.get(node2.id);
-        if (!pos2) continue;
-        
-        // Calculate average signal strength
-        const signalStrength = (node1.signalStrength + node2.signalStrength) / 2;
-        
-        this.drawConnection(
-          pos1.x, pos1.y,
-          pos2.x, pos2.y,
-          signalStrength,
-          false
-        );
+  private addMeshTopologyLinks(network: MeshNetwork, links: Array<{ source: string; target: string }>): void {
+    // Connect all nodes to each other
+    const nodeIds = Array.from(network.nodes.keys());
+    
+    for (let i = 0; i < nodeIds.length; i++) {
+      for (let j = i + 1; j < nodeIds.length; j++) {
+        links.push({
+          source: nodeIds[i],
+          target: nodeIds[j]
+        });
       }
     }
   }
 
-  private drawTreeTopology(nodes: Map<string, any>, networkNodes: any[]): void {
+  private addTreeTopologyLinks(network: MeshNetwork, links: Array<{ source: string; target: string }>): void {
     // Find coordinator node
-    const coordinator = networkNodes.find(node => node.type === 'coordinator');
-    if (!coordinator) return;
+    const coordinatorNode = Array.from(network.nodes.values()).find(node => node.type === 'coordinator');
+    if (!coordinatorNode) return;
     
     // Find relay nodes
-    const relays = networkNodes.filter(node => node.type === 'relay');
+    const relayNodes = Array.from(network.nodes.values()).filter(node => node.type === 'relay');
     
-    // Find endpoints
-    const endpoints = networkNodes.filter(node => 
+    // Connect coordinator to relays
+    relayNodes.forEach(relay => {
+      links.push({
+        source: coordinatorNode.id,
+        target: relay.id
+      });
+    });
+    
+    // Connect relays to endpoints
+    const endpoints = Array.from(network.nodes.values()).filter(node => 
       node.type !== 'coordinator' && node.type !== 'relay'
     );
     
-    // Draw connections from coordinator to relays
-    const coordinatorPos = nodes.get(coordinator.id);
-    if (coordinatorPos) {
-      relays.forEach(relay => {
-        const relayPos = nodes.get(relay.id);
-        if (!relayPos) return;
-        
-        this.drawConnection(
-          coordinatorPos.x, coordinatorPos.y,
-          relayPos.x, relayPos.y,
-          relay.signalStrength,
-          false
-        );
-      });
-    }
-    
-    // Draw connections from relays to endpoints
-    relays.forEach((relay, index) => {
-      const relayPos = nodes.get(relay.id);
-      if (!relayPos) return;
-      
-      // Assign endpoints to relays
-      const relayEndpoints = endpoints.filter((_, i) => i % relays.length === index);
-      
-      relayEndpoints.forEach(endpoint => {
-        const endpointPos = nodes.get(endpoint.id);
-        if (!endpointPos) return;
-        
-        this.drawConnection(
-          relayPos.x, relayPos.y,
-          endpointPos.x, endpointPos.y,
-          endpoint.signalStrength,
-          false
-        );
+    endpoints.forEach((endpoint, index) => {
+      const relayIndex = index % relayNodes.length;
+      links.push({
+        source: relayNodes[relayIndex].id,
+        target: endpoint.id
       });
     });
   }
 
-  private drawHybridTopology(nodes: Map<string, any>, networkNodes: any[]): void {
+  private addHybridTopologyLinks(network: MeshNetwork, links: Array<{ source: string; target: string }>): void {
     // Find coordinator and relay nodes
-    const coordinator = networkNodes.find(node => node.type === 'coordinator');
-    const relays = networkNodes.filter(node => node.type === 'relay');
-    const bridges = networkNodes.filter(node => node.type === 'bridge');
+    const coordinatorNode = Array.from(network.nodes.values()).find(node => node.type === 'coordinator');
+    const relayNodes = Array.from(network.nodes.values()).filter(node => node.type === 'relay');
+    const bridgeNodes = Array.from(network.nodes.values()).filter(node => node.type === 'bridge');
+    const endpointNodes = Array.from(network.nodes.values()).filter(node => node.type === 'endpoint');
     
-    // Draw mesh between coordinator and relays
-    if (coordinator) {
-      const coordinatorPos = nodes.get(coordinator.id);
-      if (coordinatorPos) {
-        relays.forEach(relay => {
-          const relayPos = nodes.get(relay.id);
-          if (!relayPos) return;
-          
-          this.drawConnection(
-            coordinatorPos.x, coordinatorPos.y,
-            relayPos.x, relayPos.y,
-            relay.signalStrength,
-            false
-          );
+    // Connect coordinator to relays
+    if (coordinatorNode) {
+      relayNodes.forEach(relay => {
+        links.push({
+          source: coordinatorNode.id,
+          target: relay.id
         });
-        
-        // Connect coordinator to bridges
-        bridges.forEach(bridge => {
-          const bridgePos = nodes.get(bridge.id);
-          if (!bridgePos) return;
-          
-          this.drawConnection(
-            coordinatorPos.x, coordinatorPos.y,
-            bridgePos.x, bridgePos.y,
-            bridge.signalStrength,
-            true
-          );
+      });
+      
+      // Connect coordinator to bridges
+      bridgeNodes.forEach(bridge => {
+        links.push({
+          source: coordinatorNode.id,
+          target: bridge.id
         });
-      }
+      });
     }
     
-    // Connect relays in a partial mesh
-    for (let i = 0; i < relays.length; i++) {
-      const relay1 = relays[i];
-      const pos1 = nodes.get(relay1.id);
-      if (!pos1) continue;
-      
-      // Connect to some other relays (not all)
-      for (let j = i + 1; j < relays.length; j++) {
+    // Connect some relays to each other
+    for (let i = 0; i < relayNodes.length; i++) {
+      for (let j = i + 1; j < relayNodes.length; j++) {
         if (Math.random() > 0.7) continue; // 30% chance to connect
         
-        const relay2 = relays[j];
-        const pos2 = nodes.get(relay2.id);
-        if (!pos2) continue;
-        
-        this.drawConnection(
-          pos1.x, pos1.y,
-          pos2.x, pos2.y,
-          Math.min(relay1.signalStrength, relay2.signalStrength),
-          false
-        );
+        links.push({
+          source: relayNodes[i].id,
+          target: relayNodes[j].id
+        });
       }
-      
-      // Connect relays to endpoints
-      networkNodes.forEach(node => {
-        if (node.type !== 'endpoint') return;
-        if (Math.random() > 0.5) return; // 50% chance to connect
-        
-        const nodePos = nodes.get(node.id);
-        if (!nodePos) return;
-        
-        this.drawConnection(
-          pos1.x, pos1.y,
-          nodePos.x, nodePos.y,
-          node.signalStrength,
-          false
-        );
-      });
-    }
-  }
-
-  private drawConnection(x1: number, y1: number, x2: number, y2: number, signalStrength: number, isEmergency: boolean): void {
-    this.ctx.beginPath();
-    this.ctx.moveTo(x1, y1);
-    this.ctx.lineTo(x2, y2);
-    
-    if (isEmergency) {
-      // Emergency connection
-      this.ctx.strokeStyle = '#f44336';
-      this.ctx.lineWidth = 3;
-    } else if (signalStrength >= 70) {
-      // Strong connection
-      this.ctx.strokeStyle = '#2196f3';
-      this.ctx.lineWidth = 2;
-    } else {
-      // Weak connection
-      this.ctx.strokeStyle = '#9e9e9e';
-      this.ctx.lineWidth = 1;
-      this.ctx.setLineDash([5, 3]);
     }
     
-    this.ctx.stroke();
-    this.ctx.setLineDash([]);
-  }
-
-  private drawLabels(nodes: Map<string, any>): void {
-    this.ctx.font = '12px Arial';
-    this.ctx.textAlign = 'center';
-    this.ctx.textBaseline = 'middle';
-    
-    nodes.forEach(({ x, y, node }) => {
-      // Draw node ID
-      this.ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-      this.ctx.fillRect(
-        x - 40, 
-        y + this.nodeRadius + 5, 
-        80, 
-        20
-      );
-      
-      this.ctx.fillStyle = '#fff';
-      this.ctx.fillText(
-        node.id.substring(0, 8) + '...',
-        x,
-        y + this.nodeRadius + 15
-      );
-    });
-  }
-
-  private drawHeatmap(nodes: Map<string, any>): void {
-    // Create gradient for heatmap
-    const gradient = this.ctx.createRadialGradient(0, 0, 0, 0, 0, 100);
-    gradient.addColorStop(0, 'rgba(76, 175, 80, 0.8)');
-    gradient.addColorStop(0.5, 'rgba(255, 152, 0, 0.5)');
-    gradient.addColorStop(1, 'rgba(244, 67, 54, 0.1)');
-    
-    // Draw heatmap for each node
-    nodes.forEach(({ x, y, node }) => {
-      const radius = node.signalStrength * 1.5;
-      
-      this.ctx.save();
-      this.ctx.translate(x, y);
-      
-      this.ctx.beginPath();
-      this.ctx.arc(0, 0, radius, 0, Math.PI * 2);
-      
-      const nodeGradient = this.ctx.createRadialGradient(0, 0, 0, 0, 0, radius);
-      nodeGradient.addColorStop(0, `rgba(76, 175, 80, ${node.signalStrength / 100})`);
-      nodeGradient.addColorStop(0.7, `rgba(255, 152, 0, ${node.signalStrength / 200})`);
-      nodeGradient.addColorStop(1, 'rgba(244, 67, 54, 0)');
-      
-      this.ctx.fillStyle = nodeGradient;
-      this.ctx.fill();
-      
-      this.ctx.restore();
-    });
-  }
-
-  private drawRoutes(nodes: Map<string, any>): void {
-    // Get routing table
-    const routingTable = this.routingService.routingTable();
-    
-    // Draw routes
-    routingTable.forEach(entry => {
-      entry.routes.forEach(route => {
-        if (!route.isActive) return;
-        
-        const sourceNode = nodes.get(route.nextHop);
-        const destNode = nodes.get(route.destination);
-        
-        if (!sourceNode || !destNode) return;
-        
-        // Draw route line
-        this.ctx.beginPath();
-        this.ctx.moveTo(sourceNode.x, sourceNode.y);
-        this.ctx.lineTo(destNode.x, destNode.y);
-        
-        if (route.emergencyPriority) {
-          // Emergency route
-          this.ctx.strokeStyle = '#f44336';
-          this.ctx.lineWidth = 3;
-        } else {
-          // Normal route
-          this.ctx.strokeStyle = '#2196f3';
-          this.ctx.lineWidth = 2;
-        }
-        
-        // Add arrow
-        const angle = Math.atan2(destNode.y - sourceNode.y, destNode.x - sourceNode.x);
-        const arrowSize = 10;
-        
-        const arrowX = destNode.x - this.nodeRadius * Math.cos(angle);
-        const arrowY = destNode.y - this.nodeRadius * Math.sin(angle);
-        
-        this.ctx.moveTo(arrowX, arrowY);
-        this.ctx.lineTo(
-          arrowX - arrowSize * Math.cos(angle - Math.PI / 6),
-          arrowY - arrowSize * Math.sin(angle - Math.PI / 6)
-        );
-        
-        this.ctx.moveTo(arrowX, arrowY);
-        this.ctx.lineTo(
-          arrowX - arrowSize * Math.cos(angle + Math.PI / 6),
-          arrowY - arrowSize * Math.sin(angle + Math.PI / 6)
-        );
-        
-        this.ctx.stroke();
-        
-        // Draw hop count
-        this.ctx.font = '12px Arial';
-        this.ctx.textAlign = 'center';
-        this.ctx.textBaseline = 'middle';
-        this.ctx.fillStyle = '#fff';
-        
-        const midX = (sourceNode.x + destNode.x) / 2;
-        const midY = (sourceNode.y + destNode.y) / 2;
-        
-        this.ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-        this.ctx.fillRect(midX - 15, midY - 10, 30, 20);
-        
-        this.ctx.fillStyle = '#fff';
-        this.ctx.fillText(route.hopCount.toString(), midX, midY);
+    // Connect relays to endpoints
+    endpointNodes.forEach(endpoint => {
+      const relayIndex = Math.floor(Math.random() * relayNodes.length);
+      links.push({
+        source: relayNodes[relayIndex].id,
+        target: endpoint.id
       });
     });
+    
+    // Connect bridges to some endpoints
+    bridgeNodes.forEach(bridge => {
+      const endpointsToConnect = Math.min(2, endpointNodes.length);
+      for (let i = 0; i < endpointsToConnect; i++) {
+        const endpointIndex = Math.floor(Math.random() * endpointNodes.length);
+        links.push({
+          source: bridge.id,
+          target: endpointNodes[endpointIndex].id
+        });
+      }
+    });
   }
 
-  private drawCoverageAreas(networks: MeshNetwork[]): void {
-    // Draw coverage area for each network
+  private generateSampleRoutes(nodes: Array<{ id: string; type: string }>): Array<{ 
+    source: string; 
+    target: string; 
+    hops: number; 
+    isEmergency: boolean 
+  }> {
+    const routes: Array<{ source: string; target: string; hops: number; isEmergency: boolean }> = [];
+    
+    // Find coordinator node
+    const coordinator = nodes.find(node => node.type === 'coordinator');
+    if (!coordinator) return routes;
+    
+    // Generate routes from coordinator to some random nodes
+    const targetNodes = nodes.filter(node => node.type !== 'coordinator');
+    const routeCount = Math.min(5, targetNodes.length);
+    
+    for (let i = 0; i < routeCount; i++) {
+      const targetIndex = Math.floor(Math.random() * targetNodes.length);
+      const target = targetNodes[targetIndex];
+      
+      routes.push({
+        source: coordinator.id,
+        target: target.id,
+        hops: Math.floor(Math.random() * 3) + 1,
+        isEmergency: Math.random() > 0.7 // 30% chance of emergency route
+      });
+    }
+    
+    return routes;
+  }
+
+  private generateCoverageAreas(networks: MeshNetwork[]): Array<{ 
+    center: { x: number; y: number }; 
+    radius: number; 
+    type: string 
+  }> {
+    const coverageAreas: Array<{ center: { x: number; y: number }; radius: number; type: string }> = [];
+    
+    // Generate coverage area for each network
     networks.forEach(network => {
-      // Calculate center position
-      const centerX = this.canvasWidth / 2 + this.panOffset.x;
-      const centerY = this.canvasHeight / 2 + this.panOffset.y;
-      
-      // Calculate radius in pixels (scale based on canvas size)
-      const pixelRadius = (network.coverage.radius / 1000) * Math.min(this.canvasWidth, this.canvasHeight) * 0.4 * this.zoomLevel;
-      
-      // Draw coverage circle
-      this.ctx.beginPath();
-      this.ctx.arc(centerX, centerY, pixelRadius, 0, Math.PI * 2);
-      
-      // Set color based on network type
-      if (network.type === 'emergency') {
-        this.ctx.fillStyle = 'rgba(244, 67, 54, 0.1)';
-        this.ctx.strokeStyle = 'rgba(244, 67, 54, 0.5)';
-      } else {
-        this.ctx.fillStyle = 'rgba(33, 150, 243, 0.1)';
-        this.ctx.strokeStyle = 'rgba(33, 150, 243, 0.5)';
-      }
-      
-      this.ctx.fill();
-      this.ctx.lineWidth = 2;
-      this.ctx.stroke();
-      
-      // Draw coverage radius label
-      this.ctx.font = '14px Arial';
-      this.ctx.textAlign = 'center';
-      this.ctx.textBaseline = 'middle';
-      this.ctx.fillStyle = '#333';
-      
-      this.ctx.fillText(
-        `${(network.coverage.radius / 1000).toFixed(1)} km`,
-        centerX,
-        centerY + pixelRadius + 20
-      );
-    });
-  }
-
-  private drawEmergencyConnections(nodes: Map<string, any>): void {
-    // Draw emergency connections between nodes
-    nodes.forEach((source, sourceId) => {
-      if (source.node.emergencyStatus === 'normal') return;
-      
-      nodes.forEach((dest, destId) => {
-        if (sourceId === destId) return;
-        if (dest.node.emergencyStatus === 'normal') return;
-        
-        // Draw emergency connection
-        this.ctx.beginPath();
-        this.ctx.moveTo(source.x, source.y);
-        this.ctx.lineTo(dest.x, dest.y);
-        
-        this.ctx.strokeStyle = '#f44336';
-        this.ctx.lineWidth = 3;
-        this.ctx.stroke();
+      coverageAreas.push({
+        center: { x: this.canvasWidth / 2, y: this.canvasHeight / 2 },
+        radius: Math.min(this.canvasWidth, this.canvasHeight) * 0.4,
+        type: network.type === 'emergency' ? 'emergency' : 'normal'
       });
     });
+    
+    return coverageAreas;
   }
 }
