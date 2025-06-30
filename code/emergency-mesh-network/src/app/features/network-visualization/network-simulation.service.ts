@@ -182,7 +182,7 @@ export class NetworkSimulationService {
     }, tickInterval);
 
     this.simulationStarted$.next(scenario);
-    this.analyticsService.trackEvent('simulation', 'started', scenario.name);
+    this.analyticsService.trackEvent('system_event', 'started', scenario.name);
   }
 
   stopSimulation(): void {
@@ -196,7 +196,7 @@ export class NetworkSimulationService {
     this._simulationMetrics.next(finalMetrics);
 
     this.simulationStopped$.next(finalMetrics);
-    this.analyticsService.trackEvent('simulation', 'stopped', this.currentScenario?.name || 'unknown');
+    this.analyticsService.trackEvent('system_event', 'stopped', this.currentScenario?.name || 'unknown');
   }
 
   pauseSimulation(): void {

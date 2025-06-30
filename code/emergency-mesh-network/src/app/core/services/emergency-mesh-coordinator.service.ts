@@ -476,11 +476,11 @@ export class EmergencyMeshCoordinatorService {
   private async performEmergencyHandshake(node: MeshNode): Promise<void> {
     // Emergency protocol handshake
     const handshakeData = {
-      type: 'emergency_handshake',
+      type: 'discovery' as const,
       nodeInfo: this._localNode(),
       emergencyCapabilities: this.getEmergencyCapabilities(),
       timestamp: Date.now(),
-      priority: 'high',
+      priority: 'high' as const,
       payload: {}
     };
 

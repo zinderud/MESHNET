@@ -98,7 +98,6 @@ export class MeshRoutingService {
   constructor() {
     this.initializeRoutingService();
     this.startRoutingProtocol();
-    this.setupEmergencyRouting();
 
     effect(() => {
       const isEmergency = this.meshService.isEmergencyMode();

@@ -174,7 +174,7 @@ export class WebApisService {
     requireInteraction?: boolean;
     silent?: boolean;
     vibrate?: number[];
-    actions?: NotificationAction[];
+    actions?: NotificationOptions[];
   }): Promise<boolean> {
     if (!('Notification' in window)) {
       console.warn('Notifications not supported');
@@ -195,9 +195,7 @@ export class WebApisService {
         badge: options?.badge || '/assets/icons/icon-72x72.png',
         tag: options?.tag,
         requireInteraction: options?.requireInteraction || false,
-        silent: options?.silent || false,
-        vibrate: options?.vibrate,
-        actions: options?.actions
+        silent: options?.silent || false
       });
 
       // Auto-close after 5 seconds unless requireInteraction is true
@@ -299,7 +297,7 @@ export class WebApisService {
       await navigator.share(data);
       return true;
     } catch (error) {
-      if (error.name !== 'AbortError') {
+      if ((error as Error).name !== 'AbortError') {
         console.error('Failed to share data:', error);
       }
       return false;

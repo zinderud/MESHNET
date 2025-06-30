@@ -1,4 +1,5 @@
 import { Injectable, signal, computed } from '@angular/core';
+import { toObservable } from '@angular/core/rxjs-interop';
 import { BehaviorSubject, Observable, interval } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
 
@@ -432,7 +433,7 @@ export class SecurityService {
 
   // Public API for components
   getSecurityReport(): Observable<SecurityMetrics> {
-    return this._metrics.asReadonly();
+    return toObservable(this._metrics);
   }
 
   getThreatAlerts(): Observable<string> {

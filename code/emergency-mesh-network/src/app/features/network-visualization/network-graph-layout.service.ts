@@ -456,8 +456,10 @@ export class NetworkGraphLayoutService {
       const angle = nodeIndex * angleStep;
       const radius = level * (layoutOptions.linkDistance * 0.8);
       
-      node.x = centerNode.x + Math.cos(angle) * radius;
-      node.y = centerNode.y + Math.sin(angle) * radius;
+      if (centerNode.x !== undefined && centerNode.y !== undefined) {
+        node.x = centerNode.x + Math.cos(angle) * radius;
+        node.y = centerNode.y + Math.sin(angle) * radius;
+      }
     });
     
     // Apply force layout to refine positions
