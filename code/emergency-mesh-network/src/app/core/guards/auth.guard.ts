@@ -13,14 +13,11 @@ export class AuthGuard implements CanActivate {
 
   canActivate(): Observable<boolean> | Promise<boolean> | boolean {
     // Check if cryptographic keys are initialized
-    return this.cryptoService.isInitialized().pipe(
-      map(isInitialized => {
-        if (!isInitialized) {
-          this.router.navigate(['/setup']);
-          return false;
-        }
-        return true;
-      })
-    );
+    const isInitialized = this.cryptoService.isInitialized();
+    if (!isInitialized) {
+      this.router.navigate(['/setup']);
+      return false;
+    }
+    return true;
   }
 }

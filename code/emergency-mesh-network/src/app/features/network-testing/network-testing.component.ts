@@ -912,7 +912,7 @@ export class NetworkTestingComponent implements OnInit, OnDestroy {
     
     // Track analytics
     this.analyticsService.trackEvent(
-      'test',
+      'system_event',
       test.type,
       success ? 'completed' : 'failed',
       undefined,

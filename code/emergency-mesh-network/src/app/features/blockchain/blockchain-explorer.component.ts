@@ -828,9 +828,9 @@ export class BlockchainExplorerComponent implements OnInit, OnDestroy {
       const success = await this.blockchainService.becomeValidator();
       
       if (success) {
-        this.analyticsService.trackUserAction('blockchain', 'become_validator', 'success');
+        this.analyticsService.trackUserAction('blockchain', 'become_validator', { status: 'success' });
       } else {
-        this.analyticsService.trackUserAction('blockchain', 'become_validator', 'failed');
+        this.analyticsService.trackUserAction('blockchain', 'become_validator', { status: 'failed' });
       }
     } catch (error) {
       console.error('Failed to become validator:', error);

@@ -432,7 +432,7 @@ export class SecurityService {
 
   // Public API for components
   getSecurityReport(): Observable<SecurityMetrics> {
-    return this._metrics.asObservable();
+    return this._metrics.asReadonly();
   }
 
   getThreatAlerts(): Observable<string> {

@@ -164,7 +164,7 @@ export class MeshNetworkImplementationService {
       // Setup emergency protocols
       this.setupEmergencyMeshProtocols();
       
-      this.analyticsService.trackEvent('mesh', 'network_initialized', 'success');
+      this.analyticsService.trackEvent('system_event', 'network_initialized', 'success');
       console.log('Mesh Network Implementation initialized successfully');
     } catch (error) {
       console.error('Failed to initialize mesh network:', error);
@@ -320,7 +320,7 @@ export class MeshNetworkImplementationService {
       // Emit join event
       this.meshNodeJoined$.next({ networkId, node: localNode });
       
-      this.analyticsService.trackEvent('mesh', 'network_joined', networkId);
+      this.analyticsService.trackEvent('system_event', 'network_joined', networkId);
       
       return true;
     } catch (error) {
@@ -360,7 +360,7 @@ export class MeshNetworkImplementationService {
       // Emit leave event
       this.meshNodeLeft$.next({ networkId, nodeId: localNode.id });
       
-      this.analyticsService.trackEvent('mesh', 'network_left', networkId);
+      this.analyticsService.trackEvent('system_event', 'network_left', networkId);
       
       return true;
     } catch (error) {

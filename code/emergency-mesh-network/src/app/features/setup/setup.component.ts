@@ -495,7 +495,7 @@ export class SetupComponent implements OnInit {
       this.analyticsService.trackUserAction('security_setup', 'completed');
     } catch (error) {
       console.error('Security setup failed:', error);
-      this.analyticsService.trackError('security_setup', 'Setup failed', { error: error.message });
+      this.analyticsService.trackError('security_setup', 'Setup failed', { error });
     }
   }
 
@@ -508,7 +508,7 @@ export class SetupComponent implements OnInit {
     localStorage.setItem('device_config', JSON.stringify(this.deviceConfig));
     
     this.deviceConfigComplete = true;
-    this.analyticsService.trackUserAction('device_config', 'completed', undefined, {
+    this.analyticsService.trackUserAction('device_config', 'completed', {
       deviceName: this.deviceConfig.name,
       autoDiscovery: this.deviceConfig.autoDiscovery,
       emergencyMode: this.deviceConfig.emergencyMode,

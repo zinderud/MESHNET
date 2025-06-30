@@ -504,7 +504,7 @@ export class BlockchainService {
       this.analyticsService.trackEvent('system_event', 'blockchain', 'block_created', undefined, newBlock.transactions.length);
     } catch (error) {
       console.error('Failed to process pending transactions:', error);
-      this.consensusError$.next(error.message);
+      this.consensusError$.next(error as string);
     } finally {
       this._isValidating.set(false);
     }

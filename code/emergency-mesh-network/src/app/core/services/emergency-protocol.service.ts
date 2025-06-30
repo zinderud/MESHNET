@@ -1,4 +1,4 @@
-import { Injectable, signal, computed, inject } from '@angular/core';
+import { Injectable, signal, computed, inject, effect } from '@angular/core';
 import { BehaviorSubject, Observable, Subject, interval, timer } from 'rxjs';
 import { filter, debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { MessagingService, EmergencyData } from './messaging.service';
@@ -99,6 +99,11 @@ export class EmergencyProtocolService {
     this.initializeProtocols();
     this.setupEmergencyDetection();
     this.setupEmergencyHandlers();
+
+    effect(() => {
+      const level = this.webApisService.batteryLevel$();
+      this.checkBatteryEmergency(level);
+    });
   }
 
   private initializeProtocols(): void {
@@ -244,11 +249,6 @@ export class EmergencyProtocolService {
     // Monitor device motion for fall detection
     this.webApisService.onDeviceMotion$.subscribe(motion => {
       this.checkFallDetection(motion);
-    });
-
-    // Monitor battery level
-    this.webApisService.batteryLevel$.subscribe(level => {
-      this.checkBatteryEmergency(level);
     });
 
     // Monitor network connectivity

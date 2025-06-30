@@ -278,7 +278,7 @@ export class TransactionCreatorComponent implements OnInit {
         { duration: 3000 }
       );
       
-      this.analyticsService.trackUserAction('blockchain', 'create_transaction', this.transactionType);
+      this.analyticsService.trackUserAction('blockchain', 'create_transaction', { type: this.transactionType });
       
       // Reset form
       this.resetForm();

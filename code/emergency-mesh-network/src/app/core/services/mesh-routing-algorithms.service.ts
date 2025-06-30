@@ -163,7 +163,7 @@ export class MeshRoutingAlgorithmsService {
       this._currentAlgorithm.set(algorithm);
       this.algorithmChanged$.next(algorithm);
       
-      this.analyticsService.trackEvent('routing', 'algorithm_changed', algorithm);
+      this.analyticsService.trackEvent('system_event', 'algorithm_changed', algorithm);
       
       return true;
     } catch (error) {
@@ -215,7 +215,7 @@ export class MeshRoutingAlgorithmsService {
       // Emit event
       this.simulationCompleted$.next(result);
       
-      this.analyticsService.trackEvent('routing', 'simulation_completed', algorithm, undefined, result.successRate);
+      this.analyticsService.trackEvent('system_event', 'simulation_completed', algorithm, undefined, result.successRate);
       
       return result;
     } catch (error) {

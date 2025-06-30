@@ -749,7 +749,7 @@ export class P2PNetworkDashboardComponent implements OnInit, OnDestroy {
   async startDiscovery(): Promise<void> {
     try {
       const discoveredCount = await this.discoveryService.startDiscovery();
-      this.analyticsService.trackUserAction('p2p', 'discovery', undefined, undefined, discoveredCount);
+      this.analyticsService.trackUserAction('p2p', 'discovery', { discoveredCount });
     } catch (error) {
       console.error('Discovery failed:', error);
       this.analyticsService.trackError('p2p', 'Discovery failed', { error });
@@ -761,9 +761,9 @@ export class P2PNetworkDashboardComponent implements OnInit, OnDestroy {
       const success = await this.discoveryService.connectToPeer(peerId);
       
       if (success) {
-        this.analyticsService.trackUserAction('p2p', 'connect_peer', 'success');
+        this.analyticsService.trackUserAction('p2p', 'connect_peer', { status: 'success' });
       } else {
-        this.analyticsService.trackUserAction('p2p', 'connect_peer', 'failed');
+        this.analyticsService.trackUserAction('p2p', 'connect_peer', { status: 'failed' });
       }
     } catch (error) {
       console.error(`Failed to connect to peer ${peerId}:`, error);
@@ -774,7 +774,7 @@ export class P2PNetworkDashboardComponent implements OnInit, OnDestroy {
   async connectToMultiplePeers(): Promise<void> {
     try {
       const connectedCount = await this.discoveryService.connectToMultiplePeers(5);
-      this.analyticsService.trackUserAction('p2p', 'connect_multiple', undefined, undefined, connectedCount);
+      this.analyticsService.trackUserAction('p2p', 'connect_multiple', { connectedCount });
     } catch (error) {
       console.error('Failed to connect to multiple peers:', error);
       this.analyticsService.trackError('p2p', 'Multiple connection failed', { error });
@@ -808,9 +808,9 @@ export class P2PNetworkDashboardComponent implements OnInit, OnDestroy {
       });
       
       if (success) {
-        this.analyticsService.trackUserAction('p2p', 'send_test_message', 'success');
+        this.analyticsService.trackUserAction('p2p', 'send_test_message', { status: 'success' });
       } else {
-        this.analyticsService.trackUserAction('p2p', 'send_test_message', 'failed');
+        this.analyticsService.trackUserAction('p2p', 'send_test_message', { status: 'failed' });
       }
     } catch (error) {
       console.error(`Failed to send test message to peer ${peerId}:`, error);

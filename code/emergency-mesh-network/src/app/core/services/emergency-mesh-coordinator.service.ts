@@ -465,13 +465,23 @@ export class EmergencyMeshCoordinatorService {
     return await this.webrtcService.connectToPeer(node.id);
   }
 
+  private simulateCoordinatedResponse(): void {
+    // Simulate coordinated response phase
+  }
+
+  private simulateRescueOperations(): void {
+    // Simulate rescue operations phase
+  }
+
   private async performEmergencyHandshake(node: MeshNode): Promise<void> {
     // Emergency protocol handshake
     const handshakeData = {
       type: 'emergency_handshake',
       nodeInfo: this._localNode(),
       emergencyCapabilities: this.getEmergencyCapabilities(),
-      timestamp: Date.now()
+      timestamp: Date.now(),
+      priority: 'high',
+      payload: {}
     };
 
     await this.webrtcService.sendData(node.id, handshakeData);

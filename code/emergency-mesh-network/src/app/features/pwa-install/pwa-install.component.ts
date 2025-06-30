@@ -107,7 +107,7 @@ import { AnalyticsService } from '../../core/services/analytics.service';
                               [color]="storageInfo.percentage > 90 ? 'warn' : 'accent'">
             </mat-progress-bar>
             <div class="storage-stats">
-              <span>{{ formatBytes(storageInfo.used) }} / {{ formatBytes(storageInfo.quota) }}</span>
+              <span>{{ formatBytes(storageInfo.usage) }} / {{ formatBytes(storageInfo.quota) }}</span>
             </div>
           </div>
 

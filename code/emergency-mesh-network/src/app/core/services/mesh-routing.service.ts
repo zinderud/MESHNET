@@ -1,4 +1,4 @@
-import { Injectable, signal, computed, inject } from '@angular/core';
+import { Injectable, signal, computed, inject, effect } from '@angular/core';
 import { BehaviorSubject, Observable, Subject, interval } from 'rxjs';
 import { filter, map, takeUntil } from 'rxjs/operators';
 
@@ -99,6 +99,17 @@ export class MeshRoutingService {
     this.initializeRoutingService();
     this.startRoutingProtocol();
     this.setupEmergencyRouting();
+
+    effect(() => {
+      const isEmergency = this.meshService.isEmergencyMode();
+      this._isEmergencyRouting.set(isEmergency);
+
+      if (isEmergency) {
+        this.optimizeForEmergencyRouting();
+      } else {
+        this.restoreNormalRouting();
+      }
+    });
   }
 
   private initializeRoutingService(): void {
@@ -126,19 +137,6 @@ export class MeshRoutingService {
       takeUntil(this.destroy$)
     ).subscribe(() => {
       this.maintainRoutes();
-    });
-  }
-
-  private setupEmergencyRouting(): void {
-    // Listen for emergency mode changes
-    this.meshService.isEmergencyMode.subscribe(isEmergency => {
-      this._isEmergencyRouting.set(isEmergency);
-      
-      if (isEmergency) {
-        this.optimizeForEmergencyRouting();
-      } else {
-        this.restoreNormalRouting();
-      }
     });
   }
 
