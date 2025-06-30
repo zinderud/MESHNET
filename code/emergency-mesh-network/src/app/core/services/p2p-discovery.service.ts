@@ -210,12 +210,16 @@ export class P2PDiscoveryService {
       // Emit completion event
       this.discoveryCompleted$.next(discoveredCount);
 
-      this.analyticsService.trackEvent('p2p', 'discovery_completed', undefined, undefined, discoveredCount);
+      this.analyticsService.trackEvent('system_event', 'p2p', 'discovery_completed', undefined, discoveredCount);
 
       return discoveredCount;
     } catch (error) {
       console.error('Discovery failed:', error);
-      this.discoveryError$.next(error.message);
+      if (error instanceof Error) {
+        this.discoveryError$.next(error.message);
+      } else {
+        this.discoveryError$.next('Unknown error');
+      }
       this.analyticsService.trackError('p2p', 'Discovery failed', { error });
       return 0;
     } finally {
@@ -244,7 +248,7 @@ export class P2PDiscoveryService {
         // Update peer last seen
         this.updatePeerLastSeen(peerId);
         
-        this.analyticsService.trackEvent('p2p', 'peer_connected', peer.type);
+        this.analyticsService.trackEvent('system_event', 'p2p', 'peer_connected', peer.type);
       }
       
       return connected;
@@ -451,8 +455,8 @@ export class P2PDiscoveryService {
       // Update existing peer
       const updatedPeer = {
         ...existingPeer,
-        lastSeen: Date.now(),
-        ...peer
+        ...peer,
+        lastSeen: Date.now()
       };
       
       const peers = new Map(this._discoveredPeers());

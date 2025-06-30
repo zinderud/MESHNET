@@ -139,7 +139,7 @@ export class BlockchainService {
   private setupNetworkListeners(): void {
     // Listen for blockchain messages from WebRTC
     this.webrtcService.onDataReceived$.pipe(
-      filter(data => data.type === 'blockchain')
+      filter(data => data.type === 'mesh_routing')
     ).subscribe(data => {
       this.handleBlockchainMessage(data.payload);
     });
@@ -501,7 +501,7 @@ export class BlockchainService {
       // Emit event
       this.blockAdded$.next(newBlock);
       
-      this.analyticsService.trackEvent('blockchain', 'block_created', undefined, undefined, newBlock.transactions.length);
+      this.analyticsService.trackEvent('system_event', 'blockchain', 'block_created', undefined, newBlock.transactions.length);
     } catch (error) {
       console.error('Failed to process pending transactions:', error);
       this.consensusError$.next(error.message);
@@ -633,7 +633,7 @@ export class BlockchainService {
         const syncedBlocks = longestChain.length - this._blockchainState().chain.length;
         this.blockchainSynced$.next(syncedBlocks);
         
-        this.analyticsService.trackEvent('blockchain', 'synced', undefined, undefined, syncedBlocks);
+        this.analyticsService.trackEvent('system_event', 'blockchain', 'synced', undefined, syncedBlocks);
       }
       
       this._syncStatus.set('synced');
@@ -652,7 +652,7 @@ export class BlockchainService {
     for (const peer of webrtcPeers) {
       try {
         const response = await this.webrtcService.sendData(peer.id, {
-          type: 'blockchain',
+          type: 'mesh_routing',
           payload: {
             action: 'get_chain'
           },
@@ -739,7 +739,7 @@ export class BlockchainService {
     try {
       // Broadcast to WebRTC peers
       await this.webrtcService.broadcastData({
-        type: 'blockchain',
+        type: 'mesh_routing',
         payload: {
           action: 'new_transaction',
           transaction
@@ -770,7 +770,7 @@ export class BlockchainService {
     try {
       // Broadcast to WebRTC peers
       await this.webrtcService.broadcastData({
-        type: 'blockchain',
+        type: 'mesh_routing',
         payload: {
           action: 'new_block',
           block
@@ -803,7 +803,7 @@ export class BlockchainService {
       
       // Broadcast to WebRTC peers
       await this.webrtcService.broadcastData({
-        type: 'blockchain',
+        type: 'mesh_routing',
         payload: {
           action: 'validator_registration',
           nodeId
@@ -836,7 +836,7 @@ export class BlockchainService {
       
       // Broadcast to WebRTC peers
       await this.webrtcService.broadcastData({
-        type: 'blockchain',
+        type: 'mesh_routing',
         payload: {
           action: 'validator_deregistration',
           nodeId
@@ -1020,7 +1020,7 @@ export class BlockchainService {
       
       // Send via WebRTC
       await this.webrtcService.sendData(recipient, {
-        type: 'blockchain',
+        type: 'mesh_routing',
         payload: {
           action: 'chain_response',
           chain,

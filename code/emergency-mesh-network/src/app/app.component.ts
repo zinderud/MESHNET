@@ -6,6 +6,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatListModule } from '@angular/material/list';
 import { MatBadgeModule } from '@angular/material/badge';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { Subscription } from 'rxjs';
@@ -34,6 +35,7 @@ import { BlockchainService } from './core/services/blockchain.service';
     MatSidenavModule,
     MatListModule,
     MatBadgeModule,
+    MatTooltipModule,
     PWAInstallComponent
   ],
   template: `
@@ -123,8 +125,8 @@ import { BlockchainService } from './core/services/blockchain.service';
           </a>
           
           <a mat-list-item routerLink="/messages" (click)="drawer.close()">
-            <mat-icon [matBadge]="unreadMessageCount()" 
-                      [matBadgeHidden]="unreadMessageCount() === 0"
+            <mat-icon [matBadge]="unreadMessageCount().length" 
+                      [matBadgeHidden]="unreadMessageCount().length === 0"
                       matBadgeColor="warn">message</mat-icon>
             <span>Mesajlar</span>
           </a>
@@ -133,7 +135,9 @@ import { BlockchainService } from './core/services/blockchain.service';
             @if (isNetworkConnected()) {
               <mat-icon class="network-connected">network_check</mat-icon>
             } @else {
-              <mat-icon class="network-disconnected">signal_wifi_off</mat-icon>
+              <ng-container>
+                <mat-icon class="network-disconnected">signal_wifi_off</mat-icon>
+              </ng-container>
             }
             <span>Ağ Durumu</span>
             <span class="network-status">{{ connectedPeerCount() }} cihaz</span>

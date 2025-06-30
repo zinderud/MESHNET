@@ -1,6 +1,7 @@
 import { Injectable, signal, computed } from '@angular/core';
 import { BehaviorSubject, Observable, fromEvent, merge } from 'rxjs';
 import { map, distinctUntilChanged, debounceTime } from 'rxjs/operators';
+import { filter } from 'rxjs';
 
 export interface OfflineData {
   key: string;
@@ -312,11 +313,11 @@ export class OfflineService {
 
   // Event Observables
   get onOnline$(): Observable<boolean> {
-    return this.onlineStatus$.pipe(filter(status => status === true));
+    return this.onlineStatus$.pipe(filter((status: boolean) => status === true));
   }
 
   get onOffline$(): Observable<boolean> {
-    return this.onlineStatus$.pipe(filter(status => status === false));
+    return this.onlineStatus$.pipe(filter((status: boolean) => status === false));
   }
 
   get onSyncCompleted$(): Observable<{ success: number; failed: number }> {

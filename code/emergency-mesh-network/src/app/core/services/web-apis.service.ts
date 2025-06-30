@@ -505,7 +505,7 @@ export class WebApisService {
         // Fallback for browsers without Network Information API
         const networkInfo: NetworkInfo = {
           type: navigator.onLine ? 'unknown' : 'none',
-          effectiveType: 'unknown',
+          effectiveType: '4g', // fallback to a valid value
           downlink: 0,
           rtt: 0,
           saveData: false

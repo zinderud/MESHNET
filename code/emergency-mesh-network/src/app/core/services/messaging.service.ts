@@ -195,7 +195,7 @@ export class MessagingService {
   private setupMessageHandlers(): void {
     // Handle message status updates
     this.webrtcService.onDataReceived$.pipe(
-      filter(data => data.type === 'message_status')
+      filter(data => data.type === 'status')
     ).subscribe(data => {
       this.updateMessageStatus(data.payload.messageId, data.payload.status);
     });
@@ -321,9 +321,11 @@ export class MessagingService {
 
     const mergedTemplate = { ...template, ...customData };
     
+    const allowedTypes: Message['type'][] = ['text', 'emergency', 'location', 'status', 'system'];
+    const safeType = allowedTypes.includes(mergedTemplate.type as Message['type']) ? mergedTemplate.type : 'text';
     return this.sendMessage(
       mergedTemplate.content,
-      mergedTemplate.type,
+      safeType as Message['type'],
       mergedTemplate.priority,
       undefined,
       mergedTemplate.emergencyData as EmergencyData
@@ -414,7 +416,7 @@ export class MessagingService {
         try {
           const decryptedContent = await this.cryptoService.decryptMessage(
             message.content,
-            message.signature
+            message.signature ?? ''
           );
           message.content = decryptedContent;
         } catch (error) {
@@ -468,7 +470,8 @@ export class MessagingService {
       if (peer.id !== message.sender.id) {
         await this.webrtcService.sendData(peer.id, {
           type: 'message',
-          payload: message
+          payload: message,
+          priority: message.priority
         });
       }
     }
@@ -483,7 +486,8 @@ export class MessagingService {
         // Send to specific recipient
         await this.webrtcService.sendData(message.recipient.id, {
           type: 'message',
-          payload: message
+          payload: message,
+          priority: message.priority
         });
       } else {
         // Broadcast to all connected peers
@@ -491,7 +495,8 @@ export class MessagingService {
         for (const peer of connectedPeers) {
           await this.webrtcService.sendData(peer.id, {
             type: 'message',
-            payload: message
+            payload: message,
+            priority: message.priority
           });
         }
       }
@@ -511,11 +516,12 @@ export class MessagingService {
   private async sendDeliveryConfirmation(messageId: string, senderId: string): Promise<void> {
     try {
       await this.webrtcService.sendData(senderId, {
-        type: 'message_status',
+        type: 'status',
         payload: {
           messageId,
           status: 'delivered'
-        }
+        },
+        priority: 'normal'
       });
     } catch (error) {
       console.error('Failed to send delivery confirmation:', error);

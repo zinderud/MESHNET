@@ -178,12 +178,15 @@ export class MeshRoutingService {
       availableRoutes = availableRoutes.filter(route => route.emergencyPriority);
     }
     
-    if (options?.maxHops) {
-      availableRoutes = availableRoutes.filter(route => route.hopCount <= options.maxHops);
+    const maxHops = options?.maxHops ?? 10; // or another sensible default
+    const requireReliability = options?.requireReliability ?? 0.5; // or another sensible default
+
+    if (maxHops !== undefined) {
+      availableRoutes = availableRoutes.filter(route => route.hopCount <= maxHops);
     }
-    
-    if (options?.requireReliability) {
-      availableRoutes = availableRoutes.filter(route => route.reliability >= options.requireReliability);
+
+    if (requireReliability !== undefined) {
+      availableRoutes = availableRoutes.filter(route => route.reliability >= requireReliability);
     }
     
     if (availableRoutes.length === 0) {

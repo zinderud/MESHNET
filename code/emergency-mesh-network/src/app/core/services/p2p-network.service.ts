@@ -126,7 +126,7 @@ export class P2PNetworkService {
       this.setupMessageHandling();
       
       this._isNetworkActive.set(true);
-      this.analyticsService.trackEvent('p2p', 'network_initialized', 'success');
+      this.analyticsService.trackEvent('system_event', 'p2p', 'network_initialized', 'success');
       
       console.log('P2P Network initialized successfully');
     } catch (error) {
@@ -247,7 +247,7 @@ export class P2PNetworkService {
       // Emit disconnection event
       this.peerDisconnected$.next(peer);
       
-      this.analyticsService.trackEvent('p2p', 'peer_disconnected', peerId);
+      this.analyticsService.trackEvent('system_event', 'p2p', 'peer_disconnected', peerId);
     }
   }
 

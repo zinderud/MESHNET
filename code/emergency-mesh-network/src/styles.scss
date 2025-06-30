@@ -1,25 +1,22 @@
-/* Angular Material Theme */
 @use '@angular/material' as mat;
 
-@include mat.core();
+// Define custom emergency theme colors using new API
+$emergency-primary: mat.m2-define-palette(mat.$m2-red-palette, 600);
+$emergency-accent: mat.m2-define-palette(mat.$m2-orange-palette, 500);
+$emergency-warn: mat.m2-define-palette(mat.$m2-deep-orange-palette, 700);
 
-// Define custom emergency theme colors
-$emergency-primary: mat.define-palette(mat.$red-palette, 600);
-$emergency-accent: mat.define-palette(mat.$orange-palette, 500);
-$emergency-warn: mat.define-palette(mat.$deep-orange-palette, 700);
+$emergency-theme: mat.m2-define-light-theme(
+  (
+    color: (
+      primary: $emergency-primary,
+      accent: $emergency-accent,
+      warn: $emergency-warn,
+    ),
+    typography: mat.m2-define-typography-config(),
+    density: 0,
+  )
+);
 
-// Create the theme
-$emergency-theme: mat.define-light-theme((
-  color: (
-    primary: $emergency-primary,
-    accent: $emergency-accent,
-    warn: $emergency-warn,
-  ),
-  typography: mat.define-typography-config(),
-  density: 0,
-));
-
-// Apply the theme
 @include mat.all-component-themes($emergency-theme);
 
 /* Global Styles */

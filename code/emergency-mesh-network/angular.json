@@ -1,5 +1,5 @@
 {
-  "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
+  "$schema": "https://raw.githubusercontent.com/angular/angular-cli/main/packages/angular/cli/lib/config/schema.json",
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
@@ -56,8 +56,6 @@
             "namedChunks": false,
             "aot": true,
             "extractLicenses": true,
-            "vendorChunk": false,
-            "buildOptimizer": true,
             "budgets": [
               {
                 "type": "initial",
@@ -78,8 +76,6 @@
               "sourceMap": false,
               "namedChunks": false,
               "extractLicenses": true,
-              "vendorChunk": false,
-              "buildOptimizer": true,
               "budgets": [
                 {
                   "type": "initial",

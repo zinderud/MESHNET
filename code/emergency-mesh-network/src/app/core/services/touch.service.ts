@@ -354,7 +354,7 @@ export class TouchService {
     }
 
     // Swipe patterns for emergency
-    if (gesture.type === 'swipe' && gesture.direction === 'up' && gesture.velocity > 1.0) {
+    if (gesture.type === 'swipe' && gesture.direction === 'up' && (gesture.velocity ?? 0) > 1.0) {
       this.emergencyGesture$.next('emergency_swipe_up');
     }
   }

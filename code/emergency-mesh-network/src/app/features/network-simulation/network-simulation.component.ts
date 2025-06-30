@@ -84,34 +84,36 @@ import { AnalyticsService } from '../../core/services/analytics.service';
           </div>
           
           <div class="control-actions">
-            @if (!isSimulationRunning()) {
-              <button mat-raised-button color="primary" (click)="startSimulation()">
-                <mat-icon>play_arrow</mat-icon>
-                Start Simulation
-              </button>
-            } @else {
-              <button mat-raised-button color="warn" (click)="stopSimulation()">
-                <mat-icon>stop</mat-icon>
-                Stop Simulation
-              </button>
-              
-              @if (isSimulationPaused) {
-                <button mat-raised-button color="accent" (click)="resumeSimulation()">
+            <ng-container *ngIf="isSimulationRunning$ | async as isRunning">
+              <ng-container *ngIf="!isRunning; else runningBlock">
+                <button mat-raised-button color="primary" (click)="startSimulation()">
                   <mat-icon>play_arrow</mat-icon>
-                  Resume
+                  Start Simulation
                 </button>
-              } @else {
-                <button mat-raised-button color="accent" (click)="pauseSimulation()">
-                  <mat-icon>pause</mat-icon>
-                  Pause
+              </ng-container>
+              <ng-template #runningBlock>
+                <button mat-raised-button color="warn" (click)="stopSimulation()">
+                  <mat-icon>stop</mat-icon>
+                  Stop Simulation
                 </button>
-              }
-            }
-            
-            <button mat-button (click)="resetSimulation()" [disabled]="isSimulationRunning() && !isSimulationPaused">
-              <mat-icon>refresh</mat-icon>
-              Reset
-            </button>
+                <ng-container *ngIf="isSimulationPaused; else pauseBlock">
+                  <button mat-raised-button color="accent" (click)="resumeSimulation()">
+                    <mat-icon>play_arrow</mat-icon>
+                    Resume
+                  </button>
+                </ng-container>
+                <ng-template #pauseBlock>
+                  <button mat-raised-button color="accent" (click)="pauseSimulation()">
+                    <mat-icon>pause</mat-icon>
+                    Pause
+                  </button>
+                </ng-template>
+              </ng-template>
+              <button mat-button (click)="resetSimulation()" [disabled]="isRunning && !isSimulationPaused">
+                <mat-icon>refresh</mat-icon>
+                Reset
+              </button>
+            </ng-container>
           </div>
         </mat-card-content>
       </mat-card>
@@ -120,24 +122,25 @@ import { AnalyticsService } from '../../core/services/analytics.service';
       <mat-card class="visualization-card">
         <mat-card-header>
           <mat-card-title>Network Visualization</mat-card-title>
-          @if (isSimulationRunning()) {
-            <div class="simulation-time">
+          <ng-container *ngIf="isSimulationRunning$ | async as isRunning">
+            <div class="simulation-time" *ngIf="isRunning">
               <mat-icon>timer</mat-icon>
-              <span>Time: {{ formatTime(simulationTime()) }}</span>
+              <ng-container *ngIf="simulationTime$ | async as simTime">
+                <span>Time: {{ formatTime(simTime) }}</span>
+              </ng-container>
             </div>
-          }
+          </ng-container>
         </mat-card-header>
         <mat-card-content>
           <div class="canvas-container">
             <canvas #simulationCanvas></canvas>
-            
-            @if (!isSimulationRunning() && !simulationNodes().length) {
+            <ng-container *ngIf="(isSimulationRunning$ | async) === false && (simulationNodes$ | async)?.length === 0">
               <div class="no-data-overlay">
                 <mat-icon>hub</mat-icon>
                 <h3>No Simulation Data</h3>
                 <p>Select a scenario and start the simulation</p>
               </div>
-            }
+            </ng-container>
           </div>
         </mat-card-content>
       </mat-card>
@@ -148,103 +151,98 @@ import { AnalyticsService } from '../../core/services/analytics.service';
           <mat-card-title>Simulation Metrics</mat-card-title>
         </mat-card-header>
         <mat-card-content>
-          <div class="metrics-grid">
-            <div class="metric-item">
-              <div class="metric-header">
-                <mat-icon>check_circle</mat-icon>
-                <h3>Message Delivery Rate</h3>
+          <ng-container *ngIf="simulationMetrics$ | async as metrics">
+            <div class="metrics-grid">
+              <div class="metric-item">
+                <div class="metric-header">
+                  <mat-icon>check_circle</mat-icon>
+                  <h3>Message Delivery Rate</h3>
+                </div>
+                <div class="metric-value">{{ metrics.messageDeliveryRate.toFixed(1) }}%</div>
+                <mat-progress-bar mode="determinate" 
+                                  [value]="metrics.messageDeliveryRate"
+                                  [color]="getMetricColor(metrics.messageDeliveryRate, true)">
+                </mat-progress-bar>
               </div>
-              <div class="metric-value">{{ simulationMetrics().messageDeliveryRate.toFixed(1) }}%</div>
-              <mat-progress-bar mode="determinate" 
-                                [value]="simulationMetrics().messageDeliveryRate"
-                                [color]="getMetricColor(simulationMetrics().messageDeliveryRate, true)">
-              </mat-progress-bar>
-            </div>
-            
-            <div class="metric-item">
-              <div class="metric-header">
-                <mat-icon>speed</mat-icon>
-                <h3>Average Latency</h3>
+              <div class="metric-item">
+                <div class="metric-header">
+                  <mat-icon>speed</mat-icon>
+                  <h3>Average Latency</h3>
+                </div>
+                <div class="metric-value">{{ metrics.averageLatency.toFixed(1) }} ms</div>
+                <mat-progress-bar mode="determinate" 
+                                  [value]="100 - (metrics.averageLatency / 5)"
+                                  [color]="getMetricColor(100 - (metrics.averageLatency / 5), true)">
+                </mat-progress-bar>
               </div>
-              <div class="metric-value">{{ simulationMetrics().averageLatency.toFixed(1) }} ms</div>
-              <mat-progress-bar mode="determinate" 
-                                [value]="100 - (simulationMetrics().averageLatency / 5)"
-                                [color]="getMetricColor(100 - (simulationMetrics().averageLatency / 5), true)">
-              </mat-progress-bar>
-            </div>
-            
-            <div class="metric-item">
-              <div class="metric-header">
-                <mat-icon>network_check</mat-icon>
-                <h3>Network Reliability</h3>
+              <div class="metric-item">
+                <div class="metric-header">
+                  <mat-icon>network_check</mat-icon>
+                  <h3>Network Reliability</h3>
+                </div>
+                <div class="metric-value">{{ metrics.networkReliability.toFixed(1) }}%</div>
+                <mat-progress-bar mode="determinate" 
+                                  [value]="metrics.networkReliability"
+                                  [color]="getMetricColor(metrics.networkReliability, true)">
+                </mat-progress-bar>
               </div>
-              <div class="metric-value">{{ simulationMetrics().networkReliability.toFixed(1) }}%</div>
-              <mat-progress-bar mode="determinate" 
-                                [value]="simulationMetrics().networkReliability"
-                                [color]="getMetricColor(simulationMetrics().networkReliability, true)">
-              </mat-progress-bar>
-            </div>
-            
-            <div class="metric-item">
-              <div class="metric-header">
-                <mat-icon>battery_charging_full</mat-icon>
-                <h3>Battery Consumption</h3>
+              <div class="metric-item">
+                <div class="metric-header">
+                  <mat-icon>battery_charging_full</mat-icon>
+                  <h3>Battery Consumption</h3>
+                </div>
+                <div class="metric-value">{{ metrics.batteryConsumption.toFixed(2) }}%/min</div>
+                <mat-progress-bar mode="determinate" 
+                                  [value]="metrics.batteryConsumption * 10"
+                                  [color]="getMetricColor(100 - (metrics.batteryConsumption * 10), true)">
+                </mat-progress-bar>
               </div>
-              <div class="metric-value">{{ simulationMetrics().batteryConsumption.toFixed(2) }}%/min</div>
-              <mat-progress-bar mode="determinate" 
-                                [value]="simulationMetrics().batteryConsumption * 10"
-                                [color]="getMetricColor(100 - (simulationMetrics().batteryConsumption * 10), true)">
-              </mat-progress-bar>
-            </div>
-            
-            <div class="metric-item">
-              <div class="metric-header">
-                <mat-icon>route</mat-icon>
-                <h3>Routing Efficiency</h3>
+              <div class="metric-item">
+                <div class="metric-header">
+                  <mat-icon>route</mat-icon>
+                  <h3>Routing Efficiency</h3>
+                </div>
+                <div class="metric-value">{{ metrics.routingEfficiency.toFixed(1) }}%</div>
+                <mat-progress-bar mode="determinate" 
+                                  [value]="metrics.routingEfficiency"
+                                  [color]="getMetricColor(metrics.routingEfficiency, true)">
+                </mat-progress-bar>
               </div>
-              <div class="metric-value">{{ simulationMetrics().routingEfficiency.toFixed(1) }}%</div>
-              <mat-progress-bar mode="determinate" 
-                                [value]="simulationMetrics().routingEfficiency"
-                                [color]="getMetricColor(simulationMetrics().routingEfficiency, true)">
-              </mat-progress-bar>
-            </div>
-            
-            <div class="metric-item">
-              <div class="metric-header">
-                <mat-icon>warning</mat-icon>
-                <h3>Emergency Response</h3>
+              <div class="metric-item">
+                <div class="metric-header">
+                  <mat-icon>warning</mat-icon>
+                  <h3>Emergency Response</h3>
+                </div>
+                <div class="metric-value">{{ metrics.emergencyResponseTime.toFixed(1) }} ms</div>
+                <mat-progress-bar mode="determinate" 
+                                  [value]="100 - (metrics.emergencyResponseTime / 10)"
+                                  [color]="getMetricColor(100 - (metrics.emergencyResponseTime / 10), true)">
+                </mat-progress-bar>
               </div>
-              <div class="metric-value">{{ simulationMetrics().emergencyResponseTime.toFixed(1) }} ms</div>
-              <mat-progress-bar mode="determinate" 
-                                [value]="100 - (simulationMetrics().emergencyResponseTime / 10)"
-                                [color]="getMetricColor(100 - (simulationMetrics().emergencyResponseTime / 10), true)">
-              </mat-progress-bar>
-            </div>
-            
-            <div class="metric-item">
-              <div class="metric-header">
-                <mat-icon>wifi_tethering</mat-icon>
-                <h3>Network Coverage</h3>
+              <div class="metric-item">
+                <div class="metric-header">
+                  <mat-icon>wifi_tethering</mat-icon>
+                  <h3>Network Coverage</h3>
+                </div>
+                <div class="metric-value">{{ metrics.networkCoverage.toFixed(1) }}%</div>
+                <mat-progress-bar mode="determinate" 
+                                  [value]="metrics.networkCoverage"
+                                  [color]="getMetricColor(metrics.networkCoverage, true)">
+                </mat-progress-bar>
               </div>
-              <div class="metric-value">{{ simulationMetrics().networkCoverage.toFixed(1) }}%</div>
-              <mat-progress-bar mode="determinate" 
-                                [value]="simulationMetrics().networkCoverage"
-                                [color]="getMetricColor(simulationMetrics().networkCoverage, true)">
-              </mat-progress-bar>
-            </div>
-            
-            <div class="metric-item">
-              <div class="metric-header">
-                <mat-icon>error</mat-icon>
-                <h3>Node Failure Rate</h3>
+              <div class="metric-item">
+                <div class="metric-header">
+                  <mat-icon>error</mat-icon>
+                  <h3>Node Failure Rate</h3>
+                </div>
+                <div class="metric-value">{{ metrics.nodeFailureRate.toFixed(1) }}%/min</div>
+                <mat-progress-bar mode="determinate" 
+                                  [value]="metrics.nodeFailureRate"
+                                  [color]="getMetricColor(100 - metrics.nodeFailureRate, true)">
+                </mat-progress-bar>
               </div>
-              <div class="metric-value">{{ simulationMetrics().nodeFailureRate.toFixed(1) }}%/min</div>
-              <mat-progress-bar mode="determinate" 
-                                [value]="simulationMetrics().nodeFailureRate"
-                                [color]="getMetricColor(100 - simulationMetrics().nodeFailureRate, true)">
-              </mat-progress-bar>
             </div>
-          </div>
+          </ng-container>
         </mat-card-content>
       </mat-card>
       
@@ -254,40 +252,43 @@ import { AnalyticsService } from '../../core/services/analytics.service';
           <mat-card-title>Simulation Events</mat-card-title>
         </mat-card-header>
         <mat-card-content>
-          <div class="events-container">
-            @if (simulationEvents().length === 0) {
-              <div class="no-events">
-                <mat-icon>event_busy</mat-icon>
-                <p>No events recorded yet</p>
-              </div>
-            } @else {
-              <div class="events-list">
-                @for (event of simulationEvents(); track event.id) {
-                  <div class="event-item" [ngClass]="getSeverityClass(event.severity)">
-                    <div class="event-header">
-                      <mat-icon>{{ getEventIcon(event.type) }}</mat-icon>
-                      <div class="event-info">
-                        <div class="event-title">{{ getEventTitle(event) }}</div>
-                        <div class="event-time">{{ formatTime(event.timestamp) }}</div>
+          <ng-container *ngIf="simulationEvents$ | async as events">
+            <div class="events-container">
+              <ng-container *ngIf="events.length === 0; else eventsList">
+                <div class="no-events">
+                  <mat-icon>event_busy</mat-icon>
+                  <p>No events recorded yet</p>
+                </div>
+              </ng-container>
+              <ng-template #eventsList>
+                <div class="events-list">
+                  <ng-container *ngFor="let event of events; trackBy: trackByEventId">
+                    <div class="event-item" [ngClass]="getSeverityClass(event.severity)">
+                      <div class="event-header">
+                        <mat-icon>{{ getEventIcon(event.type) }}</mat-icon>
+                        <div class="event-info">
+                          <div class="event-title">{{ getEventTitle(event) }}</div>
+                          <div class="event-time">{{ formatTime(event.timestamp) }}</div>
+                        </div>
+                        <mat-chip [ngClass]="getSeverityClass(event.severity)">
+                          {{ getSeverityText(event.severity) }}
+                        </mat-chip>
                       </div>
-                      <mat-chip [ngClass]="getSeverityClass(event.severity)">
-                        {{ getSeverityText(event.severity) }}
-                      </mat-chip>
-                    </div>
-                    <div class="event-description">
-                      {{ event.description }}
-                    </div>
-                    @if (event.resolved) {
-                      <div class="event-resolution">
-                        <mat-icon>check_circle</mat-icon>
-                        <span>Resolved at {{ formatTime(event.resolvedAt!) }}</span>
+                      <div class="event-description">
+                        {{ event.description }}
                       </div>
-                    }
-                  </div>
-                }
-              </div>
-            }
-          </div>
+                      <ng-container *ngIf="event.resolved">
+                        <div class="event-resolution">
+                          <mat-icon>check_circle</mat-icon>
+                          <span>Resolved at {{ formatTime(event.resolvedAt!) }}</span>
+                        </div>
+                      </ng-container>
+                    </div>
+                  </ng-container>
+                </div>
+              </ng-template>
+            </div>
+          </ng-container>
         </mat-card-content>
       </mat-card>
     </div>
@@ -622,12 +623,12 @@ export class NetworkSimulationComponent implements OnInit, OnDestroy, AfterViewI
   isSimulationPaused = false;
 
   // Reactive state from service
-  isSimulationRunning = this.simulationService.isSimulationRunning$;
-  simulationTime = this.simulationService.simulationTime$;
-  simulationNodes = this.simulationService.simulationNodes$;
-  simulationMessages = this.simulationService.simulationMessages$;
-  simulationEvents = this.simulationService.simulationEvents$;
-  simulationMetrics = this.simulationService.simulationMetrics$;
+  isSimulationRunning$ = this.simulationService.isSimulationRunning$;
+  simulationTime$ = this.simulationService.simulationTime$;
+  simulationNodes$ = this.simulationService.simulationNodes$;
+  simulationMessages$ = this.simulationService.simulationMessages$;
+  simulationEvents$ = this.simulationService.simulationEvents$;
+  simulationMetrics$ = this.simulationService.simulationMetrics$;
 
   // Canvas properties
   private animationFrame: number | null = null;
@@ -707,41 +708,38 @@ export class NetworkSimulationComponent implements OnInit, OnDestroy, AfterViewI
   }
 
   private renderSimulation(): void {
-    const nodes = this.simulationService.simulationNodes$;
-    
-    if (!nodes) return;
-    
-    // Convert simulation nodes to renderer format
-    const renderNodes = nodes.map(node => ({
-      id: node.id,
-      x: node.x,
-      y: node.y,
-      type: node.type,
-      signalStrength: node.signalStrength,
-      batteryLevel: node.batteryLevel,
-      isOnline: node.isOnline,
-      emergencyStatus: node.emergencyStatus,
-      label: this.getNodeLabel(node)
-    }));
-    
-    // Create connections
-    const connections = this.createConnectionsFromNodes(nodes);
-    
-    // Render the network
-    this.rendererService.renderTopology(
-      renderNodes,
-      connections,
-      {
-        showLabels: true,
-        showSignalStrength: true,
-        showBatteryLevel: true,
-        showEmergencyStatus: true,
-        nodeSize: 15,
-        lineWidth: 2,
-        theme: 'light',
-        animateConnections: true
-      }
-    );
+    this.simulationNodes$.subscribe(nodes => {
+      if (!nodes) return;
+      // Convert simulation nodes to renderer format
+      const renderNodes = nodes.map(node => ({
+        id: node.id,
+        x: node.x,
+        y: node.y,
+        type: node.type,
+        signalStrength: node.signalStrength,
+        batteryLevel: node.batteryLevel,
+        isOnline: node.isOnline,
+        emergencyStatus: node.emergencyStatus,
+        label: this.getNodeLabel(node)
+      }));
+      // Create connections
+      const connections = this.createConnectionsFromNodes(nodes);
+      // Render the network
+      this.rendererService.renderTopology(
+        renderNodes,
+        connections,
+        {
+          showLabels: true,
+          showSignalStrength: true,
+          showBatteryLevel: true,
+          showEmergencyStatus: true,
+          nodeSize: 15,
+          lineWidth: 2,
+          theme: 'light',
+          animateConnections: true
+        }
+      );
+    });
   }
 
   private createConnectionsFromNodes(nodes: SimulationNode[]): Array<{
@@ -792,39 +790,38 @@ export class NetworkSimulationComponent implements OnInit, OnDestroy, AfterViewI
 
   startSimulation(): void {
     if (!this.selectedScenario) return;
-    
     this.simulationService.startSimulation(this.selectedScenario);
     this.isSimulationPaused = false;
-    this.analyticsService.trackUserAction('simulation', 'start', this.selectedScenario.id);
+    this.analyticsService.trackUserAction('simulation_start', undefined, { scenarioId: this.selectedScenario.id });
   }
 
   stopSimulation(): void {
     this.simulationService.stopSimulation();
     this.isSimulationPaused = false;
-    this.analyticsService.trackUserAction('simulation', 'stop');
+    this.analyticsService.trackUserAction('simulation_stop');
   }
 
   pauseSimulation(): void {
     this.simulationService.pauseSimulation();
     this.isSimulationPaused = true;
-    this.analyticsService.trackUserAction('simulation', 'pause');
+    this.analyticsService.trackUserAction('simulation_pause');
   }
 
   resumeSimulation(): void {
     this.simulationService.resumeSimulation();
     this.isSimulationPaused = false;
-    this.analyticsService.trackUserAction('simulation', 'resume');
+    this.analyticsService.trackUserAction('simulation_resume');
   }
 
   resetSimulation(): void {
     this.simulationService.resetSimulation();
     this.isSimulationPaused = false;
-    this.analyticsService.trackUserAction('simulation', 'reset');
+    this.analyticsService.trackUserAction('simulation_reset');
   }
 
   updateSimulationSpeed(): void {
     this.simulationService.setSimulationSpeed(this.simulationSpeed);
-    this.analyticsService.trackUserAction('simulation', 'speed_change', undefined, undefined, this.simulationSpeed);
+    this.analyticsService.trackUserAction('simulation_speed_change', undefined, { speed: this.simulationSpeed });
   }
 
   // Helper Methods
@@ -886,5 +883,9 @@ export class NetworkSimulationComponent implements OnInit, OnDestroy, AfterViewI
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
     return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+  }
+
+  trackByEventId(index: number, event: SimulationEvent) {
+    return event.id;
   }
 }

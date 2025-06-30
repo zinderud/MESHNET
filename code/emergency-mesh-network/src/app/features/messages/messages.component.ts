@@ -12,6 +12,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { FormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 import { MessagingService, Message, MessageTemplate } from '../../core/services/messaging.service';
 import { EmergencyProtocolService } from '../../core/services/emergency-protocol.service';
@@ -31,15 +32,16 @@ import { EmergencyProtocolService } from '../../core/services/emergency-protocol
     MatBadgeModule,
     MatMenuModule,
     MatDialogModule,
-    FormsModule
+    FormsModule,
+    MatTooltipModule
   ],
   template: `
     <div class="messages-container">
       <div class="messages-header">
         <h1>Mesajlar</h1>
         <div class="header-actions">
-          <button mat-icon-button [matBadge]="unreadCount()" matBadgeColor="warn" 
-                  [matBadgeHidden]="unreadCount() === 0">
+          <button mat-icon-button [matBadge]="unreadCount().length" matBadgeColor="warn" 
+                  [matBadgeHidden]="unreadCount().length === 0">
             <mat-icon>notifications</mat-icon>
           </button>
           <button mat-icon-button [matMenuTriggerFor]="templateMenu">
@@ -151,7 +153,7 @@ import { EmergencyProtocolService } from '../../core/services/emergency-protocol
                         <span class="emergency-severity">Önem: {{ getSeverityText(message.emergencyData.severity) }}</span>
                       </div>
                     </div>
-                    @if (message.emergencyData.assistanceNeeded?.length) {
+                    @if (message.emergencyData.assistanceNeeded.length) {
                       <div class="assistance-needed">
                         <span>Yardım türü: {{ message.emergencyData.assistanceNeeded.join(', ') }}</span>
                       </div>
@@ -253,11 +255,15 @@ import { EmergencyProtocolService } from '../../core/services/emergency-protocol
                     (click)="sendMessage()"
                     [disabled]="!newMessage().trim()">
               @if (isEmergencyCompose()) {
-                <mat-icon>warning</mat-icon>
-                ACİL MESAJ GÖNDER
+                <ng-container>
+                  <mat-icon>warning</mat-icon>
+                  ACİL MESAJ GÖNDER
+                </ng-container>
               } @else {
-                <mat-icon>send</mat-icon>
-                Gönder
+                <ng-container>
+                  <mat-icon>send</mat-icon>
+                  Gönder
+                </ng-container>
               }
             </button>
             
