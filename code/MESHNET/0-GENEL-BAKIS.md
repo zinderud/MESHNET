@@ -44,41 +44,105 @@ MESHNET/
 
 ## 🔄 Geliştirme Aşamaları
 
+### **Reticulum Protocol Entegrasyonu (Yeni Eklenen)**
+MESHNET projesi, **Reticulum Network Stack**'inin güçlü özelliklerini entegre edecektir:
+
+#### **Reticulum'dan Alınacak Kilit Özellikler:**
+1. **Kriptografik Güvenlik Sistemi:**
+   - X25519 ECDH key exchange
+   - Ed25519 digital signatures
+   - AES-256-CBC şifreleme
+   - Forward secrecy with ephemeral keys
+   - Identity-based addressing system
+
+2. **Gelişmiş Routing Algoritmaları:**
+   - Self-configuring multi-hop routing
+   - Coordination-less global addressing
+   - Unforgeable packet delivery confirmations
+   - Automatic path discovery and optimization
+
+3. **Interface Abstraction Sistemi:**
+   - Modular interface architecture
+   - Custom interface creation capability
+   - Multiple carrier protocol support
+   - SDR-ready interface framework
+
+4. **Reliable Data Transfer:**
+   - Sequencing, compression, transfer coordination
+   - Automatic checksumming
+   - Progressive transfer mechanism
+   - Efficient link establishment (3-packet setup)
+
+#### **MESHNET-Reticulum Hibrit Yaklaşımı:**
+```dart
+// Hibrit protocol stack örneği
+class MESHNETProtocolStack {
+  // Reticulum'dan alınan core protocols
+  final ReticulumIdentity identity;
+  final ReticulumTransport transport;
+  final ReticulumCrypto cryptography;
+  
+  // BitChat'ten alınan mesh protocols
+  final BluetoothMeshManager bluetoothMesh;
+  final WiFiDirectManager wifiDirect;
+  
+  // MESHNET'e özel RF protocols
+  final SDRManager sdrInterface;
+  final HamRadioProtocol hamProtocols;
+  final EmergencyBeacon emergencySystem;
+}
+```
+
 ### **Aşama 1: Temel Altyapı (Hafta 1-2)**
 - [ ] Geliştirme ortamı kurulumu
 - [ ] BitChat kodunu inceleme ve anlama
+- [ ] **Reticulum protocol stack analizi**
+- [ ] **Hibrit protocol architecture tasarımı**
 - [ ] Temel Flutter/React Native projesi oluşturma
 - [ ] Native platform entegrasyonu hazırlıkları
 
-### **Aşama 2: BLE Mesh Network (Hafta 3-4)**
-- [ ] Bluetooth LE peripheral/central implementasyonu
-- [ ] Device discovery ve pairing
-- [ ] Mesh network topology
-- [ ] Basic message routing
+### **Aşama 2: Kriptografi ve Güvenlik (Hafta 3-4)**
+- [ ] **Reticulum Identity system implementasyonu**
+- [ ] **X25519 ECDH key exchange** (Reticulum standardında)
+- [ ] **Ed25519 digital signatures** (Reticulum standardında)
+- [ ] **AES-256-CBC encryption** (Reticulum token formatı)
+- [ ] **Forward secrecy** ve ephemeral key management
+- [ ] **Identity-based addressing** system
+- [ ] Emergency crypto wipe functionality
 
-### **Aşama 3: WiFi Direct (Hafta 5-6)**
-- [ ] WiFi Direct clustering
-- [ ] High-bandwidth data transfer
-- [ ] Cross-cluster bridging
-- [ ] Load balancing
+### **Aşama 3: Mesh Network Core (Hafta 5-6)**
+- [ ] **Reticulum Transport layer** entegrasyonu
+- [ ] **Self-configuring routing** algoritması
+- [ ] **Coordination-less addressing** system
+- [ ] **Multi-hop packet forwarding**
+- [ ] **Automatic path discovery**
+- [ ] **Link quality assessment**
+- [ ] **Packet delivery confirmations**
 
-### **Aşama 4: Güvenlik ve Şifreleme (Hafta 7-8)**
-- [ ] X25519 key exchange
-- [ ] AES-256-GCM encryption
-- [ ] Digital signatures (Ed25519)
-- [ ] Message authentication
+### **Aşama 4: Interface Abstraction (Hafta 7-8)**
+- [ ] **Reticulum Interface** pattern implementation
+- [ ] **Modular interface architecture**
+- [ ] Bluetooth LE interface (BitChat style)
+- [ ] WiFi Direct interface (BitChat style)
+- [ ] **Serial interface** (Reticulum style)
+- [ ] **TCP/UDP interface** (Reticulum style)
+- [ ] **Custom interface creation** framework
 
-### **Aşama 5: Mesaj Yönlendirme (Hafta 9-10)**
-- [ ] Store & Forward mechanism
-- [ ] Priority-based routing
-- [ ] Network topology optimization
-- [ ] Congestion control
+### **Aşama 5: SDR ve RF Entegrasyonu (Hafta 9-10)**
+- [ ] **RTL-SDR interface** (Reticulum pattern)
+- [ ] **HackRF interface** (Reticulum pattern)
+- [ ] **RNode hardware support** (Reticulum ecosystem)
+- [ ] Ham radio protocol bridges
+- [ ] Emergency frequency monitoring
+- [ ] Cross-band repeater functionality
 
-### **Aşama 6: SDR Entegrasyonu (Hafta 11-12)**
-- [ ] RTL-SDR/HackRF driver integration
-- [ ] Custom RF protocol implementation
-- [ ] Long-range communication
-- [ ] Frequency management
+### **Aşama 6: Advanced Features (Hafta 11-12)**
+- [ ] **Reticulum Request/Response** mechanism
+- [ ] **Resource transfer** system (file transfer)
+- [ ] **Channel and Buffer** mechanisms
+- [ ] **Network segmentation** ve virtual networks
+- [ ] Distributed naming system
+- [ ] Emergency beacon protocols
 
 ### **Aşama 7: Ham Radio Protokolleri (Hafta 13-14)**
 - [ ] APRS integration

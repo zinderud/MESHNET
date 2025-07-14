@@ -1,25 +1,32 @@
-# 6. SDR (Software Defined Radio) Entegrasyonu
+# 6. SDR (Software Defined Radio) Entegrasyonu (Reticulum Interface Pattern)
 
 ## 📋 Bu Aşamada Yapılacaklar
 
-BitChat'ten farklı olarak, RTL-SDR ve HackRF gibi external radio frequency cihazlarını entegre ederek uzun mesafe iletişim sağlayacağız.
+**Reticulum Network Stack**'inin modular interface sistemini kullanarak RTL-SDR ve HackRF gibi external radio frequency cihazlarını entegre ederek uzun mesafe iletişim sağlayacağız.
 
 ### ✅ Tamamlanması Gerekenler:
-1. **RTL-SDR entegrasyonu** (receive-only, 25MHz-1.7GHz)
-2. **HackRF One entegrasyonu** (TX/RX, 1MHz-6GHz)
-3. **GNU Radio framework entegrasyonu**
-4. **Custom RF protocol implementation**
-5. **Emergency frequency monitoring**
+1. **Reticulum Interface pattern** ile SDR entegrasyonu
+2. **RTL-SDR interface** (receive-only, 25MHz-1.7GHz)
+3. **HackRF One interface** (TX/RX, 1MHz-6GHz)
+4. **RNode hardware support** (Reticulum ecosystem)
+5. **Custom SDR interface creation**
+6. **Emergency frequency monitoring**
 
-## 🔧 BitChat'ten Temel Fark
+## 🔧 Reticulum vs BitChat Interface Yaklaşımı
 
-BitChat sadece **Bluetooth LE** ve **WiFi Direct** kullanır:
+**BitChat** sadece **Bluetooth LE** ve **WiFi Direct** kullanır:
 - **Menzil:** 10-200 metre
 - **Güç:** Düşük (pil dostu)
 - **Bant genişliği:** 1-250 Mbps
 - **Kullanım:** Lokal mesh network
 
-MESHNET **SDR entegrasyonu** ile:
+**Reticulum** **modular interface** sistemi ile:
+- **Menzil:** Protocol-agnostic (BLE'den HF'ye)
+- **Güç:** Interface-dependent
+- **Bant genişliği:** 5 bps - 1+ Gbps
+- **Kullanım:** Universal networking stack
+
+**MESHNET** **Reticulum pattern + SDR** ile:
 - **Menzil:** 2-50+ km (RF ile)
 - **Güç:** Orta-yüksek (1-50W TX)
 - **Bant genişliği:** 0.3-100 kbps (RF)

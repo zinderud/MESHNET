@@ -1,53 +1,271 @@
-# 4. Şifreleme ve Güvenlik Implementasyonu
+# 4. Şifreleme ve Güvenlik Implementasyonu (Reticulum Enhanced)
 
 ## 📋 Bu Aşamada Yapılacaklar
 
-BitChat'teki güvenlik mimarisini temel alarak, X25519 key exchange, AES-256-GCM şifreleme ve Ed25519 digital signatures implementasyonu.
+**Reticulum Network Stack**'inin olgun kriptografi mimarisini temel alarak, BitChat'in temel özelliklerini koruyarak güvenlik sistemini implementasyonu.
 
 ### ✅ Tamamlanması Gerekenler:
-1. **X25519 ECDH key exchange** (BitChat'teki gibi)
-2. **AES-256-GCM encryption** (BitChat'teki gibi)
-3. **Ed25519 digital signatures** (BitChat'teki gibi)
-4. **Argon2id password hashing** (BitChat'teki gibi)
-5. **Forward secrecy** (BitChat'teki gibi)
+1. **Reticulum Identity System** (512-bit EC keysets)
+2. **X25519 ECDH key exchange** (Reticulum standardında)
+3. **AES-256-CBC encryption** (Reticulum token formatı)
+4. **Ed25519 digital signatures** (Reticulum standardında)
+5. **HKDF key derivation** (Reticulum standardında)
+6. **Forward secrecy** (ephemeral key rotation)
+7. **Identity-based addressing** (hash-based)
 
-## 🔐 BitChat Güvenlik Mimarisi
+## 🔐 Reticulum Güvenlik Mimarisi
 
-### **BitChat'teki Kriptografi Stack:**
-```swift
-// BitChat/CryptoManager.swift
-import CryptoKit
-
-class CryptoManager {
-    // X25519 key exchange
-    private let privateKey = Curve25519.KeyAgreement.PrivateKey()
-    public let publicKey: Curve25519.KeyAgreement.PublicKey
+### **Reticulum'un Kriptografi Stack'i:**
+```python
+# Reticulum Identity sistemi
+class Identity:
+    CURVE = "Curve25519"
+    KEYSIZE = 256*2  # 512-bit total (256-bit encryption + 256-bit signing)
     
-    // AES-256-GCM encryption
-    func encryptMessage(_ message: String, for publicKey: Curve25519.KeyAgreement.PublicKey) -> Data? {
-        let sharedSecret = try? privateKey.sharedSecretFromKeyAgreement(with: publicKey)
-        let symmetricKey = sharedSecret?.hkdfDerivedSymmetricKey(
-            using: SHA256.self,
-            salt: Data(),
-            sharedInfo: Data(),
-            outputByteCount: 32
-        )
+    def __init__(self, create_keys=True):
+        if create_keys:
+            # X25519 key for encryption
+            self.prv = X25519PrivateKey.generate()
+            self.pub = self.prv.public_key()
+            
+            # Ed25519 key for signing  
+            self.sig_prv = Ed25519PrivateKey.generate()
+            self.sig_pub = self.sig_prv.public_key()
+            
+            # Generate identity hash (global address)
+            self.hash = self.get_hash()
+    
+    def encrypt(self, plaintext, destination_identity):
+        # Reticulum token encryption
+        shared_secret = self.prv.exchange(destination_identity.pub)
+        derived_key = HKDF(shared_secret, length=32, info=b"encryption")
         
-        let sealedBox = try? AES.GCM.seal(message.data(using: .utf8)!, using: symmetricKey!)
-        return sealedBox?.combined
-    }
-}
+        # AES-256-CBC with random IV
+        cipher = AES(derived_key, CBC, os.urandom(16))
+        return cipher.encrypt(plaintext)
+    
+    def sign(self, data):
+        # Ed25519 signature
+        return self.sig_prv.sign(data)
 ```
 
-### **Flutter Kriptografi Implementasyonu**
+### **MESHNET Kriptografi Implementasyonu (Reticulum Based)**
 
-#### **1. Crypto Manager Service**
+#### **1. Identity Manager Service**
 ```dart
-// lib/services/crypto_manager.dart
+// lib/services/identity_manager.dart
 import 'dart:convert';
 import 'dart:typed_data';
 import 'package:cryptography/cryptography.dart';
 import 'package:flutter/foundation.dart';
+
+class MESHNETIdentity {
+  // Reticulum standardında 512-bit identity
+  static const int KEYSIZE = 256 * 2; // bits
+  static const int HASHLENGTH = 256; // bits
+  
+  // X25519 encryption keys
+  late final SimpleKeyPair _encryptionKeyPair;
+  late final SimplePublicKey _encryptionPublicKey;
+  
+  // Ed25519 signing keys  
+  late final SimpleKeyPair _signingKeyPair;
+  late final SimplePublicKey _signingPublicKey;
+  
+  // Identity hash (global address)
+  late final Uint8List _identityHash;
+  
+  // Algorithms - Reticulum standardında
+  final _x25519 = X25519();
+  final _ed25519 = Ed25519();
+  final _aes = AesCbc.with256bits(macAlgorithm: Hmac.sha256());
+  final _hkdf = Hkdf(hmac: Hmac(Sha256()));
+  
+  // Initialize identity - Reticulum pattern
+  Future<void> initialize({bool createKeys = true}) async {
+    if (createKeys) {
+      // Generate X25519 encryption key pair
+      _encryptionKeyPair = await _x25519.newKeyPair();
+      _encryptionPublicKey = await _encryptionKeyPair.extractPublicKey();
+      
+      // Generate Ed25519 signing key pair
+      _signingKeyPair = await _ed25519.newKeyPair();
+      _signingPublicKey = await _signingKeyPair.extractPublicKey();
+      
+      // Generate identity hash (Reticulum addressing)
+      _identityHash = await _generateIdentityHash();
+      
+      debugPrint('Identity Hash: ${_hashToHex(_identityHash)}');
+    }
+  }
+  
+  // Generate Reticulum-style identity hash
+  Future<Uint8List> _generateIdentityHash() async {
+    final encPubBytes = await _encryptionPublicKey.extractBytes();
+    final sigPubBytes = await _signingPublicKey.extractBytes();
+    
+    // Combine both public keys
+    final combined = Uint8List.fromList([...encPubBytes, ...sigPubBytes]);
+    
+    // SHA-256 hash for addressing
+    final hash = await Sha256().hash(combined);
+    return Uint8List.fromList(hash.bytes.take(HASHLENGTH ~/ 8).toList());
+  }
+  
+  // Get identity hash for addressing
+  Uint8List getHash() => _identityHash;
+  
+  // Get public keys for sharing
+  Future<Map<String, Uint8List>> getPublicKeys() async {
+    return {
+      'encryption': Uint8List.fromList(await _encryptionPublicKey.extractBytes()),
+      'signing': Uint8List.fromList(await _signingPublicKey.extractBytes()),
+    };
+  }
+  
+  // Encrypt data for destination identity (Reticulum token format)
+  Future<ReticulumToken?> encrypt(
+    Uint8List plaintext, 
+    Map<String, Uint8List> destinationPublicKeys
+  ) async {
+    try {
+      // Recreate destination's encryption public key
+      final destEncKey = SimplePublicKey(
+        destinationPublicKeys['encryption']!,
+        type: KeyPairType.x25519,
+      );
+      
+      // ECDH key exchange
+      final sharedSecret = await _x25519.sharedSecretKey(
+        keyPair: _encryptionKeyPair,
+        remotePublicKey: destEncKey,
+      );
+      
+      // HKDF key derivation (Reticulum standard)
+      final derivedKey = await _hkdf.deriveKey(
+        secretKey: sharedSecret,
+        info: utf8.encode('encryption'),
+        outputLength: 32, // 256-bit
+      );
+      
+      // Generate random IV
+      final iv = Uint8List.fromList(List.generate(16, (_) => 
+          DateTime.now().millisecondsSinceEpoch % 256));
+      
+      // AES-256-CBC encryption (Reticulum format)
+      final secretBox = await _aes.encrypt(
+        plaintext,
+        secretKey: derivedKey,
+        nonce: iv,
+      );
+      
+      return ReticulumToken(
+        ciphertext: Uint8List.fromList(secretBox.cipherText),
+        iv: iv,
+        mac: Uint8List.fromList(secretBox.mac.bytes),
+        timestamp: DateTime.now(),
+      );
+      
+    } catch (e) {
+      debugPrint('Encryption error: $e');
+      return null;
+    }
+  }
+  
+  // Decrypt Reticulum token
+  Future<Uint8List?> decrypt(
+    ReticulumToken token,
+    Map<String, Uint8List> senderPublicKeys,
+  ) async {
+    try {
+      // Recreate sender's encryption public key
+      final senderEncKey = SimplePublicKey(
+        senderPublicKeys['encryption']!,
+        type: KeyPairType.x25519,
+      );
+      
+      // ECDH key exchange
+      final sharedSecret = await _x25519.sharedSecretKey(
+        keyPair: _encryptionKeyPair,
+        remotePublicKey: senderEncKey,
+      );
+      
+      // HKDF key derivation
+      final derivedKey = await _hkdf.deriveKey(
+        secretKey: sharedSecret,
+        info: utf8.encode('encryption'),
+        outputLength: 32,
+      );
+      
+      // Create SecretBox for decryption
+      final secretBox = SecretBox(
+        token.ciphertext,
+        nonce: token.iv,
+        mac: Mac(token.mac),
+      );
+      
+      // AES-256-CBC decryption
+      final plaintext = await _aes.decrypt(
+        secretBox,
+        secretKey: derivedKey,
+      );
+      
+      return Uint8List.fromList(plaintext);
+      
+    } catch (e) {
+      debugPrint('Decryption error: $e');
+      return null;
+    }
+  }
+  
+  // Sign data with Ed25519 (Reticulum standard)
+  Future<ReticulumSignature?> sign(Uint8List data) async {
+    try {
+      final signature = await _ed25519.sign(
+        data,
+        keyPair: _signingKeyPair,
+      );
+      
+      return ReticulumSignature(
+        signature: Uint8List.fromList(signature.bytes),
+        publicKey: Uint8List.fromList(await _signingPublicKey.extractBytes()),
+        timestamp: DateTime.now(),
+      );
+      
+    } catch (e) {
+      debugPrint('Signing error: $e');
+      return null;
+    }
+  }
+  
+  // Verify Ed25519 signature
+  Future<bool> verify(
+    Uint8List data,
+    ReticulumSignature signature,
+  ) async {
+    try {
+      final senderSigningKey = SimplePublicKey(
+        signature.publicKey,
+        type: KeyPairType.ed25519,
+      );
+      
+      final sig = Signature(
+        signature.signature,
+        publicKey: senderSigningKey,
+      );
+      
+      return await _ed25519.verify(data, signature: sig);
+      
+    } catch (e) {
+      debugPrint('Verification error: $e');
+      return false;
+    }
+  }
+  
+  String _hashToHex(Uint8List hash) {
+    return hash.map((b) => b.toRadixString(16).padLeft(2, '0')).join('');
+  }
+}
 
 class CryptoManager {
   // BitChat'teki gibi X25519 key pair
@@ -288,436 +506,236 @@ class CryptoManager {
 }
 ```
 
-#### **2. Encrypted Message Models**
+#### **2. Reticulum Token Models**
 ```dart
-// lib/models/encrypted_message.dart
+// lib/models/reticulum_token.dart
 import 'dart:typed_data';
 import 'dart:convert';
 
-class EncryptedMessage {
+class ReticulumToken {
   final Uint8List ciphertext;
-  final Uint8List nonce;
+  final Uint8List iv;
   final Uint8List mac;
   final DateTime timestamp;
-  final String senderId;
-  final String recipientId;
   
-  EncryptedMessage({
+  // Reticulum token overhead constants
+  static const int TOKEN_OVERHEAD = 48; // bytes
+  static const int IV_SIZE = 16; // bytes
+  static const int MAC_SIZE = 32; // bytes
+  
+  ReticulumToken({
     required this.ciphertext,
-    required this.nonce,
+    required this.iv,
     required this.mac,
     required this.timestamp,
-    required this.senderId,
-    required this.recipientId,
   });
   
-  // Serialize for transmission
+  // Serialize for transmission (Reticulum format)
   Map<String, dynamic> toJson() => {
-    'ciphertext': base64Encode(ciphertext),
-    'nonce': base64Encode(nonce),
-    'mac': base64Encode(mac),
-    'timestamp': timestamp.toIso8601String(),
-    'senderId': senderId,
-    'recipientId': recipientId,
+    'c': base64Encode(ciphertext), // ciphertext
+    'i': base64Encode(iv),         // initialization vector
+    'm': base64Encode(mac),        // message authentication code
+    't': timestamp.millisecondsSinceEpoch, // timestamp
   };
   
-  factory EncryptedMessage.fromJson(Map<String, dynamic> json) {
-    return EncryptedMessage(
-      ciphertext: base64Decode(json['ciphertext']),
-      nonce: base64Decode(json['nonce']),
-      mac: base64Decode(json['mac']),
-      timestamp: DateTime.parse(json['timestamp']),
-      senderId: json['senderId'],
-      recipientId: json['recipientId'],
+  factory ReticulumToken.fromJson(Map<String, dynamic> json) {
+    return ReticulumToken(
+      ciphertext: base64Decode(json['c']),
+      iv: base64Decode(json['i']),
+      mac: base64Decode(json['m']),
+      timestamp: DateTime.fromMillisecondsSinceEpoch(json['t']),
     );
+  }
+  
+  // Get total token size
+  int get totalSize => ciphertext.length + TOKEN_OVERHEAD;
+  
+  // Validate token format
+  bool get isValid {
+    return iv.length == IV_SIZE && 
+           mac.length == MAC_SIZE && 
+           ciphertext.isNotEmpty;
   }
 }
 
-class MessageSignature {
+class ReticulumSignature {
   final Uint8List signature;
   final Uint8List publicKey;
   final DateTime timestamp;
   
-  MessageSignature({
+  ReticulumSignature({
     required this.signature,
     required this.publicKey,
     required this.timestamp,
   });
   
   Map<String, dynamic> toJson() => {
-    'signature': base64Encode(signature),
-    'publicKey': base64Encode(publicKey),
-    'timestamp': timestamp.toIso8601String(),
+    's': base64Encode(signature),
+    'p': base64Encode(publicKey),
+    't': timestamp.toIso8601String(),
   };
   
-  factory MessageSignature.fromJson(Map<String, dynamic> json) {
-    return MessageSignature(
-      signature: base64Decode(json['signature']),
-      publicKey: base64Decode(json['publicKey']),
-      timestamp: DateTime.parse(json['timestamp']),
+  factory ReticulumSignature.fromJson(Map<String, dynamic> json) {
+    return ReticulumSignature(
+      signature: base64Decode(json['s']),
+      publicKey: base64Decode(json['p']),
+      timestamp: DateTime.parse(json['t']),
     );
   }
 }
 ```
 
-#### **3. Secure Channel Manager**
+#### **3. Reticulum Destination System**
 ```dart
-// lib/services/secure_channel_manager.dart
-import 'package:flutter/foundation.dart';
-import '../models/channel.dart';
+// lib/services/destination_manager.dart
 import '../models/message.dart';
-import 'crypto_manager.dart';
+import 'identity_manager.dart';
 
-class SecureChannelManager extends ChangeNotifier {
-  final CryptoManager _cryptoManager;
+class ReticulumDestination {
+  final MESHNETIdentity identity;
+  final String appName;
+  final String aspectOne;
+  final String aspectTwo;
+  final DestinationType type;
+  final DestinationDirection direction;
   
-  // Channel storage - BitChat'teki gibi
-  final Map<String, Channel> _channels = {};
-  final Map<String, String> _channelPasswords = {};
+  // Reticulum destination hash (truncated)
+  late final Uint8List destinationHash;
   
-  SecureChannelManager(this._cryptoManager);
-  
-  // Create encrypted channel - BitChat'teki gibi
-  Future<Channel?> createChannel(String name, String? password) async {
-    try {
-      final channelId = _generateChannelId(name);
-      
-      String? hashedPassword;
-      if (password != null) {
-        final salt = _cryptoManager.generateSalt();
-        hashedPassword = await _cryptoManager.hashPassword(password, salt);
-        _channelPasswords[channelId] = hashedPassword;
-      }
-      
-      final channel = Channel(
-        id: channelId,
-        name: name,
-        isPrivate: password != null,
-        createdAt: DateTime.now(),
-        ownerId: 'self',
-        members: ['self'],
-      );
-      
-      _channels[channelId] = channel;
-      notifyListeners();
-      
-      return channel;
-      
-    } catch (e) {
-      debugPrint('Channel creation error: $e');
-      return null;
-    }
+  ReticulumDestination({
+    required this.identity,
+    required this.appName,
+    required this.aspectOne,
+    required this.aspectTwo,
+    required this.type,
+    required this.direction,
+  }) {
+    destinationHash = _generateDestinationHash();
   }
   
-  // Join channel with password - BitChat'teki gibi
-  Future<bool> joinChannel(String channelId, String? password) async {
-    try {
-      final channel = _channels[channelId];
-      if (channel == null) {
-        debugPrint('Channel not found: $channelId');
-        return false;
-      }
-      
-      // Check password if channel is private
-      if (channel.isPrivate && password != null) {
-        final storedPassword = _channelPasswords[channelId];
-        if (storedPassword == null) {
-          debugPrint('No password stored for channel: $channelId');
-          return false;
-        }
-        
-        // Generate salt and hash provided password
-        final salt = _cryptoManager.generateSalt();
-        final hashedPassword = await _cryptoManager.hashPassword(password, salt);
-        
-        // Note: In real implementation, you'd need to store salt with password
-        // This is simplified for demo
-        if (hashedPassword != storedPassword) {
-          debugPrint('Invalid password for channel: $channelId');
-          return false;
-        }
-      }
-      
-      // Add user to channel
-      if (!channel.members.contains('self')) {
-        channel.members.add('self');
-        notifyListeners();
-      }
-      
-      return true;
-      
-    } catch (e) {
-      debugPrint('Channel join error: $e');
-      return false;
-    }
+  Uint8List _generateDestinationHash() {
+    // Reticulum destination hashing
+    final identityHash = identity.getHash();
+    final nameData = utf8.encode('$appName.$aspectOne.$aspectTwo');
+    
+    // Combine identity hash with name data
+    final combined = Uint8List.fromList([...identityHash, ...nameData]);
+    
+    // SHA-256 and truncate to 80 bits (10 bytes) for destination hash
+    final hash = Sha256().hash(combined);
+    return Uint8List.fromList(hash.bytes.take(10).toList());
   }
   
-  // Send encrypted message to channel - BitChat'teki gibi
-  Future<bool> sendChannelMessage(
-    String channelId, 
-    String content,
-    String senderId,
-  ) async {
-    try {
-      final channel = _channels[channelId];
-      if (channel == null) {
-        debugPrint('Channel not found: $channelId');
-        return false;
-      }
-      
-      // Create message
-      final message = Message(
-        id: _generateMessageId(),
-        senderId: senderId,
-        content: content,
-        timestamp: DateTime.now(),
-        channelId: channelId,
-        type: MessageType.text,
-      );
-      
-      // If channel is private, encrypt message
-      if (channel.isPrivate) {
-        // For channel encryption, we'd use a shared channel key
-        // This is simplified - in real implementation, you'd derive
-        // a channel key from the password
-        final encryptedContent = await _encryptChannelMessage(
-          content, 
-          channelId,
-        );
-        
-        if (encryptedContent != null) {
-          final encryptedMessage = message.copyWith(
-            content: encryptedContent,
-            metadata: {'encrypted': true},
-          );
-          
-          // Store encrypted message
-          channel.messages.add(encryptedMessage);
-        }
-      } else {
-        // Public channel - no encryption
-        channel.messages.add(message);
-      }
-      
-      notifyListeners();
-      return true;
-      
-    } catch (e) {
-      debugPrint('Send channel message error: $e');
-      return false;
-    }
+  // Create announce packet (Reticulum format)
+  Future<AnnouncePacket> createAnnounce() async {
+    final publicKeys = await identity.getPublicKeys();
+    
+    return AnnouncePacket(
+      destinationHash: destinationHash,
+      identityHash: identity.getHash(),
+      publicKeys: publicKeys,
+      timestamp: DateTime.now(),
+    );
   }
   
-  Future<String?> _encryptChannelMessage(String content, String channelId) async {
-    try {
-      // In real implementation, derive channel key from password
-      // For demo, we'll use a simple approach
-      final password = _channelPasswords[channelId];
-      if (password == null) return content;
-      
-      // This is simplified - real implementation would be more secure
-      final salt = _cryptoManager.generateSalt();
-      final hashedPassword = await _cryptoManager.hashPassword(password, salt);
-      
-      return base64Encode(utf8.encode(content + hashedPassword));
-      
-    } catch (e) {
-      debugPrint('Channel message encryption error: $e');
-      return null;
-    }
+  // Encrypt message for this destination
+  Future<ReticulumToken?> encryptMessage(Message message) async {
+    final messageData = utf8.encode(jsonEncode(message.toJson()));
+    final publicKeys = await identity.getPublicKeys();
+    
+    return await identity.encrypt(
+      Uint8List.fromList(messageData),
+      publicKeys,
+    );
   }
+}
+
+enum DestinationType { single, group, plain }
+enum DestinationDirection { incoming, outgoing }
+
+class AnnouncePacket {
+  final Uint8List destinationHash;
+  final Uint8List identityHash;
+  final Map<String, Uint8List> publicKeys;
+  final DateTime timestamp;
   
-  // Emergency wipe channels - BitChat'teki gibi
-  void emergencyWipeChannels() {
-    _channels.clear();
-    _channelPasswords.clear();
-    notifyListeners();
-  }
-  
-  String _generateChannelId(String name) {
-    return 'ch_${name.hashCode}_${DateTime.now().millisecondsSinceEpoch}';
-  }
-  
-  String _generateMessageId() {
-    return 'msg_${DateTime.now().millisecondsSinceEpoch}_${Random().nextInt(1000)}';
-  }
-  
-  // Getters
-  List<Channel> get channels => _channels.values.toList();
-  Channel? getChannel(String channelId) => _channels[channelId];
+  AnnouncePacket({
+    required this.destinationHash,
+    required this.identityHash,
+    required this.publicKeys,
+    required this.timestamp,
+  });
 }
 ```
 
-#### **4. Security UI Components**
+#### **4. Forward Secrecy Implementation**
 ```dart
-// lib/widgets/security_status_widget.dart
-import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../services/crypto_manager.dart';
-
-class SecurityStatusWidget extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Consumer<CryptoManager>(
-      builder: (context, cryptoManager, child) {
-        return Container(
-          padding: EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: Colors.green.shade900,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.security,
-                color: Colors.white,
-                size: 16,
-              ),
-              SizedBox(width: 4),
-              Text(
-                'E2E Encrypted',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-}
-
-// lib/widgets/emergency_wipe_widget.dart
-class EmergencyWipeWidget extends StatelessWidget {
-  final VoidCallback onWipe;
+// lib/services/forward_secrecy_manager.dart
+class ForwardSecrecyManager {
+  final MESHNETIdentity _identity;
+  final Map<String, EphemeralSession> _sessions = {};
   
-  const EmergencyWipeWidget({Key? key, required this.onWipe}) : super(key: key);
+  // Reticulum ratchet constants
+  static const Duration RATCHET_EXPIRY = Duration(days: 30);
+  static const int MAX_MISSED_RATCHETS = 8;
   
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => _showWipeDialog(context),
-      child: Container(
-        padding: EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.red.shade900,
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Row(
-          children: [
-            Icon(Icons.delete_forever, color: Colors.white),
-            SizedBox(width: 8),
-            Text(
-              'Emergency Wipe',
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
-      ),
+  ForwardSecrecyManager(this._identity);
+  
+  // Create ephemeral session (Reticulum ratchet)
+  Future<EphemeralSession> createSession(String peerId) async {
+    final sessionKey = await _x25519.newKeyPair();
+    final session = EphemeralSession(
+      peerId: peerId,
+      sessionKey: sessionKey,
+      created: DateTime.now(),
+      ratchetCount: 0,
     );
+    
+    _sessions[peerId] = session;
+    return session;
   }
   
-  void _showWipeDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Emergency Wipe'),
-        content: Text(
-          'This will permanently delete all messages, keys, and data. This action cannot be undone.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              onWipe();
-            },
-            child: Text('Wipe Data', style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
-    );
+  // Rotate session keys (forward secrecy)
+  Future<void> rotateSession(String peerId) async {
+    final session = _sessions[peerId];
+    if (session != null) {
+      // Generate new ephemeral key
+      final newSessionKey = await _x25519.newKeyPair();
+      
+      session.sessionKey = newSessionKey;
+      session.ratchetCount++;
+      session.lastRatchet = DateTime.now();
+      
+      debugPrint('Rotated ratchet for $peerId (count: ${session.ratchetCount})');
+    }
   }
-}
-```
-
-## 🔐 Security Best Practices
-
-### **1. Key Management**
-```dart
-// lib/services/key_manager.dart
-class KeyManager {
-  static const String KEY_ROTATION_INTERVAL = 'key_rotation_interval';
-  static const int DEFAULT_ROTATION_HOURS = 24;
   
-  // Automatic key rotation - BitChat'teki gibi
-  void scheduleKeyRotation(CryptoManager cryptoManager) {
-    Timer.periodic(Duration(hours: DEFAULT_ROTATION_HOURS), (timer) {
-      cryptoManager.rotateKeys();
+  // Clean up expired sessions
+  void cleanupExpiredSessions() {
+    final now = DateTime.now();
+    _sessions.removeWhere((peerId, session) {
+      final expired = now.difference(session.created) > RATCHET_EXPIRY;
+      if (expired) {
+        debugPrint('Cleaned up expired session for $peerId');
+      }
+      return expired;
     });
   }
+}
+
+class EphemeralSession {
+  final String peerId;
+  SimpleKeyPair sessionKey;
+  final DateTime created;
+  int ratchetCount;
+  DateTime? lastRatchet;
   
-  // Secure key storage
-  Future<void> secureStoreKey(String key, Uint8List keyData) async {
-    // Use secure storage for key persistence
-    // Implementation depends on platform
-  }
+  EphemeralSession({
+    required this.peerId,
+    required this.sessionKey,
+    required this.created,
+    required this.ratchetCount,
+    this.lastRatchet,
+  });
 }
 ```
-
-### **2. Security Validation**
-```dart
-// lib/services/security_validator.dart
-class SecurityValidator {
-  static bool validateEncryptedMessage(EncryptedMessage message) {
-    // Validate message structure
-    if (message.ciphertext.isEmpty) return false;
-    if (message.nonce.length != 12) return false; // GCM nonce
-    if (message.mac.isEmpty) return false;
-    
-    // Validate timestamp (prevent replay attacks)
-    final now = DateTime.now();
-    final messageAge = now.difference(message.timestamp);
-    if (messageAge.inHours > 24) return false;
-    
-    return true;
-  }
-  
-  static bool validateSignature(MessageSignature signature) {
-    // Validate signature structure
-    if (signature.signature.isEmpty) return false;
-    if (signature.publicKey.length != 32) return false; // Ed25519 public key
-    
-    return true;
-  }
-}
-```
-
-## ✅ Bu Aşama Tamamlandığında
-
-- [ ] **X25519 ECDH key exchange çalışıyor**
-- [ ] **AES-256-GCM encryption/decryption**
-- [ ] **Ed25519 digital signatures**
-- [ ] **Argon2id password hashing**
-- [ ] **Forward secrecy key rotation**
-- [ ] **Emergency wipe functionality**
-- [ ] **Secure channel management**
-
-## 🔄 Sonraki Adım
-
-**5. Adım:** `5-MESAJ-YONLENDIRME.md` dosyasını inceleyin ve advanced message routing implementasyonuna başlayın.
-
----
-
-**Son Güncelleme:** 11 Temmuz 2025  
-**Durum:** Güvenlik ve Şifreleme Implementasyonu Hazır

@@ -1,103 +1,234 @@
-# 5. MESAJ YÖNLENDIRME VE MESH PROTOKOLLERI
+# 5. MESAJ YÖNLENDIRME VE MESH PROTOKOLLERI (Reticulum Enhanced)
 
 ## Genel Bakış
 
-Bu aşamada, çok protokollü ortamda akıllı mesaj yönlendirme ve mesh protokollerini implementasyonu ele alınacaktır. BitChat'in temel yönlendirme mantığı genişletilerek, multi-protocol ortamda daha etkili mesaj dağıtımı sağlanacaktır.
+Bu aşamada, **Reticulum Network Stack**'inin self-configuring routing algoritmasını temel alarak, BitChat'in mesh protokolleri ile hibrit bir yönlendirme sistemi implementasyonu ele alınacaktır.
 
-## 5.1 Mesaj Yönlendirme Mimarisi
+## 5.1 Reticulum-Based Routing Architecture
 
-### 5.1.1 Hibrit Yönlendirme Algoritması
+### 5.1.1 Self-Configuring Mesh Router (Reticulum Pattern)
 
 ```dart
-// lib/core/routing/hybrid_router.dart
-class HybridMeshRouter {
-  final Map<String, NetworkProtocol> _protocols = {};
-  final Map<String, RouteEntry> _routingTable = {};
-  final Map<String, double> _linkQuality = {};
+// lib/core/routing/reticulum_router.dart
+class ReticulumMeshRouter {
+  // Reticulum routing constants
+  static const int ANNOUNCE_TIMEOUT = 60; // seconds
+  static const int MAX_HOPS = 30;
+  static const int RECALL_SIZE = 8192; // packet recall buffer
   
-  class RouteEntry {
-    final String destination;
-    final String nextHop;
-    final ProtocolType protocolType;
-    final int hopCount;
-    final double linkQuality;
-    final DateTime lastUpdated;
+  final Map<Uint8List, DestinationEntry> _destinationTable = {};
+  final Map<Uint8List, PathEntry> _pathTable = {};
+  final Map<String, InterfaceState> _interfaces = {};
+  final Queue<PacketRecall> _recallBuffer = Queue();
+  
+  class DestinationEntry {
+    final Uint8List destinationHash; // 80-bit truncated hash
+    final Uint8List publicKey;
+    final List<PathEntry> availablePaths;
+    final DateTime lastAnnounce;
+    int hopCount;
+    double pathQuality;
     
-    RouteEntry({
-      required this.destination,
-      required this.nextHop,
-      required this.protocolType,
+    DestinationEntry({
+      required this.destinationHash,
+      required this.publicKey,
+      required this.availablePaths,
+      required this.lastAnnounce,
       required this.hopCount,
-      required this.linkQuality,
-      required this.lastUpdated,
+      required this.pathQuality,
     });
   }
   
-  // Dinamik protokol seçimi
-  Future<ProtocolType> selectBestProtocol(
-    String destination,
-    MessagePriority priority,
-    int messageSize,
-  ) async {
-    var availableRoutes = _routingTable.values
-        .where((route) => route.destination == destination)
-        .toList();
+  class PathEntry {
+    final String interfaceId;
+    final ProtocolType protocolType;
+    final Uint8List nextHop;
+    final int hopCount;
+    final double rssi;
+    final double snr;
+    final DateTime established;
+    final DateTime lastSeen;
     
-    if (availableRoutes.isEmpty) {
-      return await _discoverRoute(destination);
+    PathEntry({
+      required this.interfaceId,
+      required this.protocolType,
+      required this.nextHop,
+      required this.hopCount,
+      required this.rssi,
+      required this.snr,
+      required this.established,
+      required this.lastSeen,
+    });
+  }
+  
+  // Reticulum hash-based routing
+  Future<PathEntry?> findBestPath(Uint8List destinationHash) async {
+    final destination = _destinationTable[destinationHash];
+    if (destination == null) {
+      // No known destination, trigger announce
+      await _requestPath(destinationHash);
+      return null;
     }
     
-    // Mesaj prioritesi ve boyutuna göre protokol seçimi
-    switch (priority) {
-      case MessagePriority.emergency:
-        return _selectEmergencyProtocol(availableRoutes);
-      case MessagePriority.high:
-        return _selectHighPriorityProtocol(availableRoutes, messageSize);
-      case MessagePriority.normal:
-        return _selectOptimalProtocol(availableRoutes, messageSize);
+    // Select best path based on Reticulum metrics
+    return _selectOptimalPath(destination.availablePaths);
+  }
+  
+  PathEntry? _selectOptimalPath(List<PathEntry> paths) {
+    if (paths.isEmpty) return null;
+    
+    // Reticulum path selection algorithm
+    return paths.reduce((best, current) {
+      final bestScore = _calculatePathScore(best);
+      final currentScore = _calculatePathScore(current);
+      return currentScore > bestScore ? current : best;
+    });
+  }
+  
+  double _calculatePathScore(PathEntry path) {
+    // Reticulum path scoring: hop count, signal quality, protocol capability
+    double hopPenalty = 1.0 / (path.hopCount + 1);
+    double signalQuality = (path.rssi + 100) / 100; // Normalize RSSI
+    double protocolBonus = _getProtocolBonus(path.protocolType);
+    double agePenalty = _getAgePenalty(path.lastSeen);
+    
+    return hopPenalty * signalQuality * protocolBonus * agePenalty;
+  }
+  
+  double _getProtocolBonus(ProtocolType protocol) {
+    switch (protocol) {
+      case ProtocolType.sdr:
+        return 1.5; // Long range capability
+      case ProtocolType.hamRadio:
+        return 1.4; // Emergency reliability
+      case ProtocolType.wifiDirect:
+        return 1.2; // High bandwidth
+      case ProtocolType.bluetooth:
+        return 1.0; // Baseline
       default:
-        return _selectEconomicProtocol(availableRoutes);
+        return 0.8;
     }
   }
   
-  ProtocolType _selectEmergencyProtocol(List<RouteEntry> routes) {
-    // Acil durum: En güvenilir protokol
-    var longRangeRoutes = routes.where((r) => 
-        r.protocolType == ProtocolType.hamRadio || 
-        r.protocolType == ProtocolType.sdr).toList();
+  Future<void> _requestPath(Uint8List destinationHash) async {
+    // Send path request packet (Reticulum announce mechanism)
+    final pathRequest = PathRequestPacket(
+      destinationHash: destinationHash,
+      sourceHash: _localIdentity.getHash(),
+      maxHops: MAX_HOPS,
+      timestamp: DateTime.now(),
+    );
     
-    if (longRangeRoutes.isNotEmpty) {
-      return longRangeRoutes.first.protocolType;
-    }
-    
-    // Fallback: WiFi Direct daha güvenilir
-    return routes.any((r) => r.protocolType == ProtocolType.wifiDirect)
-        ? ProtocolType.wifiDirect
-        : ProtocolType.bluetooth;
-  }
-  
-  ProtocolType _selectOptimalProtocol(List<RouteEntry> routes, int messageSize) {
-    // Boyut ve bant genişliği optimizasyonu
-    if (messageSize > 1024 * 1024) { // 1MB üstü
-      return ProtocolType.wifiDirect;
-    } else if (messageSize > 64 * 1024) { // 64KB üstü
-      return routes.any((r) => r.protocolType == ProtocolType.wifiDirect)
-          ? ProtocolType.wifiDirect
-          : ProtocolType.bluetooth;
-    } else {
-      // Küçük mesajlar için en düşük güç tüketimi
-      return ProtocolType.bluetooth;
+    // Broadcast on all active interfaces
+    for (final interface in _interfaces.values) {
+      if (interface.isActive) {
+        await interface.broadcastPacket(pathRequest);
+      }
     }
   }
 }
 ```
 
-### 5.1.2 Adaptif Yönlendirme Tablosu
+### 5.1.2 Reticulum Announce System
 
 ```dart
-// lib/core/routing/adaptive_routing_table.dart
-class AdaptiveRoutingTable {
-  final Map<String, List<RouteEntry>> _multiPathRoutes = {};
+// lib/core/routing/announce_system.dart
+class ReticulumAnnounceSystem {
+  final ReticulumMeshRouter _router;
+  final Timer _announceTimer;
+  
+  static const Duration ANNOUNCE_INTERVAL = Duration(minutes: 2);
+  static const Duration ANNOUNCE_TIMEOUT = Duration(minutes: 30);
+  
+  ReticulumAnnounceSystem(this._router) : 
+    _announceTimer = Timer.periodic(ANNOUNCE_INTERVAL, _periodicAnnounce);
+  
+  // Reticulum destination announce
+  Future<void> announceDestination(ReticulumDestination destination) async {
+    final announcePacket = AnnouncePacket(
+      destinationHash: destination.destinationHash,
+      identityHash: destination.identity.getHash(),
+      publicKeys: await destination.identity.getPublicKeys(),
+      appName: destination.appName,
+      aspects: [destination.aspectOne, destination.aspectTwo],
+      timestamp: DateTime.now(),
+      hopCount: 0,
+    );
+    
+    // Sign announce with destination identity
+    final signature = await destination.identity.sign(
+      Uint8List.fromList(announcePacket.toBytes())
+    );
+    announcePacket.signature = signature;
+    
+    // Broadcast announce on all interfaces
+    await _broadcastAnnounce(announcePacket);
+    
+    debugPrint('Announced destination: ${_hashToHex(destination.destinationHash)}');
+  }
+  
+  Future<void> _broadcastAnnounce(AnnouncePacket packet) async {
+    for (final interface in _router._interfaces.values) {
+      if (interface.isActive && interface.canBroadcast) {
+        await interface.sendPacket(packet);
+      }
+    }
+  }
+  
+  // Handle received announce
+  Future<void> handleReceivedAnnounce(AnnouncePacket packet, String fromInterface) async {
+    // Verify announce signature
+    final isValid = await _verifyAnnounceSignature(packet);
+    if (!isValid) {
+      debugPrint('Invalid announce signature rejected');
+      return;
+    }
+    
+    // Check for loop prevention
+    if (_isLoopback(packet)) {
+      return;
+    }
+    
+    // Update destination table
+    await _updateDestinationTable(packet, fromInterface);
+    
+    // Rebroadcast if hop count allows
+    if (packet.hopCount < ReticulumMeshRouter.MAX_HOPS) {
+      await _rebroadcastAnnounce(packet, fromInterface);
+    }
+  }
+  
+  Future<void> _updateDestinationTable(AnnouncePacket packet, String fromInterface) async {
+    final destinationEntry = DestinationEntry(
+      destinationHash: packet.destinationHash,
+      publicKey: packet.publicKeys['encryption']!,
+      availablePaths: [
+        PathEntry(
+          interfaceId: fromInterface,
+          protocolType: _getInterfaceProtocol(fromInterface),
+          nextHop: packet.sourceHash,
+          hopCount: packet.hopCount + 1,
+          rssi: packet.rssi ?? -80,
+          snr: packet.snr ?? 0,
+          established: DateTime.now(),
+          lastSeen: DateTime.now(),
+        )
+      ],
+      lastAnnounce: packet.timestamp,
+      hopCount: packet.hopCount + 1,
+      pathQuality: _calculateInitialQuality(packet),
+    );
+    
+    _router._destinationTable[packet.destinationHash] = destinationEntry;
+  }
+  
+  void _periodicAnnounce(Timer timer) {
+    // Periodic announcement of local destinations
+    for (final destination in _localDestinations) {
+      announceDestination(destination);
+    }
+  }
+}
   final Map<String, RouteMetrics> _routeMetrics = {};
   final Duration _routeTimeout = const Duration(minutes: 5);
   
