@@ -1,6 +1,8 @@
-// lib/simple_main.dart - Basit MESHNET Uygulaması
+// lib/main.dart - MESHNET Bluetooth Mesh Uygulaması
 import 'package:flutter/material.dart';
-import 'screens/simple_chat_screen.dart';
+import 'package:provider/provider.dart';
+import 'screens/chat_screen.dart';
+import 'services/bluetooth_mesh_manager.dart';
 
 void main() {
   runApp(MeshNetApp());
@@ -10,12 +12,17 @@ class MeshNetApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'MESHNET',
+      title: 'MESHNET - Emergency Mesh Network',
       theme: ThemeData(
         primarySwatch: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,
+        appBarTheme: AppBarTheme(
+          backgroundColor: Colors.blue.shade700,
+          foregroundColor: Colors.white,
+          elevation: 2,
+        ),
       ),
-      home: SimpleChatScreen(),
+      home: ChatScreen(),
       debugShowCheckedModeBanner: false,
     );
   }
