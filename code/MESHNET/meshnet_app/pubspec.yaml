@@ -1,0 +1,40 @@
+name: meshnet_app
+description: MESHNET - Emergency Mesh Network Communication App based on BitChat
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Network & Communication
+  flutter_bluetooth_serial: ^0.4.0
+  wifi_scan: ^0.4.1
+  network_info_plus: ^4.0.2
+  
+  # Cryptography
+  cryptography: ^2.5.0
+  encrypt: ^5.0.1
+  
+  # Storage
+  sqflite: ^2.3.0
+  shared_preferences: ^2.2.0
+  
+  # UI & Utils
+  provider: ^6.0.5
+  intl: ^0.18.1
+  path_provider: ^2.1.0
+  
+  # SDR Integration (gelecek aşamalar için)
+  ffi: ^2.1.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^2.0.0
+
+flutter:
+  uses-material-design: true

@@ -3,5 +3,6 @@ node_modules/
 
 .tar.xz
 flutter/
+/flutter/
 MESHNET/flutter/
-/MESHNET/flutter/
+./MESHNET/flutter/  
