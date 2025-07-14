@@ -2,21 +2,26 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
-import 'package:flutter_blue_plus/flutter_blue_plus.dart';
-import 'package:permission_handler/permission_handler.dart';
+// import 'package:flutter_blue_plus/flutter_blue_plus.dart';  // Web'de çalışmaz
+// import 'package:permission_handler/permission_handler.dart'; // Web'de çalışmaz
 import 'package:crypto/crypto.dart';
+
+// Web uyumlu mock Bluetooth Device sınıfı
+class MockBluetoothDevice {
+  final String platformName;
+  final String remoteId;
+  
+  MockBluetoothDevice({required this.platformName, required this.remoteId});
+}
 
 class BluetoothMeshManager extends ChangeNotifier {
   static const String MESHNET_SERVICE_UUID = "6E400001-B5A3-F393-E0A9-E50E24DCCA9E";
   static const String MESHNET_TX_CHAR_UUID = "6E400002-B5A3-F393-E0A9-E50E24DCCA9E";
   static const String MESHNET_RX_CHAR_UUID = "6E400003-B5A3-F393-E0A9-E50E24DCCA9E";
 
-  final List<BluetoothDevice> _discoveredDevices = [];
-  final List<BluetoothDevice> _connectedDevices = [];
-  final Map<String, BluetoothCharacteristic> _txCharacteristics = {};
-  final Map<String, BluetoothCharacteristic> _rxCharacteristics = {};
+  final List<MockBluetoothDevice> _discoveredDevices = [];
+  final List<MockBluetoothDevice> _connectedDevices = [];
   
-  StreamSubscription<List<BluetoothDevice>>? _scanSubscription;
   bool _isScanning = false;
   bool _isInitialized = false;
   
@@ -26,8 +31,8 @@ class BluetoothMeshManager extends ChangeNotifier {
   final List<MeshMessage> _messageQueue = [];
   final Set<String> _processedMessages = {};
 
-  List<BluetoothDevice> get discoveredDevices => List.unmodifiable(_discoveredDevices);
-  List<BluetoothDevice> get connectedDevices => List.unmodifiable(_connectedDevices);
+  List<MockBluetoothDevice> get discoveredDevices => List.unmodifiable(_discoveredDevices);
+  List<MockBluetoothDevice> get connectedDevices => List.unmodifiable(_connectedDevices);
   bool get isScanning => _isScanning;
   bool get isInitialized => _isInitialized;
   String get nodeId => _nodeId;
@@ -35,28 +40,24 @@ class BluetoothMeshManager extends ChangeNotifier {
 
   Future<bool> initialize() async {
     try {
-      // Check permissions
-      if (!await _requestPermissions()) {
-        print('Bluetooth permissions not granted');
-        return false;
-      }
-
-      // Check if Bluetooth is supported
-      if (await FlutterBluePlus.isSupported == false) {
-        print('Bluetooth not supported by this device');
-        return false;
+      // Web platformunda Bluetooth izinleri otomatik kabul
+      if (kIsWeb) {
+        print('Web platformu: Bluetooth simülasyonu başlatılıyor...');
       }
 
       // Generate unique node ID
       _nodeId = _generateNodeId();
       
-      // Start advertising service
-      await _startAdvertising();
-      
       _isInitialized = true;
       notifyListeners();
       
       print('Bluetooth Mesh Manager initialized with Node ID: $_nodeId');
+      
+      // Web'de demo cihazlar ekle
+      if (kIsWeb) {
+        _addDemoDevices();
+      }
+      
       return true;
     } catch (e) {
       print('Error initializing Bluetooth Mesh Manager: $e');
@@ -64,16 +65,26 @@ class BluetoothMeshManager extends ChangeNotifier {
     }
   }
 
-  Future<bool> _requestPermissions() async {
-    Map<Permission, PermissionStatus> permissions = await [
-      Permission.bluetooth,
-      Permission.bluetoothAdvertise,
-      Permission.bluetoothConnect,
-      Permission.bluetoothScan,
-      Permission.location,
-    ].request();
-
-    return permissions.values.every((status) => status.isGranted);
+  void _addDemoDevices() {
+    // Demo cihazları ekle
+    Timer(Duration(seconds: 2), () {
+      final demoDevices = [
+        MockBluetoothDevice(platformName: 'MESHNET-Android-001', remoteId: 'demo001'),
+        MockBluetoothDevice(platformName: 'MESHNET-iPhone-002', remoteId: 'demo002'),
+      ];
+      
+      _discoveredDevices.addAll(demoDevices);
+      notifyListeners();
+      
+      // 3 saniye sonra bağlan
+      Timer(Duration(seconds: 3), () {
+        _connectedDevices.addAll(demoDevices);
+        for (var device in demoDevices) {
+          _addMeshNode(device);
+        }
+        notifyListeners();
+      });
+    });
   }
 
   String _generateNodeId() {
@@ -83,110 +94,36 @@ class BluetoothMeshManager extends ChangeNotifier {
     return digest.toString().substring(0, 16);
   }
 
-  Future<void> _startAdvertising() async {
-    try {
-      // Start advertising as MESHNET device
-      await FlutterBluePlus.startScan(
-        timeout: Duration(seconds: 4),
-        androidUsesFineLocation: true,
-      );
-    } catch (e) {
-      print('Error starting advertising: $e');
-    }
-  }
-
   Future<void> startScanning() async {
     if (_isScanning) return;
 
-    try {
-      _isScanning = true;
-      notifyListeners();
+    _isScanning = true;
+    notifyListeners();
 
-      _scanSubscription = FlutterBluePlus.scanResults.listen((results) {
-        for (ScanResult result in results) {
-          final device = result.device;
-          if (_isMeshNetDevice(result) && !_discoveredDevices.contains(device)) {
-            _discoveredDevices.add(device);
-            _connectToDevice(device);
-          }
-        }
+    if (kIsWeb) {
+      print('Web platformu: Cihaz taraması simülasyonu başlatıldı');
+      // Web'de 5 saniye sonra taramayı durdur
+      Timer(Duration(seconds: 5), () {
+        _isScanning = false;
         notifyListeners();
       });
-
-      await FlutterBluePlus.startScan(
-        timeout: Duration(seconds: 10),
-        androidUsesFineLocation: true,
-      );
-
-    } catch (e) {
-      print('Error starting scan: $e');
-      _isScanning = false;
-      notifyListeners();
+    } else {
+      // Gerçek Bluetooth tarama kodu burada olacak
+      Timer(Duration(seconds: 10), () {
+        _isScanning = false;
+        notifyListeners();
+      });
     }
   }
 
   Future<void> stopScanning() async {
-    await FlutterBluePlus.stopScan();
-    await _scanSubscription?.cancel();
     _isScanning = false;
     notifyListeners();
   }
 
-  bool _isMeshNetDevice(ScanResult result) {
-    // Check if device advertises MESHNET service
-    return result.advertisementData.serviceUuids.contains(MESHNET_SERVICE_UUID) ||
-           result.device.platformName.toLowerCase().contains('meshnet');
-  }
-
-  Future<void> _connectToDevice(BluetoothDevice device) async {
-    try {
-      await device.connect(timeout: Duration(seconds: 10));
-      _connectedDevices.add(device);
-      
-      // Discover services and characteristics
-      await _setupDeviceCharacteristics(device);
-      
-      // Add to mesh network
-      _addMeshNode(device);
-      
-      notifyListeners();
-      print('Connected to device: ${device.platformName}');
-    } catch (e) {
-      print('Error connecting to device ${device.platformName}: $e');
-    }
-  }
-
-  Future<void> _setupDeviceCharacteristics(BluetoothDevice device) async {
-    try {
-      List<BluetoothService> services = await device.discoverServices();
-      
-      for (BluetoothService service in services) {
-        if (service.uuid.toString().toUpperCase() == MESHNET_SERVICE_UUID.toUpperCase()) {
-          for (BluetoothCharacteristic characteristic in service.characteristics) {
-            String charUuid = characteristic.uuid.toString().toUpperCase();
-            
-            if (charUuid == MESHNET_TX_CHAR_UUID.toUpperCase()) {
-              _txCharacteristics[device.remoteId.toString()] = characteristic;
-            } else if (charUuid == MESHNET_RX_CHAR_UUID.toUpperCase()) {
-              _rxCharacteristics[device.remoteId.toString()] = characteristic;
-              
-              // Setup notifications for incoming messages
-              await characteristic.setNotifyValue(true);
-              characteristic.lastValueStream.listen((value) {
-                _handleIncomingMessage(device, value);
-              });
-            }
-          }
-        }
-      }
-    } catch (e) {
-      print('Error setting up characteristics for ${device.platformName}: $e');
-    }
-  }
-
-  void _addMeshNode(BluetoothDevice device) {
+  void _addMeshNode(MockBluetoothDevice device) {
     final node = MeshNode(
-      id: device.remoteId.toString(),
+      id: device.remoteId,
       name: device.platformName,
       device: device,
       lastSeen: DateTime.now(),
@@ -194,7 +131,7 @@ class BluetoothMeshManager extends ChangeNotifier {
     _meshNodes[node.id] = node;
   }
 
-  void _handleIncomingMessage(BluetoothDevice device, List<int> data) {
+  void _handleIncomingMessage(MockBluetoothDevice device, List<int> data) {
     try {
       final message = MeshMessage.fromBytes(Uint8List.fromList(data));
       
@@ -205,8 +142,8 @@ class BluetoothMeshManager extends ChangeNotifier {
       _processedMessages.add(message.messageId);
       
       // Update node last seen time
-      if (_meshNodes.containsKey(device.remoteId.toString())) {
-        _meshNodes[device.remoteId.toString()]!.lastSeen = DateTime.now();
+      if (_meshNodes.containsKey(device.remoteId)) {
+        _meshNodes[device.remoteId]!.lastSeen = DateTime.now();
       }
       
       // If message is for this node, process it
@@ -216,7 +153,7 @@ class BluetoothMeshManager extends ChangeNotifier {
       
       // Forward message to other nodes if TTL > 0
       if (message.ttl > 0) {
-        _forwardMessage(message, device.remoteId.toString());
+        _forwardMessage(message, device.remoteId);
       }
       
     } catch (e) {
@@ -235,6 +172,9 @@ class BluetoothMeshManager extends ChangeNotifier {
         break;
       case MeshMessageType.emergency:
         _handleEmergencyMessage(message);
+        break;
+      case MeshMessageType.file:
+        _handleFileMessage(message);
         break;
     }
   }
@@ -256,14 +196,20 @@ class BluetoothMeshManager extends ChangeNotifier {
     notifyListeners();
   }
 
+  void _handleFileMessage(MeshMessage message) {
+    // Handle file transfer message
+    print('File message from ${message.sourceNodeId}: ${message.payload}');
+    notifyListeners();
+  }
+
   Future<void> _forwardMessage(MeshMessage message, String excludeNodeId) async {
     final forwardedMessage = message.copyWith(
       ttl: message.ttl - 1,
       forwardedBy: _nodeId,
     );
     
-    for (BluetoothDevice device in _connectedDevices) {
-      if (device.remoteId.toString() != excludeNodeId) {
+    for (MockBluetoothDevice device in _connectedDevices) {
+      if (device.remoteId != excludeNodeId) {
         await _sendMessageToDevice(device, forwardedMessage);
       }
     }
@@ -281,6 +227,39 @@ class BluetoothMeshManager extends ChangeNotifier {
     );
     
     await _broadcastMessage(message);
+    
+    // Web'de demo mesaj gönder
+    if (kIsWeb && _connectedDevices.isNotEmpty) {
+      _simulateIncomingMessage(content);
+    }
+  }
+
+  void _simulateIncomingMessage(String originalContent) {
+    // 2-5 saniye sonra demo cevap mesajı
+    Timer(Duration(seconds: 2 + (DateTime.now().millisecond % 3)), () {
+      final responses = [
+        'Mesaj alındı: "$originalContent"',
+        'Roger that! 👍',
+        'Bağlantı test edildi ✅',
+        'MESHNET çalışıyor 🔗',
+        'Acil durum ağı aktif 🚨',
+      ];
+      
+      final response = responses[DateTime.now().millisecond % responses.length];
+      final demoMessage = List<int>.from(utf8.encode(jsonEncode({
+        'messageId': _generateMessageId(),
+        'sourceNodeId': 'demo001',
+        'targetNodeId': _nodeId,
+        'type': MeshMessageType.chat.index,
+        'payload': response,
+        'timestamp': DateTime.now().millisecondsSinceEpoch,
+        'ttl': 5,
+      })));
+      
+      if (_connectedDevices.isNotEmpty) {
+        _handleIncomingMessage(_connectedDevices.first, demoMessage);
+      }
+    });
   }
 
   Future<void> sendEmergencyMessage(String content, Map<String, dynamic>? location) async {
@@ -304,17 +283,20 @@ class BluetoothMeshManager extends ChangeNotifier {
   }
 
   Future<void> _broadcastMessage(MeshMessage message) async {
-    for (BluetoothDevice device in _connectedDevices) {
+    for (MockBluetoothDevice device in _connectedDevices) {
       await _sendMessageToDevice(device, message);
     }
   }
 
-  Future<void> _sendMessageToDevice(BluetoothDevice device, MeshMessage message) async {
+  Future<void> _sendMessageToDevice(MockBluetoothDevice device, MeshMessage message) async {
     try {
-      final characteristic = _txCharacteristics[device.remoteId.toString()];
-      if (characteristic != null) {
+      if (kIsWeb) {
+        // Web'de konsola log yaz
+        print('Sending message to ${device.platformName}: ${message.payload}');
+      } else {
+        // Gerçek Bluetooth gönderimi burada olacak
         final data = message.toBytes();
-        await characteristic.write(data, withoutResponse: true);
+        print('Would send ${data.length} bytes to ${device.platformName}');
       }
     } catch (e) {
       print('Error sending message to ${device.platformName}: $e');
@@ -328,19 +310,9 @@ class BluetoothMeshManager extends ChangeNotifier {
   Future<void> disconnect() async {
     await stopScanning();
     
-    for (BluetoothDevice device in _connectedDevices) {
-      try {
-        await device.disconnect();
-      } catch (e) {
-        print('Error disconnecting from ${device.platformName}: $e');
-      }
-    }
-    
     _connectedDevices.clear();
     _discoveredDevices.clear();
     _meshNodes.clear();
-    _txCharacteristics.clear();
-    _rxCharacteristics.clear();
     _processedMessages.clear();
     
     notifyListeners();
@@ -356,7 +328,7 @@ class BluetoothMeshManager extends ChangeNotifier {
 class MeshNode {
   final String id;
   final String name;
-  final BluetoothDevice device;
+  final MockBluetoothDevice device;
   DateTime lastSeen;
   int hopCount;
 

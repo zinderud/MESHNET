@@ -112,8 +112,8 @@ class _ChatScreenState extends State<ChatScreen> {
     final connectedCount = _meshManager!.connectedDevices.length;
     final isScanning = _meshManager!.isScanning;
     
-    Color statusColor = connectedCount > 0 ? Colors.green : 
-                       isScanning ? Colors.orange : Colors.red;
+    Color statusColor = connectedCount > 0 ? Colors.green.shade700 : 
+                       isScanning ? Colors.orange.shade700 : Colors.red.shade700;
     String statusText = connectedCount > 0 
         ? '$connectedCount cihaza bağlı'
         : isScanning 
@@ -123,7 +123,7 @@ class _ChatScreenState extends State<ChatScreen> {
     return Container(
       width: double.infinity,
       padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      color: statusColor.shade700,
+      color: statusColor,
       child: Row(
         children: [
           if (isScanning)

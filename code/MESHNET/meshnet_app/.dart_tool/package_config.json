@@ -56,18 +56,6 @@
       "languageVersion": "3.0"
     },
     {
-      "name": "flutter_blue_plus",
-      "rootUri": "file:///home/zinderud/.pub-cache/hosted/pub.dev/flutter_blue_plus-1.34.5",
-      "packageUri": "lib/",
-      "languageVersion": "2.15"
-    },
-    {
-      "name": "flutter_bluetooth_serial",
-      "rootUri": "file:///home/zinderud/.pub-cache/hosted/pub.dev/flutter_bluetooth_serial-0.4.0",
-      "packageUri": "lib/",
-      "languageVersion": "2.12"
-    },
-    {
       "name": "flutter_lints",
       "rootUri": "file:///home/zinderud/.pub-cache/hosted/pub.dev/flutter_lints-2.0.3",
       "packageUri": "lib/",
@@ -114,42 +102,6 @@
       "rootUri": "file:///home/zinderud/.pub-cache/hosted/pub.dev/path-1.8.3",
       "packageUri": "lib/",
       "languageVersion": "2.12"
-    },
-    {
-      "name": "permission_handler",
-      "rootUri": "file:///home/zinderud/.pub-cache/hosted/pub.dev/permission_handler-11.0.1",
-      "packageUri": "lib/",
-      "languageVersion": "2.15"
-    },
-    {
-      "name": "permission_handler_android",
-      "rootUri": "file:///home/zinderud/.pub-cache/hosted/pub.dev/permission_handler_android-11.1.0",
-      "packageUri": "lib/",
-      "languageVersion": "2.15"
-    },
-    {
-      "name": "permission_handler_apple",
-      "rootUri": "file:///home/zinderud/.pub-cache/hosted/pub.dev/permission_handler_apple-9.1.4",
-      "packageUri": "lib/",
-      "languageVersion": "2.15"
-    },
-    {
-      "name": "permission_handler_platform_interface",
-      "rootUri": "file:///home/zinderud/.pub-cache/hosted/pub.dev/permission_handler_platform_interface-3.12.0",
-      "packageUri": "lib/",
-      "languageVersion": "2.14"
-    },
-    {
-      "name": "permission_handler_windows",
-      "rootUri": "file:///home/zinderud/.pub-cache/hosted/pub.dev/permission_handler_windows-0.1.3",
-      "packageUri": "lib/",
-      "languageVersion": "2.12"
-    },
-    {
-      "name": "plugin_platform_interface",
-      "rootUri": "file:///home/zinderud/.pub-cache/hosted/pub.dev/plugin_platform_interface-2.1.8",
-      "packageUri": "lib/",
-      "languageVersion": "3.0"
     },
     {
       "name": "provider",
@@ -224,7 +176,7 @@
       "languageVersion": "3.0"
     }
   ],
-  "generated": "2025-07-14T13:01:55.102318Z",
+  "generated": "2025-07-14T13:26:48.051535Z",
   "generator": "pub",
   "generatorVersion": "3.1.5"
 }

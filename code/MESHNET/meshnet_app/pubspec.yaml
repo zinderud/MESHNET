@@ -12,9 +12,9 @@ dependencies:
   
   cupertino_icons: ^1.0.2
   provider: ^6.0.5
-  flutter_bluetooth_serial: ^0.4.0
-  permission_handler: ^11.0.1
-  flutter_blue_plus: ^1.12.13
+  # flutter_bluetooth_serial: ^0.4.0  # Web'de çalışmaz
+  # permission_handler: ^11.0.1       # Web'de çalışmaz  
+  # flutter_blue_plus: ^1.12.13       # Web'de çalışmaz
   crypto: ^3.0.3
 
 dev_dependencies:
