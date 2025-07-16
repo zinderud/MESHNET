@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 // import 'package:flutter_blue_plus/flutter_blue_plus.dart';  // Web'de çalışmaz
 // import 'package:permission_handler/permission_handler.dart'; // Web'de çalışmaz
 import 'package:crypto/crypto.dart';
+import 'crypto_manager.dart';
 
 // Web uyumlu mock Bluetooth Device sınıfı
 class MockBluetoothDevice {
@@ -25,11 +26,18 @@ class BluetoothMeshManager extends ChangeNotifier {
   bool _isScanning = false;
   bool _isInitialized = false;
   
+  // Crypto manager for E2E encryption
+  final CryptoManager _cryptoManager = CryptoManager();
+  
   // Mesh network properties
   String _nodeId = '';
   final Map<String, MeshNode> _meshNodes = {};
   final List<MeshMessage> _messageQueue = [];
   final Set<String> _processedMessages = {};
+  
+  // Encryption status
+  bool _encryptionEnabled = true;
+  final Map<String, bool> _peerEncryptionStatus = {};
 
   List<MockBluetoothDevice> get discoveredDevices => List.unmodifiable(_discoveredDevices);
   List<MockBluetoothDevice> get connectedDevices => List.unmodifiable(_connectedDevices);
@@ -37,21 +45,31 @@ class BluetoothMeshManager extends ChangeNotifier {
   bool get isInitialized => _isInitialized;
   String get nodeId => _nodeId;
   List<MeshNode> get meshNodes => _meshNodes.values.toList();
+  
+  // Encryption getters
+  bool get encryptionEnabled => _encryptionEnabled;
+  String get publicKey => _cryptoManager.publicKeyHex;
+  bool isPeerEncrypted(String peerId) => _peerEncryptionStatus[peerId] ?? false;
+  int get encryptedPeersCount => _peerEncryptionStatus.values.where((status) => status).length;
 
   Future<bool> initialize() async {
     try {
+      // Initialize crypto manager first
+      await _cryptoManager.initialize();
+      
       // Web platformunda Bluetooth izinleri otomatik kabul
       if (kIsWeb) {
         print('Web platformu: Bluetooth simülasyonu başlatılıyor...');
       }
 
-      // Generate unique node ID
-      _nodeId = _generateNodeId();
+      // Use crypto manager's node ID
+      _nodeId = _cryptoManager.nodeId;
       
       _isInitialized = true;
       notifyListeners();
       
       print('Bluetooth Mesh Manager initialized with Node ID: $_nodeId');
+      print('Encryption enabled: $_encryptionEnabled');
       
       // Web'de demo cihazlar ekle
       if (kIsWeb) {
@@ -81,10 +99,33 @@ class BluetoothMeshManager extends ChangeNotifier {
         _connectedDevices.addAll(demoDevices);
         for (var device in demoDevices) {
           _addMeshNode(device);
+          
+          // Simulate key exchange for demo devices
+          _simulateKeyExchange(device.remoteId);
         }
         notifyListeners();
       });
     });
+  }
+  
+  /// Simulate key exchange with demo devices
+  void _simulateKeyExchange(String peerId) {
+    // Generate demo public keys for peer
+    final demoPublicKeys = {
+      'demo001': '04a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3',
+      'demo002': '04b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4',
+    };
+    
+    if (demoPublicKeys.containsKey(peerId)) {
+      try {
+        _cryptoManager.registerPeerPublicKey(peerId, demoPublicKeys[peerId]!);
+        _peerEncryptionStatus[peerId] = true;
+        print('🔐 Key exchange completed with $peerId');
+      } catch (e) {
+        print('Key exchange failed with $peerId: $e');
+        _peerEncryptionStatus[peerId] = false;
+      }
+    }
   }
 
   String _generateNodeId() {
@@ -238,20 +279,33 @@ class BluetoothMeshManager extends ChangeNotifier {
     // 2-5 saniye sonra demo cevap mesajı
     Timer(Duration(seconds: 2 + (DateTime.now().millisecond % 3)), () {
       final responses = [
-        'Mesaj alındı: "$originalContent"',
-        'Roger that! 👍',
-        'Bağlantı test edildi ✅',
-        'MESHNET çalışıyor 🔗',
-        'Acil durum ağı aktif 🚨',
+        'Mesaj alındı: "$originalContent" 🔐',
+        'Roger that! 👍 [ENCRYPTED]',
+        'Bağlantı test edildi ✅ 🔒',
+        'MESHNET çalışıyor 🔗 [E2E]',
+        'Acil durum ağı aktif 🚨 [SECURE]',
       ];
       
       final response = responses[DateTime.now().millisecond % responses.length];
+      String messagePayload = response;
+      
+      // Simulate encrypted incoming message
+      if (_encryptionEnabled && _peerEncryptionStatus['demo001'] == true) {
+        try {
+          // Simulate decryption process
+          print('📥 Received encrypted message from demo001');
+          messagePayload = response; // In real scenario, this would be decrypted
+        } catch (e) {
+          print('Decryption failed: $e');
+        }
+      }
+      
       final demoMessage = List<int>.from(utf8.encode(jsonEncode({
         'messageId': _generateMessageId(),
         'sourceNodeId': 'demo001',
         'targetNodeId': _nodeId,
         'type': MeshMessageType.chat.index,
-        'payload': response,
+        'payload': messagePayload,
         'timestamp': DateTime.now().millisecondsSinceEpoch,
         'ttl': 5,
       })));
@@ -290,12 +344,30 @@ class BluetoothMeshManager extends ChangeNotifier {
 
   Future<void> _sendMessageToDevice(MockBluetoothDevice device, MeshMessage message) async {
     try {
+      String messageData = message.payload;
+      bool isEncrypted = false;
+      
+      // Encrypt message if peer supports encryption
+      if (_encryptionEnabled && _peerEncryptionStatus[device.remoteId] == true) {
+        try {
+          final encryptedMessage = _cryptoManager.encryptMessage(message.payload, device.remoteId);
+          if (encryptedMessage != null) {
+            messageData = jsonEncode(encryptedMessage.toJson());
+            isEncrypted = true;
+            print('🔐 Encrypted message for ${device.platformName}');
+          }
+        } catch (e) {
+          print('Encryption failed for ${device.platformName}: $e');
+          // Fall back to unencrypted
+        }
+      }
+      
       if (kIsWeb) {
         // Web'de konsola log yaz
-        print('Sending message to ${device.platformName}: ${message.payload}');
+        print('📤 Sending ${isEncrypted ? 'encrypted' : 'plain'} message to ${device.platformName}: ${isEncrypted ? '[ENCRYPTED]' : message.payload}');
       } else {
         // Gerçek Bluetooth gönderimi burada olacak
-        final data = message.toBytes();
+        final data = utf8.encode(messageData);
         print('Would send ${data.length} bytes to ${device.platformName}');
       }
     } catch (e) {

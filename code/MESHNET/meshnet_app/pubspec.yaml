@@ -16,6 +16,8 @@ dependencies:
   # permission_handler: ^11.0.1       # Web'de çalışmaz  
   # flutter_blue_plus: ^1.12.13       # Web'de çalışmaz
   crypto: ^3.0.3
+  cryptography: ^2.5.0
+  convert: ^3.1.1
 
 dev_dependencies:
   flutter_test:

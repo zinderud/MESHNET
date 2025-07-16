@@ -71,13 +71,24 @@ class _ChatScreenState extends State<ChatScreen> {
               color: _getNetworkStatusColor(),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Text(
-              '${_meshManager?.connectedDevices.length ?? 0} peers',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-              ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  _meshManager?.encryptionEnabled == true ? Icons.lock : Icons.lock_open,
+                  color: Colors.white,
+                  size: 16,
+                ),
+                SizedBox(width: 4),
+                Text(
+                  '${_meshManager?.connectedDevices.length ?? 0} peers',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -115,7 +126,7 @@ class _ChatScreenState extends State<ChatScreen> {
     Color statusColor = connectedCount > 0 ? Colors.green.shade700 : 
                        isScanning ? Colors.orange.shade700 : Colors.red.shade700;
     String statusText = connectedCount > 0 
-        ? '$connectedCount cihaza bağlı'
+        ? '$connectedCount cihaza bağlı${_meshManager?.encryptionEnabled == true ? ' 🔐' : ''}'
         : isScanning 
             ? 'Cihaz aranıyor...'
             : 'Bağlantı yok';
@@ -295,6 +306,21 @@ class _ChatScreenState extends State<ChatScreen> {
                   'Node ID: ${_meshManager?.nodeId.substring(0, 12) ?? 'Bilinmiyor'}...',
                   style: TextStyle(color: Colors.white60, fontSize: 12),
                 ),
+                SizedBox(height: 4),
+                Row(
+                  children: [
+                    Icon(
+                      _meshManager?.encryptionEnabled == true ? Icons.lock : Icons.lock_open,
+                      color: Colors.white60,
+                      size: 14,
+                    ),
+                    SizedBox(width: 4),
+                    Text(
+                      'E2E Encryption: ${_meshManager?.encryptionEnabled == true ? 'ON' : 'OFF'}',
+                      style: TextStyle(color: Colors.white60, fontSize: 12),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
@@ -331,9 +357,20 @@ class _ChatScreenState extends State<ChatScreen> {
                         itemCount: _meshManager!.connectedDevices.length,
                         itemBuilder: (context, index) {
                           final device = _meshManager!.connectedDevices[index];
+                          final isEncrypted = _meshManager!.isPeerEncrypted(device.remoteId);
                           return ListTile(
-                            leading: Icon(Icons.bluetooth_connected, 
-                                         color: Colors.green),
+                            leading: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.bluetooth_connected, color: Colors.green),
+                                SizedBox(width: 4),
+                                Icon(
+                                  isEncrypted ? Icons.lock : Icons.lock_open,
+                                  color: isEncrypted ? Colors.green : Colors.orange,
+                                  size: 16,
+                                ),
+                              ],
+                            ),
                             title: Text(device.platformName.isNotEmpty 
                                        ? device.platformName 
                                        : 'Bilinmeyen Cihaz'),
@@ -341,13 +378,13 @@ class _ChatScreenState extends State<ChatScreen> {
                             trailing: Container(
                               padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                               decoration: BoxDecoration(
-                                color: Colors.green.shade100,
+                                color: isEncrypted ? Colors.green.shade100 : Colors.orange.shade100,
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Text(
-                                'Bağlı',
+                                isEncrypted ? 'Encrypted' : 'Plain',
                                 style: TextStyle(
-                                  color: Colors.green.shade700,
+                                  color: isEncrypted ? Colors.green.shade700 : Colors.orange.shade700,
                                   fontSize: 12,
                                   fontWeight: FontWeight.bold,
                                 ),
