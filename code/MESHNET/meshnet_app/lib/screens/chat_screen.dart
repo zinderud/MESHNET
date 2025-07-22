@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/bluetooth_mesh_manager.dart';
+import '../services/location_manager.dart';
 
 class ChatScreen extends StatefulWidget {
   @override
@@ -20,7 +21,10 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Future<void> _initializeMeshNetwork() async {
-    _meshManager = BluetoothMeshManager();
+    final meshManager = Provider.of<BluetoothMeshManager>(context, listen: false);
+    final locationManager = Provider.of<LocationManager>(context, listen: false);
+    
+    _meshManager = meshManager;
     
     final initialized = await _meshManager!.initialize();
     if (initialized) {
@@ -251,6 +255,13 @@ class _ChatScreenState extends State<ChatScreen> {
       ),
       child: Row(
         children: [
+          // GPS location share button
+          IconButton(
+            onPressed: _shareCurrentLocation,
+            icon: Icon(Icons.my_location),
+            color: Colors.blue.shade600,
+            tooltip: 'Konumu paylaş',
+          ),
           Expanded(
             child: TextField(
               controller: _messageController,
@@ -438,6 +449,64 @@ class _ChatScreenState extends State<ChatScreen> {
           timestamp: DateTime.now(),
         ));
       });
+    }
+  }
+
+  void _shareCurrentLocation() async {
+    try {
+      if (_meshManager == null) return;
+      
+      // Check if location is available
+      final locationManager = _meshManager!.locationManager;
+      
+      if (!locationManager.locationEnabled) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('📍 Konum servisleri kapalı'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+        return;
+      }
+      
+      if (!locationManager.permissionGranted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('📍 Konum izni gerekli'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+      
+      // Send location update
+      await _meshManager!.sendLocationUpdate(
+        message: 'Mevcut konumum paylaşıldı',
+      );
+      
+      // Add location message to chat
+      setState(() {
+        _messages.add(ChatMessage(
+          content: '📍 Konum paylaşıldı',
+          isOwn: true,
+          timestamp: DateTime.now(),
+        ));
+      });
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('📍 Konumunuz mesh ağa paylaşıldı'),
+          backgroundColor: Colors.green,
+        ),
+      );
+      
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('❌ Konum paylaşılamadı: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 

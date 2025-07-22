@@ -18,6 +18,8 @@ dependencies:
   crypto: ^3.0.3
   cryptography: ^2.5.0
   convert: ^3.1.1
+  geolocator: ^9.0.2
+  geocoding: ^2.1.1
 
 dev_dependencies:
   flutter_test:

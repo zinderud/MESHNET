@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 // import 'package:permission_handler/permission_handler.dart'; // Web'de çalışmaz
 import 'package:crypto/crypto.dart';
 import 'crypto_manager.dart';
+import 'location_manager.dart';
 
 // Web uyumlu mock Bluetooth Device sınıfı
 class MockBluetoothDevice {
@@ -29,6 +30,9 @@ class BluetoothMeshManager extends ChangeNotifier {
   // Crypto manager for E2E encryption
   final CryptoManager _cryptoManager = CryptoManager();
   
+  // Location manager for GPS sharing
+  final LocationManager _locationManager = LocationManager();
+  
   // Mesh network properties
   String _nodeId = '';
   final Map<String, MeshNode> _meshNodes = {};
@@ -51,11 +55,19 @@ class BluetoothMeshManager extends ChangeNotifier {
   String get publicKey => _cryptoManager.publicKeyHex;
   bool isPeerEncrypted(String peerId) => _peerEncryptionStatus[peerId] ?? false;
   int get encryptedPeersCount => _peerEncryptionStatus.values.where((status) => status).length;
+  
+  // Location getters
+  LocationManager get locationManager => _locationManager;
+  bool get locationEnabled => _locationManager.locationEnabled;
+  bool get locationTracking => _locationManager.isTracking;
 
   Future<bool> initialize() async {
     try {
       // Initialize crypto manager first
       await _cryptoManager.initialize();
+      
+      // Initialize location manager
+      await _locationManager.initialize();
       
       // Web platformunda Bluetooth izinleri otomatik kabul
       if (kIsWeb) {
@@ -217,6 +229,9 @@ class BluetoothMeshManager extends ChangeNotifier {
       case MeshMessageType.file:
         _handleFileMessage(message);
         break;
+      case MeshMessageType.location:
+        _handleLocationMessage(message);
+        break;
     }
   }
 
@@ -241,6 +256,25 @@ class BluetoothMeshManager extends ChangeNotifier {
     // Handle file transfer message
     print('File message from ${message.sourceNodeId}: ${message.payload}');
     notifyListeners();
+  }
+
+  void _handleLocationMessage(MeshMessage message) {
+    try {
+      // Parse location data
+      final locationData = jsonDecode(message.payload);
+      
+      // Process emergency location if it's an emergency
+      if (locationData['emergency'] == true) {
+        _locationManager.receiveEmergencyLocation(locationData);
+        print('🚨 Emergency location received from ${message.sourceNodeId}');
+      } else {
+        print('📍 Location update from ${message.sourceNodeId}');
+      }
+      
+      notifyListeners();
+    } catch (e) {
+      print('Error handling location message: $e');
+    }
   }
 
   Future<void> _forwardMessage(MeshMessage message, String excludeNodeId) async {
@@ -336,6 +370,80 @@ class BluetoothMeshManager extends ChangeNotifier {
     await _broadcastMessage(message);
   }
 
+  /// Send emergency location to mesh network
+  Future<void> sendEmergencyLocation({
+    required String emergencyType,
+    String? message,
+    Map<String, dynamic>? additionalData,
+  }) async {
+    try {
+      // Share emergency location through location manager
+      final emergencyShare = await _locationManager.shareEmergencyLocation(
+        emergencyType: emergencyType,
+        message: message,
+        additionalData: additionalData,
+      );
+      
+      // Create mesh message for emergency location
+      final locationMessage = MeshMessage(
+        messageId: _generateMessageId(),
+        sourceNodeId: _nodeId,
+        targetNodeId: 'broadcast',
+        type: MeshMessageType.location,
+        payload: jsonEncode({
+          ...emergencyShare.toJson(),
+          'emergency': true,
+        }),
+        timestamp: DateTime.now(),
+        ttl: 15, // Emergency locations get maximum hops
+      );
+      
+      await _broadcastMessage(locationMessage);
+      
+      print('🚨 Emergency location broadcasted: $emergencyType');
+    } catch (e) {
+      print('❌ Error sending emergency location: $e');
+      throw e;
+    }
+  }
+
+  /// Send current location update
+  Future<void> sendLocationUpdate({String? message}) async {
+    try {
+      final position = _locationManager.currentPosition;
+      if (position == null) {
+        throw Exception('Current location not available');
+      }
+      
+      final locationData = {
+        'latitude': position.latitude,
+        'longitude': position.longitude,
+        'accuracy': position.accuracy,
+        'timestamp': DateTime.now().millisecondsSinceEpoch,
+        'message': message ?? 'Konum güncellemesi',
+        'emergency': false,
+        'nodeId': _nodeId,
+      };
+      
+      final locationMessage = MeshMessage(
+        messageId: _generateMessageId(),
+        sourceNodeId: _nodeId,
+        targetNodeId: 'broadcast',
+        type: MeshMessageType.location,
+        payload: jsonEncode(locationData),
+        timestamp: DateTime.now(),
+        ttl: 5, // Normal location updates get standard hops
+      );
+      
+      await _broadcastMessage(locationMessage);
+      
+      print('📍 Location update sent');
+    } catch (e) {
+      print('❌ Error sending location update: $e');
+      throw e;
+    }
+  }
+
   Future<void> _broadcastMessage(MeshMessage message) async {
     for (MockBluetoothDevice device in _connectedDevices) {
       await _sendMessageToDevice(device, message);
@@ -413,7 +521,7 @@ class MeshNode {
   });
 }
 
-enum MeshMessageType { chat, discovery, emergency, file }
+enum MeshMessageType { chat, discovery, emergency, file, location }
 
 class MeshMessage {
   final String messageId;
