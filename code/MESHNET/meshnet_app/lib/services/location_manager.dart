@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
+import 'emergency_manager.dart'; // EmergencyLocation için
 
 /// GPS konum yöneticisi - acil durum koordinat paylaşımı
 class LocationManager extends ChangeNotifier {
@@ -35,6 +36,19 @@ class LocationManager extends ChangeNotifier {
   bool get emergencyMode => _emergencyMode;
   List<LocationPoint> get locationHistory => List.unmodifiable(_locationHistory);
   Map<String, EmergencyLocationShare> get emergencyShares => Map.unmodifiable(_emergencyShares);
+  
+  // Emergency location getter
+  EmergencyLocation? get currentLocation {
+    if (_currentPosition == null) return null;
+    
+    return EmergencyLocation(
+      latitude: _currentPosition!.latitude,
+      longitude: _currentPosition!.longitude,
+      address: _currentAddress ?? 'Unknown location',
+      accuracy: _currentPosition!.accuracy,
+      timestamp: _currentPosition!.timestamp,
+    );
+  }
   
   /// Initialize location services
   Future<bool> initialize() async {

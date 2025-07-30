@@ -181,11 +181,23 @@ class MESHNETProtocolStack {
 - [x] **Call sign ve grid locator yönetimi**
 - [x] **Multi-protocol ham radio desteği**
 
-### **Aşama 8: Acil Durum Özellikleri (Hafta 15-16)**
-- [ ] Emergency mode activation
-- [ ] Location-based broadcasts
-- [ ] Priority message handling
-- [ ] Emergency wipe functionality
+### **Aşama 8: Acil Durum Özellikleri (TAMAMLANDI) ✅**
+- [x] **Emergency Detection Service** - Otomatik acil durum tespiti
+- [x] **Movement pattern analysis** - Hareket kalıpları analizi
+- [x] **Crash detection** - Kaza tespiti (ani hız değişimi)
+- [x] **Inactivity monitoring** - Uzun süre hareketsizlik tespiti
+- [x] **Panic button system** - Panik butonu (üçlü basma)
+- [x] **Shake detection** - Cihaz sallama tespiti
+- [x] **Geographic anomaly detection** - Tehlikeli bölge tespiti
+- [x] **Priority Message Service** - Öncelikli mesaj sistemi
+- [x] **Emergency message queuing** - Acil durum mesaj kuyruklama
+- [x] **Multi-protocol message routing** - Çoklu protokol yönlendirme
+- [x] **Rate limiting** - Hız sınırlama
+- [x] **Emergency Wipe Service** - Güvenli veri silme
+- [x] **Multi-pass secure deletion** - Çok geçişli güvenli silme
+- [x] **Auto-wipe triggers** - Otomatik silme tetikleyicileri
+- [x] **Panic wipe codes** - Panik silme kodları
+- [x] **DoD 5220.22-M standard** - Askeri seviye veri silme
 
 ### **Aşama 9: Kullanıcı Arayüzü (Hafta 17-18)**
 - [ ] IRC-style command interface
@@ -279,7 +291,7 @@ class MESHNETProtocolStack {
 - `/doc/Stratejik Konular/` - Stratejik analizler
 - `/doc/Algoritma_ve_Analiz/` - Algoritma detayları
 
-## 🚀 **GÜNCEL PROJE DURUMU (Versiyon 4.0 - Ham Radio Integration)**
+## 🚀 **GÜNCEL PROJE DURUMU (Versiyon 5.0 - Advanced Emergency Features)**
 
 ### ✅ **Tamamlanan Özellikler:**
 - **Bluetooth Mesh Network**: Yakın mesafe cihaz bağlantıları ✅
@@ -287,11 +299,21 @@ class MESHNETProtocolStack {
 - **WiFi Direct Clustering**: Yüksek kapasiteli grup iletişimi ✅
 - **📡 SDR Integration**: RTL-SDR/HackRF entegrasyonu ✅
 - **📻 Ham Radio Protocols**: APRS, Winlink, FT8/JS8 desteği ✅
-  - APRS beacon ve mesajlaşma sistemi
-  - Winlink global emergency email network
-  - FT8, JS8Call, PSK31 digital mode desteği
-  - Emergency frequency monitoring
-  - Multi-protocol ham radio interface
+- **🚨 Emergency Management**: Acil durum yönetim sistemi ✅
+- **🤖 Emergency Detection**: Otomatik acil durum tespiti ✅
+  - Hareket kalıpları analizi ve kaza tespiti
+  - Uzun süre hareketsizlik monitörü
+  - Panik butonu ve cihaz sallama tespiti
+  - Tehlikeli bölge girişi uyarısı
+- **📨 Priority Messaging**: Öncelikli mesaj yönlendirme ✅
+  - Emergency/Urgent/High/Normal/Low öncelik seviyeleri
+  - Çoklu protokol otomatik yönlendirme
+  - Rate limiting ve queue management
+- **🗑️ Emergency Wipe**: Güvenli veri silme sistemi ✅
+  - Basic/Secure/Military seviye silme
+  - Otomatik tetikleyiciler (başarısız giriş, hareketsizlik)
+  - Panik kodu ile anlık silme
+  - DoD 5220.22-M askeri standardı
 
 ### 🔄 **Devam Eden Çalışmalar:**
 - **Cognitive Radio**: Otomatik frekans seçimi ve spektrum yönetimi
@@ -306,10 +328,10 @@ class MESHNETProtocolStack {
 
 ## 🚀 Sonraki Adım
 
-**Aşama 8:** `Acil Durum Özellikleri` - Emergency mode activation, Priority messaging
+**Aşama 9:** `Kullanıcı Arayüzü` - IRC-style commands, Channel management, Advanced UI
 
 ---
 
 **Son Güncelleme:** 30 Temmuz 2025  
-**Versiyon:** 4.0  
-**Durum:** Ham Radio Protocols Tamamlandı - Multi-Protocol Emergency Communication System
+**Versiyon:** 5.0  
+**Durum:** Emergency Features Tamamlandı - Comprehensive Emergency Communication & Security System

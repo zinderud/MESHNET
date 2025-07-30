@@ -7,6 +7,9 @@ import 'location_manager.dart';
 import 'wifi_direct_manager.dart';
 import 'sdr_manager.dart';
 import 'ham_radio_manager.dart';
+import 'emergency_detection_service.dart';
+import 'priority_message_service.dart';
+import 'emergency_wipe_service.dart';
 
 /// Emergency Management System
 /// Coordinates all communication protocols for emergency situations
@@ -108,6 +111,11 @@ class EmergencyManager extends ChangeNotifier {
   WiFiDirectManager? _wifiDirectManager;
   SDRManager? _sdrManager;
   HamRadioManager? _hamRadioManager;
+  
+  // Emergency services
+  EmergencyDetectionService? _detectionService;
+  PriorityMessageService? _priorityMessageService;
+  EmergencyWipeService? _wipeService;
 
   // Emergency state
   bool _isEmergencyMode = false;
@@ -148,6 +156,11 @@ class EmergencyManager extends ChangeNotifier {
   Duration get beaconInterval => _beaconInterval;
   bool get enableAutoEscalation => _enableAutoEscalation;
   bool get enableMultiProtocol => _enableMultiProtocol;
+  
+  // Emergency service getters
+  EmergencyDetectionService? get detectionService => _detectionService;
+  PriorityMessageService? get priorityMessageService => _priorityMessageService;
+  EmergencyWipeService? get wipeService => _wipeService;
 
   /// Initialize Emergency Manager
   Future<bool> initialize({
@@ -166,6 +179,9 @@ class EmergencyManager extends ChangeNotifier {
       if (wifiDirectManager != null) _wifiDirectManager = wifiDirectManager;
       if (sdrManager != null) _sdrManager = sdrManager;
       if (hamRadioManager != null) _hamRadioManager = hamRadioManager;
+      
+      // Initialize emergency services
+      await _initializeEmergencyServices();
       
       // Initialize default emergency contacts
       _initializeDefaultContacts();
@@ -205,6 +221,33 @@ class EmergencyManager extends ChangeNotifier {
     ].join(', ')} managers');
     
     notifyListeners();
+  }
+
+  /// Initialize emergency services
+  Future<void> _initializeEmergencyServices() async {
+    try {
+      // Initialize emergency detection service
+      _detectionService = EmergencyDetectionService();
+      await _detectionService!.initialize(locationManager: _locationManager);
+      
+      // Initialize priority message service
+      _priorityMessageService = PriorityMessageService();
+      await _priorityMessageService!.initialize();
+      
+      // Add message processors
+      _priorityMessageService!.addProcessor(BluetoothMessageProcessor());
+      _priorityMessageService!.addProcessor(WiFiDirectMessageProcessor());
+      _priorityMessageService!.addProcessor(SDRMessageProcessor());
+      _priorityMessageService!.addProcessor(HamRadioMessageProcessor());
+      
+      // Initialize emergency wipe service
+      _wipeService = EmergencyWipeService();
+      await _wipeService!.initialize();
+      
+      print('🚨 Emergency services initialized');
+    } catch (e) {
+      print('❌ Error initializing emergency services: $e');
+    }
   }
 
   /// Initialize default emergency contacts
@@ -816,13 +859,37 @@ class EmergencyLocation {
   final double longitude;
   final double accuracy;
   final String address;
+  final DateTime timestamp;
 
   EmergencyLocation({
     required this.latitude,
     required this.longitude,
     required this.accuracy,
     required this.address,
-  });
+    DateTime? timestamp,
+  }) : timestamp = timestamp ?? DateTime.now();
+
+  /// Convert to JSON
+  Map<String, dynamic> toJson() {
+    return {
+      'latitude': latitude,
+      'longitude': longitude,
+      'accuracy': accuracy,
+      'address': address,
+      'timestamp': timestamp.toIso8601String(),
+    };
+  }
+
+  /// Create from JSON
+  factory EmergencyLocation.fromJson(Map<String, dynamic> json) {
+    return EmergencyLocation(
+      latitude: json['latitude']?.toDouble() ?? 0.0,
+      longitude: json['longitude']?.toDouble() ?? 0.0,
+      accuracy: json['accuracy']?.toDouble() ?? 0.0,
+      address: json['address'] ?? '',
+      timestamp: DateTime.tryParse(json['timestamp'] ?? '') ?? DateTime.now(),
+    );
+  }
 }
 
 /// Emergency level info
