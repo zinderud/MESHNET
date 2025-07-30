@@ -2,6 +2,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/sdr_manager.dart';
+import '../services/ham_radio_manager.dart';
+import 'ham_radio_screen.dart';
 
 class SDRScreen extends StatefulWidget {
   @override
@@ -16,7 +18,7 @@ class _SDRScreenState extends State<SDRScreen> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(length: 5, vsync: this);
     
     // Initialize frequency controller
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -50,6 +52,7 @@ class _SDRScreenState extends State<SDRScreen> with TickerProviderStateMixin {
             Tab(icon: Icon(Icons.graphic_eq), text: 'Spektrum'),
             Tab(icon: Icon(Icons.message), text: 'Mesajlar'),
             Tab(icon: Icon(Icons.emergency), text: 'Acil Durum'),
+            Tab(icon: Icon(Icons.radio_button_checked), text: 'Ham Radio'),
           ],
         ),
       ),
@@ -60,6 +63,7 @@ class _SDRScreenState extends State<SDRScreen> with TickerProviderStateMixin {
           _buildSpectrumTab(),
           _buildMessagesTab(),
           _buildEmergencyTab(),
+          HamRadioScreen(),
         ],
       ),
     );

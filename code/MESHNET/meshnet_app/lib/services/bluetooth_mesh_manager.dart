@@ -50,6 +50,9 @@ class BluetoothMeshManager extends ChangeNotifier {
   String get nodeId => _nodeId;
   List<MeshNode> get meshNodes => _meshNodes.values.toList();
   
+  // Connection status
+  bool get isConnected => _connectedDevices.isNotEmpty;
+  
   // Encryption getters
   bool get encryptionEnabled => _encryptionEnabled;
   String get publicKey => _cryptoManager.publicKeyHex;
@@ -307,6 +310,11 @@ class BluetoothMeshManager extends ChangeNotifier {
     if (kIsWeb && _connectedDevices.isNotEmpty) {
       _simulateIncomingMessage(content);
     }
+  }
+  
+  /// Send a general message (used by Emergency Manager)
+  Future<void> sendMessage(String content, {String? targetNodeId}) async {
+    return sendChatMessage(content, targetNodeId: targetNodeId);
   }
 
   void _simulateIncomingMessage(String originalContent) {

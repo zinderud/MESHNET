@@ -345,6 +345,29 @@ class WiFiDirectManager extends ChangeNotifier {
     }
   }
   
+  /// Send message through WiFi Direct (used by Emergency Manager)
+  Future<bool> sendMessage(String message, {String? targetAddress}) async {
+    final data = Uint8List.fromList(utf8.encode(message));
+    return await sendData(data, targetAddress: targetAddress);
+  }
+  
+  /// Broadcast message to all connected devices
+  Future<bool> broadcastMessage(String message) async {
+    bool allSuccess = true;
+    
+    for (final device in _connectedDevices) {
+      final success = await sendMessage(message, targetAddress: device.deviceAddress);
+      if (!success) allSuccess = false;
+    }
+    
+    // If no specific devices, use broadcast
+    if (_connectedDevices.isEmpty) {
+      return await sendMessage(message);
+    }
+    
+    return allSuccess;
+  }
+  
   /// Simulate data transmission for web
   Future<bool> _simulateDataTransmission(Uint8List data, String? targetAddress) async {
     final dataSize = data.length;
