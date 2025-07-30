@@ -4,9 +4,11 @@ import 'package:provider/provider.dart';
 import 'screens/chat_screen.dart';
 import 'screens/emergency_location_screen.dart';
 import 'screens/wifi_direct_screen.dart';
+import 'screens/sdr_screen.dart';
 import 'services/bluetooth_mesh_manager.dart';
 import 'services/location_manager.dart';
 import 'services/wifi_direct_manager.dart';
+import 'services/sdr_manager.dart';
 
 void main() {
   runApp(MeshNetApp());
@@ -29,6 +31,11 @@ class MeshNetApp extends StatelessWidget {
         }),
         ChangeNotifierProvider(create: (_) {
           final manager = WiFiDirectManager();
+          manager.initialize(); // Auto-initialize
+          return manager;
+        }),
+        ChangeNotifierProvider(create: (_) {
+          final manager = SDRManager();
           manager.initialize(); // Auto-initialize
           return manager;
         }),
@@ -63,12 +70,14 @@ class _MainScreenState extends State<MainScreen> {
     ChatScreen(),
     EmergencyLocationScreen(),
     WiFiDirectScreen(),
+    SDRScreen(),
   ];
   
   final List<String> _titles = [
     'MESHNET Chat',
     'Acil Durum GPS',
     'WiFi Direct',
+    'SDR Interface',
   ];
 
   @override
@@ -95,6 +104,10 @@ class _MainScreenState extends State<MainScreen> {
           BottomNavigationBarItem(
             icon: Icon(Icons.wifi),
             label: 'WiFi Direct',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.radio),
+            label: 'SDR',
           ),
         ],
       ),
