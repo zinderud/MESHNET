@@ -40,6 +40,28 @@ class NetworkConstants {
   static const int MAX_PEERS = 50;
   static const int PEER_TIMEOUT_MINUTES = 10;
   static const int HEARTBEAT_INTERVAL_SECONDS = 30;
+
+  // Default settings for Settings model
+  static const Duration defaultScanInterval = Duration(seconds: 30);
+  static const Duration defaultConnectionTimeout = Duration(seconds: 15);
+  static const int defaultMaxConnections = 8;
+  static const String defaultGroupName = "MESHNET";
+  static const int defaultPort = 8080;
+  static const Duration defaultTimeout = Duration(seconds: 15);
+  static const double defaultSDRFrequency = 433000000.0; // Hz
+  static const int defaultSampleRate = 2048000;
+  static const double defaultBandwidth = 1000000.0;
+  static const String defaultModulation = "FSK";
+  static const double defaultTxPower = 10.0;
+  static const String defaultCallSign = "N0CALL";
+  static const double defaultHamFrequency = 145500000.0; // Hz
+  static const int defaultBaud = 1200;
+  static const String defaultHamMode = "PACKET";
+  static const int defaultMaxMessageSize = 8192;
+  static const Duration defaultMessageTimeout = Duration(seconds: 30);
+  static const Duration defaultHeartbeatInterval = Duration(seconds: 60);
+  static const Duration defaultDiscoveryInterval = Duration(seconds: 30);
+  static const int defaultMaxRetries = 3;
 }
 
 /// Emergency System Constants
@@ -76,6 +98,13 @@ class EmergencyConstants {
   static const int BEACON_INTERVAL_SECONDS = 60;
   static const int BEACON_TTL_HOURS = 24;
   static const int MAX_BEACON_RETRIES = 5;
+
+  // Default settings for Settings model
+  static const Duration defaultTimeout = Duration(hours: 24);
+  static const Duration defaultBroadcastInterval = Duration(seconds: 30);
+  static const double defaultMaxRange = 10000.0; // meters
+  static const List<String> defaultServices = ['ambulance', 'fire', 'police'];
+  static const int defaultPriority = 1;
 }
 
 /// UI/UX Constants
@@ -96,6 +125,13 @@ class UIConstants {
   static const double PADDING_SMALL = 8.0;
   static const double PADDING_MEDIUM = 16.0;
   static const double PADDING_LARGE = 24.0;
+
+  // Default settings for Settings model
+  static const double defaultFontSize = 14.0;
+  static const String defaultLanguage = 'en';
+  static const Duration defaultAnimationDuration = Duration(milliseconds: 300);
+  static const int defaultPrimaryColor = 0xFF2196F3;
+}
   static const double PADDING_EXTRA_LARGE = 32.0;
   
   // Border Radius
@@ -148,6 +184,14 @@ class SecurityConstants {
   static const int WIPE_PASSES_MILITARY = 7;
   static const int MAX_FAILED_ATTEMPTS = 10;
   static const int INACTIVITY_TIMEOUT_HOURS = 72;
+
+  // Default settings for Settings model
+  static const String defaultEncryptionAlgorithm = 'AES-256-GCM';
+  static const int defaultKeySize = 256;
+  static const Duration defaultKeyRotationInterval = Duration(hours: 24);
+  static const Duration defaultSessionTimeout = Duration(minutes: 30);
+  static const int defaultMaxLoginAttempts = 3;
+  static const double defaultMinTrustScore = 0.5;
 }
 
 /// Storage Constants
