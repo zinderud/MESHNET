@@ -1,6 +1,7 @@
 // lib/screens/chat_screen.dart - Bluetooth Mesh Chat Ekranı
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:meshnet_app/widgets/message_bubble.dart';
 import '../services/bluetooth_mesh_manager.dart';
 import '../services/location_manager.dart';
 
@@ -108,7 +109,11 @@ class _ChatScreenState extends State<ChatScreen> {
               padding: EdgeInsets.all(8),
               itemCount: _messages.length,
               itemBuilder: (context, index) {
-                return _buildMessageBubble(_messages[index]);
+                final message = _messages[index];
+                return MessageBubble(
+                  message: message,
+                  isMe: message.isOwn,
+                );
               },
             ),
           ),

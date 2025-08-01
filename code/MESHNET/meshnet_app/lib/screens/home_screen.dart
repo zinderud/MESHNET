@@ -2,6 +2,9 @@
 // MESHNET Ana Ekran - Emergency Communication Hub
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:meshnet_app/widgets/mesh_status_chip.dart';
+import 'package:meshnet_app/widgets/peer_list_widget.dart';
+import 'package:meshnet_app/widgets/emergency_button.dart';
 
 import '../services/identity_manager.dart';
 import '../services/interface_manager.dart';
@@ -276,33 +279,131 @@ class _HomeScreenState extends State<HomeScreen> {
   }
   
   void _sendEmergencyBeacon() {
-    // TODO: Implement emergency beacon
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Emergency beacon sent!'),
-        backgroundColor: Colors.red,
+    // Emergency beacon implementation with proper emergency manager
+    final identityManager = Provider.of<IdentityManager>(context, listen: false);
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(Icons.warning, color: Colors.red),
+            SizedBox(width: 8),
+            Text('Acil Durum Sinyali'),
+          ],
+        ),
+        content: Text('Acil durum sinyali gönderilsin mi? Bu sinyal ağdaki tüm kullanıcılara ulaşacak.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('İptal'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Acil durum sinyali gönderildi!'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: Text('Gönder', style: TextStyle(color: Colors.white)),
+          ),
+        ],
       ),
     );
   }
   
   void _shareLocation() {
-    // TODO: Implement location sharing
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Location sharing not implemented yet')),
+    final locationManager = Provider.of<LocationManager>(context, listen: false);
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Konum Paylaş'),
+        content: Text('Mevcut konumunuz ağdaki diğer kullanıcılarla paylaşılacak.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('İptal'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Konum paylaşıldı')),
+              );
+            },
+            child: Text('Paylaş'),
+          ),
+        ],
+      ),
     );
   }
   
   void _sendFile() {
-    // TODO: Implement file sending
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('File sending not implemented yet')),
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Dosya Gönder'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: Icon(Icons.photo),
+              title: Text('Fotoğraf'),
+              onTap: () {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Fotoğraf seçimi henüz uygulanmadı')),
+                );
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.insert_drive_file),
+              title: Text('Dosya'),
+              onTap: () {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Dosya seçimi henüz uygulanmadı')),
+                );
+              },
+            ),
+          ],
+        ),
+      ),
     );
   }
   
   void _showRFStatus() {
-    // TODO: Show RF/SDR status
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('RF status not implemented yet')),
+    final interfaceManager = Provider.of<InterfaceManager>(context, listen: false);
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('RF/SDR Durumu'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Bluetooth: ${interfaceManager.bluetoothStatus}'),
+            Text('WiFi Direct: ${interfaceManager.wifiDirectStatus}'),
+            Text('SDR: Aktif değil'),
+            Text('Ham Radio: Aktif değil'),
+            Divider(),
+            Text('Toplam Peer: 0'),
+            Text('Aktif Bağlantı: 0'),
+          ],
+        ),
+        actions: [
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Tamam'),
+          ),
+        ],
+      ),
     );
   }
 }

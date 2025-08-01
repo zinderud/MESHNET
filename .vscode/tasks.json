@@ -1,0 +1,15 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Run MESHNET App with Performance Optimizations",
+			"type": "shell",
+			"command": "cd /media/zinderud/sade/code/clone/acildurum/code/MESHNET/meshnet_app && flutter run --hot",
+			"group": "build",
+			"isBackground": true,
+			"problemMatcher": [
+				"$dart-analyzer"
+			]
+		}
+	]
+}

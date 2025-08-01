@@ -1,5 +1,6 @@
 // lib/main.dart - MESHNET Bluetooth Mesh Uygulaması
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'screens/chat_screen.dart';
 import 'screens/emergency_location_screen.dart';
@@ -7,15 +8,43 @@ import 'screens/wifi_direct_screen.dart';
 import 'screens/sdr_screen.dart';
 import 'screens/ham_radio_screen.dart';
 import 'screens/emergency_screen.dart';
+import 'screens/home_screen.dart';
+import 'screens/settings_screen.dart';
 import 'services/bluetooth_mesh_manager.dart';
 import 'services/location_manager.dart';
 import 'services/wifi_direct_manager.dart';
 import 'services/sdr_manager.dart';
 import 'services/ham_radio_manager.dart';
 import 'services/emergency_manager.dart';
+import 'providers/settings_provider.dart';
+import 'services/optimization_manager.dart';
+import 'utils/logger.dart';
 
-void main() {
+void main() async {
+  // Ensure Flutter is initialized
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // Initialize optimization services
+  await _initializeOptimizationServices();
+  
   runApp(MeshNetApp());
+}
+
+Future<void> _initializeOptimizationServices() async {
+  try {
+    Logger.info('Initializing optimization services...');
+    
+    // Initialize the optimization manager which handles all performance services
+    final optimizationManager = OptimizationManager();
+    await optimizationManager.initialize();
+    
+    // Set initial optimization level to moderate
+    await optimizationManager.setOptimizationLevel(OptimizationLevel.moderate);
+    
+    Logger.info('Optimization services initialized successfully');
+  } catch (e) {
+    Logger.error('Failed to initialize optimization services', error: e);
+  }
 }
 
 class MeshNetApp extends StatelessWidget {
@@ -23,6 +52,10 @@ class MeshNetApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
+        // Settings Provider
+        ChangeNotifierProvider(create: (_) => SettingsProvider()),
+        
+        // Core Service Managers
         ChangeNotifierProvider(create: (_) {
           final manager = BluetoothMeshManager();
           manager.initialize(); // Auto-initialize
@@ -54,8 +87,8 @@ class MeshNetApp extends StatelessWidget {
           return manager;
         }),
       ],
-      child: Consumer<EmergencyManager>(
-        builder: (context, emergencyManager, child) {
+      child: Consumer2<EmergencyManager, SettingsProvider>(
+        builder: (context, emergencyManager, settingsProvider, child) {
           // Connect other providers to emergency manager
           final bluetoothManager = Provider.of<BluetoothMeshManager>(context, listen: false);
           final locationManager = Provider.of<LocationManager>(context, listen: false);
@@ -74,19 +107,47 @@ class MeshNetApp extends StatelessWidget {
           
           return MaterialApp(
             title: 'MESHNET - Emergency Mesh Network',
-            theme: ThemeData(
-              primarySwatch: Colors.blue,
-              visualDensity: VisualDensity.adaptivePlatformDensity,
-              appBarTheme: AppBarTheme(
-                backgroundColor: Colors.blue.shade700,
-                foregroundColor: Colors.white,
-                elevation: 2,
-              ),
-            ),
+            theme: _buildTheme(settingsProvider, false),
+            darkTheme: _buildTheme(settingsProvider, true),
+            themeMode: settingsProvider.themeMode,
             home: MainScreen(),
             debugShowCheckedModeBanner: false,
           );
         },
+      ),
+    );
+  }
+
+  ThemeData _buildTheme(SettingsProvider settings, bool isDark) {
+    final brightness = isDark ? Brightness.dark : Brightness.light;
+    final colorScheme = ColorScheme.fromSeed(
+      seedColor: settings.primaryColor,
+      brightness: brightness,
+    );
+
+    return ThemeData(
+      useMaterial3: true,
+      colorScheme: colorScheme,
+      fontFamily: settings.fontFamily,
+      visualDensity: VisualDensity.adaptivePlatformDensity,
+      appBarTheme: AppBarTheme(
+        backgroundColor: colorScheme.primary,
+        foregroundColor: colorScheme.onPrimary,
+        elevation: 2,
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: colorScheme.primary,
+          foregroundColor: colorScheme.onPrimary,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(settings.borderRadius),
+          ),
+        ),
+      ),
+      cardTheme: CardTheme(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(settings.borderRadius),
+        ),
       ),
     );
   }
@@ -97,62 +158,128 @@ class MainScreen extends StatefulWidget {
   _MainScreenState createState() => _MainScreenState();
 }
 
-class _MainScreenState extends State<MainScreen> {
+class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
   int _selectedIndex = 0;
+  OptimizationManager? _optimizationManager;
   
   final List<Widget> _screens = [
+    HomeScreen(),
     ChatScreen(),
     EmergencyLocationScreen(),
     WiFiDirectScreen(),
     SDRScreen(),
     EmergencyScreen(),
+    SettingsScreen(),
   ];
   
   final List<String> _titles = [
+    'Ana Sayfa',
     'MESHNET Chat',
     'Acil Durum GPS',
     'WiFi Direct',
     'RF & SDR',
     'Emergency Control',
+    'Ayarlar',
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _optimizationManager = OptimizationManager();
+    _initializePerformanceOptimizations();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  void _initializePerformanceOptimizations() {
+    // Schedule background optimizations
+    _optimizationManager?.scheduleBackgroundTask(
+      id: 'routine_optimization',
+      task: () => _optimizationManager?.performManualOptimization(),
+      interval: Duration(minutes: 5),
+      priority: 3,
+    );
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    
+    switch (state) {
+      case AppLifecycleState.paused:
+        // App is in background - optimize for battery
+        _optimizationManager?.optimizeForBattery();
+        break;
+      case AppLifecycleState.resumed:
+        // App is active - optimize for performance
+        _optimizationManager?.optimizeForPerformance();
+        break;
+      case AppLifecycleState.detached:
+        // App is being terminated
+        _optimizationManager?.dispose();
+        break;
+      default:
+        break;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _screens[_selectedIndex],
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        currentIndex: _selectedIndex,
-        onTap: (index) {
-          setState(() {
-            _selectedIndex = index;
-          });
+      body: IndexedStack(
+        index: _selectedIndex,
+        children: _screens,
+      ),
+      bottomNavigationBar: Consumer<SettingsProvider>(
+        builder: (context, settings, child) {
+          return BottomNavigationBar(
+            type: BottomNavigationBarType.fixed,
+            currentIndex: _selectedIndex,
+            onTap: (index) {
+              setState(() {
+                _selectedIndex = index;
+              });
+            },
+            selectedItemColor: settings.primaryColor,
+            unselectedItemColor: Colors.grey,
+            showUnselectedLabels: true,
+            items: [
+              BottomNavigationBarItem(
+                icon: Icon(Icons.home),
+                label: 'Ana Sayfa',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.chat),
+                label: 'Chat',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.emergency_share),
+                label: 'Acil GPS',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.wifi),
+                label: 'WiFi Direct',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.radio),
+                label: 'RF & SDR',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.emergency),
+                label: 'Emergency',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.settings),
+                label: 'Ayarlar',
+              ),
+            ],
+          );
         },
-        selectedItemColor: Colors.blue,
-        unselectedItemColor: Colors.grey,
-        showUnselectedLabels: true,
-        items: [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.chat),
-            label: 'Chat',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.emergency_share),
-            label: 'Acil GPS',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.wifi),
-            label: 'WiFi Direct',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.radio),
-            label: 'RF & SDR',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.emergency),
-            label: 'Emergency',
-          ),
-        ],
       ),
     );
   }
