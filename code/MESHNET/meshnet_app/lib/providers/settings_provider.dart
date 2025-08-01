@@ -1,10 +1,12 @@
 // lib/providers/settings_provider.dart - Settings State Management
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:meshnet_app/models/settings.dart';
 import 'package:meshnet_app/utils/logger.dart';
 
 /// Settings provider for managing application settings
-class SettingsProvider extends ChangeNotifier with MeshLogger {
+class SettingsProvider extends ChangeNotifier {
+  final Logger _logger = Logger('SettingsProvider');
   AppSettings _settings = AppSettings.defaults();
   bool _isLoading = false;
   String? _error;
@@ -33,6 +35,18 @@ class SettingsProvider extends ChangeNotifier with MeshLogger {
   /// System settings
   SystemSettings get system => _settings.system;
 
+  // Theme mode getter for MaterialApp
+  ThemeMode get themeMode => ui.darkMode ? ThemeMode.dark : ThemeMode.light;
+
+  // Primary color for theme
+  Color get primaryColor => Color(ui.themeColor);
+
+  // Font family for theme
+  String? get fontFamily => 'Roboto'; // Default font family
+
+  // Border radius for UI components
+  double get borderRadius => 8.0; // Default border radius
+
   /// Load settings from storage
   Future<void> loadSettings() async {
     _isLoading = true;
@@ -40,16 +54,16 @@ class SettingsProvider extends ChangeNotifier with MeshLogger {
     notifyListeners();
 
     try {
-      logInfo('Loading settings from storage');
+      _logger.info('Loading settings from storage');
       
       // TODO: Implement actual storage loading
       // For now, use defaults
       _settings = AppSettings.defaults();
       
-      logInfo('Settings loaded successfully');
+      _logger.info('Settings loaded successfully');
     } catch (e) {
       _error = 'Failed to load settings: $e';
-      logError('Failed to load settings', error: e);
+      _logger.severe('Failed to load settings', error: e);
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -63,16 +77,16 @@ class SettingsProvider extends ChangeNotifier with MeshLogger {
     notifyListeners();
 
     try {
-      logInfo('Saving settings to storage');
+      _logger.info('Saving settings to storage');
       
       // TODO: Implement actual storage saving
       final json = _settings.toJson();
-      logDebug('Settings JSON: $json');
+      _logger.fine('Settings JSON: $json');
       
-      logInfo('Settings saved successfully');
+      _logger.info('Settings saved successfully');
     } catch (e) {
       _error = 'Failed to save settings: $e';
-      logError('Failed to save settings', error: e);
+      _logger.severe('Failed to save settings', error: e);
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -81,7 +95,7 @@ class SettingsProvider extends ChangeNotifier with MeshLogger {
 
   /// Update network settings
   Future<void> updateNetworkSettings(NetworkSettings newNetwork) async {
-    logInfo('Updating network settings');
+    _logger.info('Updating network settings');
     
     _settings = _settings.copyWith(network: newNetwork);
     notifyListeners();
@@ -91,7 +105,7 @@ class SettingsProvider extends ChangeNotifier with MeshLogger {
 
   /// Update emergency settings
   Future<void> updateEmergencySettings(EmergencySettings newEmergency) async {
-    logInfo('Updating emergency settings');
+    _logger.info('Updating emergency settings');
     
     _settings = _settings.copyWith(emergency: newEmergency);
     notifyListeners();
@@ -101,7 +115,7 @@ class SettingsProvider extends ChangeNotifier with MeshLogger {
 
   /// Update UI settings
   Future<void> updateUISettings(UISettings newUI) async {
-    logInfo('Updating UI settings');
+    _logger.info('Updating UI settings');
     
     _settings = _settings.copyWith(ui: newUI);
     notifyListeners();
@@ -111,7 +125,7 @@ class SettingsProvider extends ChangeNotifier with MeshLogger {
 
   /// Update security settings
   Future<void> updateSecuritySettings(SecuritySettings newSecurity) async {
-    logInfo('Updating security settings');
+    _logger.info('Updating security settings');
     
     _settings = _settings.copyWith(security: newSecurity);
     notifyListeners();
@@ -121,7 +135,7 @@ class SettingsProvider extends ChangeNotifier with MeshLogger {
 
   /// Update system settings
   Future<void> updateSystemSettings(SystemSettings newSystem) async {
-    logInfo('Updating system settings');
+    _logger.info('Updating system settings');
     
     _settings = _settings.copyWith(system: newSystem);
     notifyListeners();
@@ -131,7 +145,7 @@ class SettingsProvider extends ChangeNotifier with MeshLogger {
 
   /// Reset settings to defaults
   Future<void> resetToDefaults() async {
-    logInfo('Resetting settings to defaults');
+    _logger.info('Resetting settings to defaults');
     
     _settings = AppSettings.defaults();
     notifyListeners();

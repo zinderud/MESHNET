@@ -1,23 +1,24 @@
 // lib/main.dart - MESHNET Bluetooth Mesh Uygulaması
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'screens/chat_screen.dart';
+import 'screens/network_status_screen.dart';
 import 'screens/emergency_location_screen.dart';
-import 'screens/wifi_direct_screen.dart';
-import 'screens/sdr_screen.dart';
-import 'screens/ham_radio_screen.dart';
-import 'screens/emergency_screen.dart';
-import 'screens/home_screen.dart';
 import 'screens/settings_screen.dart';
-import 'services/bluetooth_mesh_manager.dart';
-import 'services/location_manager.dart';
-import 'services/wifi_direct_manager.dart';
-import 'services/sdr_manager.dart';
-import 'services/ham_radio_manager.dart';
-import 'services/emergency_manager.dart';
+import 'screens/performance_screen.dart';
 import 'providers/settings_provider.dart';
+import 'providers/network_provider.dart';
+import 'providers/location_provider.dart';
+import 'providers/emergency_provider.dart';
+import 'providers/bluetooth_provider.dart';
+import 'providers/wifi_direct_provider.dart';
+import 'providers/sdr_provider.dart';
 import 'services/optimization_manager.dart';
+import 'services/performance_monitor.dart';
+import 'services/memory_optimizer.dart';
+import 'services/cpu_optimizer.dart';
+import 'services/network_optimizer.dart';
+import 'services/battery_optimizer.dart';
 import 'utils/logger.dart';
 
 void main() async {
@@ -31,8 +32,9 @@ void main() async {
 }
 
 Future<void> _initializeOptimizationServices() async {
+  final logger = Logger('OptimizationServices');
   try {
-    Logger.info('Initializing optimization services...');
+    logger.info('Initializing optimization services...');
     
     // Initialize the optimization manager which handles all performance services
     final optimizationManager = OptimizationManager();
@@ -41,9 +43,9 @@ Future<void> _initializeOptimizationServices() async {
     // Set initial optimization level to moderate
     await optimizationManager.setOptimizationLevel(OptimizationLevel.moderate);
     
-    Logger.info('Optimization services initialized successfully');
+    logger.info('Optimization services initialized successfully');
   } catch (e) {
-    Logger.error('Failed to initialize optimization services', error: e);
+    logger.severe('Failed to initialize optimization services', e);
   }
 }
 

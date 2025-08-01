@@ -377,6 +377,25 @@ class UISettings {
   final bool vibrationEnabled;
   final bool notificationsEnabled;
   final int themeColor;
+  
+  // Additional UI settings for enhanced functionality
+  final bool showAvatars;
+  final String messageBubbleStyle;
+  final bool enableAnimations;
+  final double animationSpeed;
+  final bool hapticFeedback;
+  final bool soundEffects;
+  final String layoutDensity;
+  final bool compactMode;
+  final bool showNavigationLabels;
+  final String tabBarPosition;
+  final bool highContrastMode;
+  final bool largeTextMode;
+  final bool screenReaderSupport;
+  final bool reduceMotion;
+  final bool developerMode;
+  final bool showDebugInfo;
+  final bool showPerformanceMetrics;
 
   const UISettings({
     required this.darkMode,
@@ -388,6 +407,23 @@ class UISettings {
     required this.vibrationEnabled,
     required this.notificationsEnabled,
     required this.themeColor,
+    this.showAvatars = true,
+    this.messageBubbleStyle = 'modern',
+    this.enableAnimations = true,
+    this.animationSpeed = 1.0,
+    this.hapticFeedback = true,
+    this.soundEffects = true,
+    this.layoutDensity = 'comfortable',
+    this.compactMode = false,
+    this.showNavigationLabels = true,
+    this.tabBarPosition = 'bottom',
+    this.highContrastMode = false,
+    this.largeTextMode = false,
+    this.screenReaderSupport = false,
+    this.reduceMotion = false,
+    this.developerMode = false,
+    this.showDebugInfo = false,
+    this.showPerformanceMetrics = false,
   });
 
   factory UISettings.defaults() {
@@ -414,6 +450,23 @@ class UISettings {
     bool? vibrationEnabled,
     bool? notificationsEnabled,
     int? themeColor,
+    bool? showAvatars,
+    String? messageBubbleStyle,
+    bool? enableAnimations,
+    double? animationSpeed,
+    bool? hapticFeedback,
+    bool? soundEffects,
+    String? layoutDensity,
+    bool? compactMode,
+    bool? showNavigationLabels,
+    String? tabBarPosition,
+    bool? highContrastMode,
+    bool? largeTextMode,
+    bool? screenReaderSupport,
+    bool? reduceMotion,
+    bool? developerMode,
+    bool? showDebugInfo,
+    bool? showPerformanceMetrics,
   }) {
     return UISettings(
       darkMode: darkMode ?? this.darkMode,
@@ -425,6 +478,23 @@ class UISettings {
       vibrationEnabled: vibrationEnabled ?? this.vibrationEnabled,
       notificationsEnabled: notificationsEnabled ?? this.notificationsEnabled,
       themeColor: themeColor ?? this.themeColor,
+      showAvatars: showAvatars ?? this.showAvatars,
+      messageBubbleStyle: messageBubbleStyle ?? this.messageBubbleStyle,
+      enableAnimations: enableAnimations ?? this.enableAnimations,
+      animationSpeed: animationSpeed ?? this.animationSpeed,
+      hapticFeedback: hapticFeedback ?? this.hapticFeedback,
+      soundEffects: soundEffects ?? this.soundEffects,
+      layoutDensity: layoutDensity ?? this.layoutDensity,
+      compactMode: compactMode ?? this.compactMode,
+      showNavigationLabels: showNavigationLabels ?? this.showNavigationLabels,
+      tabBarPosition: tabBarPosition ?? this.tabBarPosition,
+      highContrastMode: highContrastMode ?? this.highContrastMode,
+      largeTextMode: largeTextMode ?? this.largeTextMode,
+      screenReaderSupport: screenReaderSupport ?? this.screenReaderSupport,
+      reduceMotion: reduceMotion ?? this.reduceMotion,
+      developerMode: developerMode ?? this.developerMode,
+      showDebugInfo: showDebugInfo ?? this.showDebugInfo,
+      showPerformanceMetrics: showPerformanceMetrics ?? this.showPerformanceMetrics,
     );
   }
 
@@ -439,6 +509,23 @@ class UISettings {
       'vibrationEnabled': vibrationEnabled,
       'notificationsEnabled': notificationsEnabled,
       'themeColor': themeColor,
+      'showAvatars': showAvatars,
+      'messageBubbleStyle': messageBubbleStyle,
+      'enableAnimations': enableAnimations,
+      'animationSpeed': animationSpeed,
+      'hapticFeedback': hapticFeedback,
+      'soundEffects': soundEffects,
+      'layoutDensity': layoutDensity,
+      'compactMode': compactMode,
+      'showNavigationLabels': showNavigationLabels,
+      'tabBarPosition': tabBarPosition,
+      'highContrastMode': highContrastMode,
+      'largeTextMode': largeTextMode,
+      'screenReaderSupport': screenReaderSupport,
+      'reduceMotion': reduceMotion,
+      'developerMode': developerMode,
+      'showDebugInfo': showDebugInfo,
+      'showPerformanceMetrics': showPerformanceMetrics,
     };
   }
 
@@ -453,6 +540,23 @@ class UISettings {
       vibrationEnabled: json['vibrationEnabled'] ?? true,
       notificationsEnabled: json['notificationsEnabled'] ?? true,
       themeColor: json['themeColor'] ?? 0xFF2196F3,
+      showAvatars: json['showAvatars'] ?? true,
+      messageBubbleStyle: json['messageBubbleStyle'] ?? 'modern',
+      enableAnimations: json['enableAnimations'] ?? true,
+      animationSpeed: json['animationSpeed']?.toDouble() ?? 1.0,
+      hapticFeedback: json['hapticFeedback'] ?? true,
+      soundEffects: json['soundEffects'] ?? true,
+      layoutDensity: json['layoutDensity'] ?? 'comfortable',
+      compactMode: json['compactMode'] ?? false,
+      showNavigationLabels: json['showNavigationLabels'] ?? true,
+      tabBarPosition: json['tabBarPosition'] ?? 'bottom',
+      highContrastMode: json['highContrastMode'] ?? false,
+      largeTextMode: json['largeTextMode'] ?? false,
+      screenReaderSupport: json['screenReaderSupport'] ?? false,
+      reduceMotion: json['reduceMotion'] ?? false,
+      developerMode: json['developerMode'] ?? false,
+      showDebugInfo: json['showDebugInfo'] ?? false,
+      showPerformanceMetrics: json['showPerformanceMetrics'] ?? false,
     );
   }
 }
@@ -469,6 +573,20 @@ class SecuritySettings {
   final int maxLoginAttempts;
   final bool trustScoreEnabled;
   final double minTrustScore;
+  
+  // Additional security settings
+  final String authenticationMethod;
+  final bool signMessages;
+  final bool verifySignatures;
+  final String signatureAlgorithm;
+  final bool secureProtocolsOnly;
+  final bool firewallEnabled;
+  final bool intrusionDetection;
+  final List<String> trustedPeers;
+  final bool anonymousMode;
+  final bool hideMetadata;
+  final Duration dataRetentionPeriod;
+  final bool autoDeleteMessages;
 
   const SecuritySettings({
     required this.encryptionEnabled,
@@ -481,6 +599,18 @@ class SecuritySettings {
     required this.maxLoginAttempts,
     required this.trustScoreEnabled,
     required this.minTrustScore,
+    this.authenticationMethod = 'passphrase',
+    this.signMessages = true,
+    this.verifySignatures = true,
+    this.signatureAlgorithm = 'Ed25519',
+    this.secureProtocolsOnly = true,
+    this.firewallEnabled = true,
+    this.intrusionDetection = true,
+    this.trustedPeers = const [],
+    this.anonymousMode = false,
+    this.hideMetadata = false,
+    this.dataRetentionPeriod = const Duration(days: 30),
+    this.autoDeleteMessages = false,
   });
 
   factory SecuritySettings.defaults() {
@@ -509,6 +639,18 @@ class SecuritySettings {
     int? maxLoginAttempts,
     bool? trustScoreEnabled,
     double? minTrustScore,
+    String? authenticationMethod,
+    bool? signMessages,
+    bool? verifySignatures,
+    String? signatureAlgorithm,
+    bool? secureProtocolsOnly,
+    bool? firewallEnabled,
+    bool? intrusionDetection,
+    List<String>? trustedPeers,
+    bool? anonymousMode,
+    bool? hideMetadata,
+    Duration? dataRetentionPeriod,
+    bool? autoDeleteMessages,
   }) {
     return SecuritySettings(
       encryptionEnabled: encryptionEnabled ?? this.encryptionEnabled,
@@ -521,6 +663,18 @@ class SecuritySettings {
       maxLoginAttempts: maxLoginAttempts ?? this.maxLoginAttempts,
       trustScoreEnabled: trustScoreEnabled ?? this.trustScoreEnabled,
       minTrustScore: minTrustScore ?? this.minTrustScore,
+      authenticationMethod: authenticationMethod ?? this.authenticationMethod,
+      signMessages: signMessages ?? this.signMessages,
+      verifySignatures: verifySignatures ?? this.verifySignatures,
+      signatureAlgorithm: signatureAlgorithm ?? this.signatureAlgorithm,
+      secureProtocolsOnly: secureProtocolsOnly ?? this.secureProtocolsOnly,
+      firewallEnabled: firewallEnabled ?? this.firewallEnabled,
+      intrusionDetection: intrusionDetection ?? this.intrusionDetection,
+      trustedPeers: trustedPeers ?? this.trustedPeers,
+      anonymousMode: anonymousMode ?? this.anonymousMode,
+      hideMetadata: hideMetadata ?? this.hideMetadata,
+      dataRetentionPeriod: dataRetentionPeriod ?? this.dataRetentionPeriod,
+      autoDeleteMessages: autoDeleteMessages ?? this.autoDeleteMessages,
     );
   }
 
@@ -536,6 +690,18 @@ class SecuritySettings {
       'maxLoginAttempts': maxLoginAttempts,
       'trustScoreEnabled': trustScoreEnabled,
       'minTrustScore': minTrustScore,
+      'authenticationMethod': authenticationMethod,
+      'signMessages': signMessages,
+      'verifySignatures': verifySignatures,
+      'signatureAlgorithm': signatureAlgorithm,
+      'secureProtocolsOnly': secureProtocolsOnly,
+      'firewallEnabled': firewallEnabled,
+      'intrusionDetection': intrusionDetection,
+      'trustedPeers': trustedPeers,
+      'anonymousMode': anonymousMode,
+      'hideMetadata': hideMetadata,
+      'dataRetentionPeriod': dataRetentionPeriod.inMilliseconds,
+      'autoDeleteMessages': autoDeleteMessages,
     };
   }
 
@@ -551,6 +717,18 @@ class SecuritySettings {
       maxLoginAttempts: json['maxLoginAttempts'] ?? 3,
       trustScoreEnabled: json['trustScoreEnabled'] ?? true,
       minTrustScore: json['minTrustScore']?.toDouble() ?? 0.5,
+      authenticationMethod: json['authenticationMethod'] ?? 'passphrase',
+      signMessages: json['signMessages'] ?? true,
+      verifySignatures: json['verifySignatures'] ?? true,
+      signatureAlgorithm: json['signatureAlgorithm'] ?? 'Ed25519',
+      secureProtocolsOnly: json['secureProtocolsOnly'] ?? true,
+      firewallEnabled: json['firewallEnabled'] ?? true,
+      intrusionDetection: json['intrusionDetection'] ?? true,
+      trustedPeers: List<String>.from(json['trustedPeers'] ?? []),
+      anonymousMode: json['anonymousMode'] ?? false,
+      hideMetadata: json['hideMetadata'] ?? false,
+      dataRetentionPeriod: Duration(milliseconds: json['dataRetentionPeriod'] ?? 2592000000),
+      autoDeleteMessages: json['autoDeleteMessages'] ?? false,
     );
   }
 }
@@ -566,6 +744,26 @@ class SystemSettings {
   final int maxCacheSize;
   final bool lowPowerMode;
   final String dataDirectory;
+  
+  // Additional system settings
+  final String performanceMode;
+  final double cpuUsageLimit;
+  final double memoryUsageLimit;
+  final bool backgroundProcessing;
+  final bool autoSleepMode;
+  final String storageLocation;
+  final int maxStorageSize;
+  final bool autoCleanup;
+  final Duration cleanupInterval;
+  final bool enableLogging;
+  final int maxLogFileSize;
+  final bool usageAnalytics;
+  final bool autoUpdates;
+  final Duration updateCheckFrequency;
+  final bool betaUpdates;
+  final bool autoBackup;
+  final Duration backupFrequency;
+  final String backupLocation;
 
   const SystemSettings({
     required this.debugMode,
@@ -577,6 +775,24 @@ class SystemSettings {
     required this.maxCacheSize,
     required this.lowPowerMode,
     required this.dataDirectory,
+    this.performanceMode = 'balanced',
+    this.cpuUsageLimit = 80.0,
+    this.memoryUsageLimit = 512.0,
+    this.backgroundProcessing = true,
+    this.autoSleepMode = false,
+    this.storageLocation = 'internal',
+    this.maxStorageSize = 1024,
+    this.autoCleanup = true,
+    this.cleanupInterval = const Duration(days: 7),
+    this.enableLogging = true,
+    this.maxLogFileSize = 10,
+    this.usageAnalytics = false,
+    this.autoUpdates = true,
+    this.updateCheckFrequency = const Duration(days: 1),
+    this.betaUpdates = false,
+    this.autoBackup = false,
+    this.backupFrequency = const Duration(days: 7),
+    this.backupLocation = 'local',
   });
 
   factory SystemSettings.defaults() {
@@ -603,6 +819,24 @@ class SystemSettings {
     int? maxCacheSize,
     bool? lowPowerMode,
     String? dataDirectory,
+    String? performanceMode,
+    double? cpuUsageLimit,
+    double? memoryUsageLimit,
+    bool? backgroundProcessing,
+    bool? autoSleepMode,
+    String? storageLocation,
+    int? maxStorageSize,
+    bool? autoCleanup,
+    Duration? cleanupInterval,
+    bool? enableLogging,
+    int? maxLogFileSize,
+    bool? usageAnalytics,
+    bool? autoUpdates,
+    Duration? updateCheckFrequency,
+    bool? betaUpdates,
+    bool? autoBackup,
+    Duration? backupFrequency,
+    String? backupLocation,
   }) {
     return SystemSettings(
       debugMode: debugMode ?? this.debugMode,
@@ -614,6 +848,24 @@ class SystemSettings {
       maxCacheSize: maxCacheSize ?? this.maxCacheSize,
       lowPowerMode: lowPowerMode ?? this.lowPowerMode,
       dataDirectory: dataDirectory ?? this.dataDirectory,
+      performanceMode: performanceMode ?? this.performanceMode,
+      cpuUsageLimit: cpuUsageLimit ?? this.cpuUsageLimit,
+      memoryUsageLimit: memoryUsageLimit ?? this.memoryUsageLimit,
+      backgroundProcessing: backgroundProcessing ?? this.backgroundProcessing,
+      autoSleepMode: autoSleepMode ?? this.autoSleepMode,
+      storageLocation: storageLocation ?? this.storageLocation,
+      maxStorageSize: maxStorageSize ?? this.maxStorageSize,
+      autoCleanup: autoCleanup ?? this.autoCleanup,
+      cleanupInterval: cleanupInterval ?? this.cleanupInterval,
+      enableLogging: enableLogging ?? this.enableLogging,
+      maxLogFileSize: maxLogFileSize ?? this.maxLogFileSize,
+      usageAnalytics: usageAnalytics ?? this.usageAnalytics,
+      autoUpdates: autoUpdates ?? this.autoUpdates,
+      updateCheckFrequency: updateCheckFrequency ?? this.updateCheckFrequency,
+      betaUpdates: betaUpdates ?? this.betaUpdates,
+      autoBackup: autoBackup ?? this.autoBackup,
+      backupFrequency: backupFrequency ?? this.backupFrequency,
+      backupLocation: backupLocation ?? this.backupLocation,
     );
   }
 
@@ -628,6 +880,24 @@ class SystemSettings {
       'maxCacheSize': maxCacheSize,
       'lowPowerMode': lowPowerMode,
       'dataDirectory': dataDirectory,
+      'performanceMode': performanceMode,
+      'cpuUsageLimit': cpuUsageLimit,
+      'memoryUsageLimit': memoryUsageLimit,
+      'backgroundProcessing': backgroundProcessing,
+      'autoSleepMode': autoSleepMode,
+      'storageLocation': storageLocation,
+      'maxStorageSize': maxStorageSize,
+      'autoCleanup': autoCleanup,
+      'cleanupInterval': cleanupInterval.inMilliseconds,
+      'enableLogging': enableLogging,
+      'maxLogFileSize': maxLogFileSize,
+      'usageAnalytics': usageAnalytics,
+      'autoUpdates': autoUpdates,
+      'updateCheckFrequency': updateCheckFrequency.inMilliseconds,
+      'betaUpdates': betaUpdates,
+      'autoBackup': autoBackup,
+      'backupFrequency': backupFrequency.inMilliseconds,
+      'backupLocation': backupLocation,
     };
   }
 
@@ -642,6 +912,24 @@ class SystemSettings {
       maxCacheSize: json['maxCacheSize'] ?? (100 * 1024 * 1024),
       lowPowerMode: json['lowPowerMode'] ?? false,
       dataDirectory: json['dataDirectory'] ?? '/data/meshnet',
+      performanceMode: json['performanceMode'] ?? 'balanced',
+      cpuUsageLimit: json['cpuUsageLimit']?.toDouble() ?? 80.0,
+      memoryUsageLimit: json['memoryUsageLimit']?.toDouble() ?? 512.0,
+      backgroundProcessing: json['backgroundProcessing'] ?? true,
+      autoSleepMode: json['autoSleepMode'] ?? false,
+      storageLocation: json['storageLocation'] ?? 'internal',
+      maxStorageSize: json['maxStorageSize'] ?? 1024,
+      autoCleanup: json['autoCleanup'] ?? true,
+      cleanupInterval: Duration(milliseconds: json['cleanupInterval'] ?? 604800000),
+      enableLogging: json['enableLogging'] ?? true,
+      maxLogFileSize: json['maxLogFileSize'] ?? 10,
+      usageAnalytics: json['usageAnalytics'] ?? false,
+      autoUpdates: json['autoUpdates'] ?? true,
+      updateCheckFrequency: Duration(milliseconds: json['updateCheckFrequency'] ?? 86400000),
+      betaUpdates: json['betaUpdates'] ?? false,
+      autoBackup: json['autoBackup'] ?? false,
+      backupFrequency: Duration(milliseconds: json['backupFrequency'] ?? 604800000),
+      backupLocation: json['backupLocation'] ?? 'local',
     );
   }
 }
