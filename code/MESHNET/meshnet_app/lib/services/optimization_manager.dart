@@ -1,12 +1,13 @@
-// lib/services/optimization_manager.dart - Ana Optimizasyon Yöneticisi
+// lib/services/optimization_manager.dart - Performance Optimization Manager
 import 'dart:async';
+import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:meshnet_app/utils/logger.dart';
-import 'package:meshnet_app/services/performance_monitor.dart';
-import 'package:meshnet_app/services/memory_optimizer.dart';
-import 'package:meshnet_app/services/cpu_optimizer.dart';
-import 'package:meshnet_app/services/network_optimizer.dart';
-import 'package:meshnet_app/services/battery_optimizer.dart';
+import 'performance_monitor.dart';
+import 'memory_optimizer.dart';
+import 'cpu_optimizer.dart';
+import 'network_optimizer.dart';
+import 'battery_optimizer.dart';
 
 enum OptimizationLevel {
   disabled,
@@ -50,7 +51,7 @@ class OptimizationManager {
   Future<void> initialize() async {
     if (_isInitialized) return;
 
-    Logger.info('Optimization Manager initializing...');
+    Logger("OptimizationManager").info('Optimization Manager initializing...');
 
     try {
       // Initialize core services
@@ -72,10 +73,10 @@ class OptimizationManager {
       _startStatisticsCollection();
 
       _isInitialized = true;
-      Logger.info('Optimization Manager initialized successfully');
+      Logger("OptimizationManager").info('Optimization Manager initialized successfully');
 
     } catch (e) {
-      Logger.error('Failed to initialize Optimization Manager', error: e);
+      Logger("OptimizationManager").severe('Failed to initialize Optimization Manager', error: e);
       rethrow;
     }
   }
@@ -104,7 +105,7 @@ class OptimizationManager {
       final requiredLevel = _determineOptimizationLevel(metrics, batteryStats);
       
       if (requiredLevel != _currentLevel) {
-        Logger.info('Auto-optimization changing level: $_currentLevel -> $requiredLevel');
+        Logger("OptimizationManager").info('Auto-optimization changing level: $_currentLevel -> $requiredLevel');
         await setOptimizationLevel(requiredLevel);
       }
       
@@ -112,7 +113,7 @@ class OptimizationManager {
       await _performTargetedOptimizations(metrics, batteryStats);
       
     } catch (e) {
-      Logger.error('Auto-optimization failed', error: e);
+      Logger("OptimizationManager").severe('Auto-optimization failed', error: e);
     }
   }
 
@@ -163,7 +164,7 @@ class OptimizationManager {
     
     // Memory optimization
     if (memoryUsage > memoryPressureThreshold) {
-      Logger.info('High memory usage detected, performing cleanup');
+      Logger("OptimizationManager").info('High memory usage detected, performing cleanup');
       _memoryOptimizer.setMemoryPressure(true);
       _memoryOptimizer.performCleanup();
     } else {
@@ -172,7 +173,7 @@ class OptimizationManager {
     
     // CPU optimization
     if (cpuUsage > cpuUsageThreshold) {
-      Logger.info('High CPU usage detected, optimizing for battery');
+      Logger("OptimizationManager").info('High CPU usage detected, optimizing for battery');
       await _cpuOptimizer.optimizeForBatteryLife();
     }
     
@@ -194,7 +195,7 @@ class OptimizationManager {
     final previousLevel = _currentLevel;
     _currentLevel = level;
 
-    Logger.info('Setting optimization level: $previousLevel -> $level');
+    Logger("OptimizationManager").info('Setting optimization level: $previousLevel -> $level');
 
     try {
       await _applyOptimizationLevel(level);
@@ -210,10 +211,10 @@ class OptimizationManager {
       _totalOptimizations++;
       _lastOptimization = DateTime.now();
 
-      Logger.info('Optimization level applied successfully: $level');
+      Logger("OptimizationManager").info('Optimization level applied successfully: $level');
 
     } catch (e) {
-      Logger.error('Failed to apply optimization level: $level', error: e);
+      Logger("OptimizationManager").severe('Failed to apply optimization level: $level', error: e);
       
       final result = OptimizationResult(
         level: level,
@@ -301,7 +302,7 @@ class OptimizationManager {
 
   void _cancelBackgroundTasks({required int priorityThreshold}) {
     // This would integrate with actual task management system
-    Logger.info('Cancelling background tasks below priority $priorityThreshold');
+    Logger("OptimizationManager").info('Cancelling background tasks below priority $priorityThreshold');
   }
 
   // Performance Measurement
@@ -341,16 +342,16 @@ class OptimizationManager {
   // Public API
   void enableAutoOptimization() {
     _autoOptimizationEnabled = true;
-    Logger.info('Auto-optimization enabled');
+    Logger("OptimizationManager").info('Auto-optimization enabled');
   }
 
   void disableAutoOptimization() {
     _autoOptimizationEnabled = false;
-    Logger.info('Auto-optimization disabled');
+    Logger("OptimizationManager").info('Auto-optimization disabled');
   }
 
   Future<void> performManualOptimization() async {
-    Logger.info('Performing manual optimization');
+    Logger("OptimizationManager").info('Performing manual optimization');
     await _performAutoOptimization();
   }
 
@@ -360,12 +361,12 @@ class OptimizationManager {
   }
 
   Future<void> optimizeForBattery() async {
-    Logger.info('Battery optimization requested');
+    Logger("OptimizationManager").info('Battery optimization requested');
     await setOptimizationLevel(OptimizationLevel.aggressive);
   }
 
   Future<void> optimizeForPerformance() async {
-    Logger.info('Performance optimization requested');
+    Logger("OptimizationManager").info('Performance optimization requested');
     await setOptimizationLevel(OptimizationLevel.basic);
   }
 
@@ -429,7 +430,7 @@ class OptimizationManager {
   Future<void> runOptimizationTest() async {
     if (!kDebugMode) return;
     
-    Logger.info('Running optimization test suite');
+    Logger("OptimizationManager").info('Running optimization test suite');
     
     try {
       // Test all optimization levels
@@ -447,10 +448,10 @@ class OptimizationManager {
       // Return to moderate level
       await setOptimizationLevel(OptimizationLevel.moderate);
       
-      Logger.info('Optimization test completed successfully');
+      Logger("OptimizationManager").info('Optimization test completed successfully');
       
     } catch (e) {
-      Logger.error('Optimization test failed', error: e);
+      Logger("OptimizationManager").severe('Optimization test failed', error: e);
     }
   }
 
@@ -467,7 +468,7 @@ class OptimizationManager {
     }
     
     _isInitialized = false;
-    Logger.info('Optimization Manager disposed');
+    Logger("OptimizationManager").info('Optimization Manager disposed');
   }
 }
 
@@ -495,5 +496,16 @@ class OptimizationResult {
       'error': error,
       'improvement_metrics': improvementMetrics,
     };
+  }
+}
+
+extension OptimizationManagerExtensions on OptimizationManager {
+  /// Schedule a background optimization task
+  void scheduleBackgroundTask() {
+    if (!_isInitialized) return;
+    
+    Timer(Duration(seconds: 5), () async {
+      await _performAutoOptimization();
+    });
   }
 }

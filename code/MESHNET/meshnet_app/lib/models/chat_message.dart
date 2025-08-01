@@ -67,10 +67,35 @@ class ChatMessage {
     );
   }
 
+  // Factory constructor for simple text messages
+  factory ChatMessage.simple({
+    required String content,
+    bool isOwn = false,
+    bool isSystem = false,
+    bool isError = false,
+    String? senderName,
+    String? senderId,
+  }) {
+    return ChatMessage(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      senderId: senderId ?? (isOwn ? 'me' : 'unknown'),
+      senderName: senderName ?? (isOwn ? 'Ben' : 'Bilinmeyen'),
+      content: content,
+      type: isSystem ? MessageType.emergency : MessageType.text,
+      status: isOwn ? MessageStatus.sent : MessageStatus.delivered,
+      timestamp: DateTime.now(),
+    );
+  }
+
   // Reset method for memory pool reuse
   ChatMessage reset() {
     return ChatMessage.empty();
   }
+
+  // Convenience getters for UI compatibility
+  bool get isOwn => senderId == 'me';
+  bool get isSystem => type == MessageType.emergency;
+  bool get isError => status == MessageStatus.failed;
 
   // Copy with method for immutable updates
   ChatMessage copyWith({

@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:meshnet_app/widgets/message_bubble.dart';
+import 'package:meshnet_app/models/chat_message.dart';
 import '../services/bluetooth_mesh_manager.dart';
 import '../services/location_manager.dart';
 
@@ -35,7 +36,7 @@ class _ChatScreenState extends State<ChatScreen> {
       _meshManager!.addListener(_onMeshNetworkChanged);
       
       setState(() {
-        _messages.add(ChatMessage(
+        _messages.add(ChatMessage.simple(
           content: 'MESHNET başlatıldı. Node ID: ${_meshManager!.nodeId}',
           isSystem: true,
           timestamp: DateTime.now(),
@@ -43,7 +44,7 @@ class _ChatScreenState extends State<ChatScreen> {
       });
     } else {
       setState(() {
-        _messages.add(ChatMessage(
+        _messages.add(ChatMessage.simple(
           content: 'MESHNET başlatılamadı. Bluetooth izinlerini kontrol edin.',
           isSystem: true,
           isError: true,
@@ -434,7 +435,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
     // Add own message to UI immediately
     setState(() {
-      _messages.add(ChatMessage(
+      _messages.add(ChatMessage.simple(
         content: content,
         isOwn: true,
         timestamp: DateTime.now(),
@@ -443,11 +444,11 @@ class _ChatScreenState extends State<ChatScreen> {
 
     // Send via mesh network
     try {
-      await _meshManager!.sendChatMessage(content);
+      await _meshManager!.sendChatMessage.simple(content);
       _messageController.clear();
     } catch (e) {
       setState(() {
-        _messages.add(ChatMessage(
+        _messages.add(ChatMessage.simple(
           content: 'Mesaj gönderilemedi: $e',
           isSystem: true,
           isError: true,
@@ -491,7 +492,7 @@ class _ChatScreenState extends State<ChatScreen> {
       
       // Add location message to chat
       setState(() {
-        _messages.add(ChatMessage(
+        _messages.add(ChatMessage.simple(
           content: '📍 Konum paylaşıldı',
           isOwn: true,
           timestamp: DateTime.now(),
@@ -522,24 +523,4 @@ class _ChatScreenState extends State<ChatScreen> {
     _messageController.dispose();
     super.dispose();
   }
-}
-
-class ChatMessage {
-  final String content;
-  final bool isOwn;
-  final bool isSystem;
-  final bool isError;
-  final DateTime timestamp;
-  final String? senderName;
-  final String? senderId;
-
-  ChatMessage({
-    required this.content,
-    this.isOwn = false,
-    this.isSystem = false,
-    this.isError = false,
-    required this.timestamp,
-    this.senderName,
-    this.senderId,
-  });
 }
