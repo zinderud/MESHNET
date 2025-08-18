@@ -8,6 +8,7 @@ import 'package:meshnet_app/screens/settings/ui_settings_screen.dart';
 import 'package:meshnet_app/screens/settings/security_settings_screen.dart';
 import 'package:meshnet_app/screens/settings/system_settings_screen.dart';
 import 'package:meshnet_app/screens/performance_screen.dart';
+import 'package:meshnet_app/screens/advanced_features_screen.dart';
 import 'package:meshnet_app/utils/constants.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -167,6 +168,38 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   context,
                   MaterialPageRoute(
                     builder: (context) => PerformanceScreen(),
+                  ),
+                ),
+              ),
+
+              SizedBox(height: UIConstants.PADDING_MEDIUM),
+
+              // Advanced Features (NEW)
+              _buildSettingsCard(
+                context,
+                icon: Icons.build_circle,
+                iconColor: Colors.teal,
+                title: 'Advanced Features',
+                subtitle: 'Blockchain, P2P Network, and Security',
+                trailing: Container(
+                  padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.teal.shade100,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    'PRIORITY 4',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.teal.shade700,
+                    ),
+                  ),
+                ),
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => AdvancedFeaturesScreen(),
                   ),
                 ),
               ),
