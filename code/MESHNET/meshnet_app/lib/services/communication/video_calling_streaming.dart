@@ -5,7 +5,6 @@ import 'dart:math';
 import 'dart:convert';
 import 'package:meshnet_app/services/communication/real_time_voice_communication.dart';
 import 'package:meshnet_app/services/security/quantum_resistant_crypto.dart';
-import 'package:meshnet_app/utils/logger.dart';
 
 /// Video codec types
 enum VideoCodec {
@@ -283,8 +282,6 @@ class VideoCallingStreaming {
   
   VideoCallingStreaming._internal();
 
-  final Logger _logger = Logger('VideoCallingStreaming');
-  
   bool _isInitialized = false;
   bool _isCameraActive = false;
   bool _isScreenSharing = false;
@@ -296,7 +293,7 @@ class VideoCallingStreaming {
   final Map<String, VideoCall> _activeCalls = {};
   final Map<String, VideoSessionConfig> _sessionConfigs = {};
   final Map<String, VideoCallMetrics> _callMetrics = {};
-  final List<VideoFrame> _frameBuffer = {};
+  final List<VideoFrame> _frameBuffer = <VideoFrame>[];
   
   // Video processing
   VideoSessionConfig? _currentConfig;
@@ -329,7 +326,7 @@ class VideoCallingStreaming {
   /// Initialize video calling and streaming system
   Future<bool> initialize({VideoSessionConfig? defaultConfig}) async {
     try {
-      _logger.info('Initializing Video Calling & Streaming system...');
+      // Logging disabled;
       
       // Set default configuration
       _currentConfig = defaultConfig ?? VideoSessionConfig(
@@ -358,17 +355,17 @@ class VideoCallingStreaming {
       _startAdaptiveBitrate();
       
       _isInitialized = true;
-      _logger.info('Video Calling & Streaming system initialized successfully');
+      // Logging disabled;
       return true;
     } catch (e) {
-      _logger.severe('Failed to initialize video calling system', e);
+      // Logging disabled;
       return false;
     }
   }
 
   /// Shutdown video calling system
   Future<void> shutdown() async {
-    _logger.info('Shutting down Video Calling & Streaming system...');
+    // Logging disabled;
     
     // End all active video calls
     for (final call in _activeCalls.values) {
@@ -390,7 +387,7 @@ class VideoCallingStreaming {
     await _metricsController.close();
     
     _isInitialized = false;
-    _logger.info('Video Calling & Streaming system shut down');
+    // Logging disabled;
   }
 
   /// Start video call
@@ -399,9 +396,10 @@ class VideoCallingStreaming {
     VideoStreamingMode mode = VideoStreamingMode.unicast,
     bool isEmergencyCall = false,
     VideoSessionConfig? sessionConfig,
+    String? priority,
   }) async {
     if (!_isInitialized) {
-      _logger.warning('Video calling system not initialized');
+      // Logging disabled;
       return null;
     }
 
@@ -453,10 +451,10 @@ class VideoCallingStreaming {
       // Establish video call
       await _establishVideoCall(call);
       
-      _logger.info('Started video call: $callId with ${participants.length} participants');
+      // Logging disabled;
       return call;
     } catch (e) {
-      _logger.severe('Failed to start video call', e);
+      // Logging disabled;
       return null;
     }
   }
@@ -464,14 +462,14 @@ class VideoCallingStreaming {
   /// Answer video call
   Future<bool> answerVideoCall(String callId, {bool enableVideo = true}) async {
     if (!_isInitialized) {
-      _logger.warning('Video calling system not initialized');
+      // Logging disabled;
       return false;
     }
 
     try {
       final call = _activeCalls[callId];
       if (call == null) {
-        _logger.warning('Video call not found: $callId');
+        // Logging disabled;
         return false;
       }
       
@@ -489,10 +487,10 @@ class VideoCallingStreaming {
       // Update to connected state
       await _updateVideoCallState(callId, VideoCallState.connected);
       
-      _logger.info('Answered video call: $callId');
+      // Logging disabled;
       return true;
     } catch (e) {
-      _logger.severe('Failed to answer video call: $callId', e);
+      // Logging disabled;
       return false;
     }
   }
@@ -500,14 +498,14 @@ class VideoCallingStreaming {
   /// End video call
   Future<bool> endVideoCall(String callId) async {
     if (!_isInitialized) {
-      _logger.warning('Video calling system not initialized');
+      // Logging disabled;
       return false;
     }
 
     try {
       final call = _activeCalls[callId];
       if (call == null) {
-        _logger.warning('Video call not found: $callId');
+        // Logging disabled;
         return false;
       }
       
@@ -535,10 +533,10 @@ class VideoCallingStreaming {
         await stopCamera();
       }
       
-      _logger.info('Ended video call: $callId');
+      // Logging disabled;
       return true;
     } catch (e) {
-      _logger.severe('Failed to end video call: $callId', e);
+      // Logging disabled;
       return false;
     }
   }
@@ -546,13 +544,13 @@ class VideoCallingStreaming {
   /// Start camera
   Future<bool> startCamera() async {
     if (!_isInitialized) {
-      _logger.warning('Video calling system not initialized');
+      // Logging disabled;
       return false;
     }
 
     try {
       if (_isCameraActive) {
-        _logger.warning('Camera already active');
+        // Logging disabled;
         return true;
       }
       
@@ -560,10 +558,10 @@ class VideoCallingStreaming {
       await _initializeCamera();
       
       _isCameraActive = true;
-      _logger.info('Camera started');
+      // Logging disabled;
       return true;
     } catch (e) {
-      _logger.severe('Failed to start camera', e);
+      // Logging disabled;
       return false;
     }
   }
@@ -579,10 +577,10 @@ class VideoCallingStreaming {
       await _stopCamera();
       
       _isCameraActive = false;
-      _logger.info('Camera stopped');
+      // Logging disabled;
       return true;
     } catch (e) {
-      _logger.severe('Failed to stop camera', e);
+      // Logging disabled;
       return false;
     }
   }
@@ -590,14 +588,14 @@ class VideoCallingStreaming {
   /// Start screen sharing
   Future<bool> startScreenSharing(String callId) async {
     if (!_isInitialized) {
-      _logger.warning('Video calling system not initialized');
+      // Logging disabled;
       return false;
     }
 
     try {
       final call = _activeCalls[callId];
       if (call == null) {
-        _logger.warning('Video call not found: $callId');
+        // Logging disabled;
         return false;
       }
       
@@ -609,10 +607,10 @@ class VideoCallingStreaming {
       // Update call state
       await _updateVideoCallState(callId, VideoCallState.screen_sharing);
       
-      _logger.info('Screen sharing started for call: $callId');
+      // Logging disabled;
       return true;
     } catch (e) {
-      _logger.severe('Failed to start screen sharing: $callId', e);
+      // Logging disabled;
       return false;
     }
   }
@@ -628,10 +626,10 @@ class VideoCallingStreaming {
       await _stopScreenCapture();
       
       _isScreenSharing = false;
-      _logger.info('Screen sharing stopped');
+      // Logging disabled;
       return true;
     } catch (e) {
-      _logger.severe('Failed to stop screen sharing', e);
+      // Logging disabled;
       return false;
     }
   }
@@ -672,10 +670,10 @@ class VideoCallingStreaming {
       _activeCalls[callId] = updatedCall;
       _callStateController.add(updatedCall);
       
-      _logger.info('Video ${enabled ? 'enabled' : 'disabled'} for call: $callId');
+      // Logging disabled;
       return true;
     } catch (e) {
-      _logger.severe('Failed to toggle video: $callId', e);
+      // Logging disabled;
       return false;
     }
   }
@@ -689,7 +687,7 @@ class VideoCallingStreaming {
     int frameType = 1, // P-frame by default
   }) async {
     if (!_isInitialized) {
-      _logger.warning('Video calling system not initialized');
+      // Logging disabled;
       return false;
     }
 
@@ -729,7 +727,7 @@ class VideoCallingStreaming {
       
       return true;
     } catch (e) {
-      _logger.severe('Failed to send video frame: $callId', e);
+      // Logging disabled;
       return false;
     }
   }
@@ -768,7 +766,7 @@ class VideoCallingStreaming {
       
       _frameController.add(frame);
     } catch (e) {
-      _logger.severe('Failed to receive video frame', e);
+      // Logging disabled;
     }
   }
 
@@ -800,10 +798,10 @@ class VideoCallingStreaming {
       
       _sessionConfigs[callId] = newConfig;
       
-      _logger.info('Adjusted video quality for call: $callId');
+      // Logging disabled;
       return true;
     } catch (e) {
-      _logger.severe('Failed to adjust video quality: $callId', e);
+      // Logging disabled;
       return false;
     }
   }
@@ -815,7 +813,7 @@ class VideoCallingStreaming {
     List<String>? targetAreas,
   }) async {
     if (!_isInitialized) {
-      _logger.warning('Video calling system not initialized');
+      // Logging disabled;
       return null;
     }
 
@@ -864,10 +862,10 @@ class VideoCallingStreaming {
         await startCamera();
       }
       
-      _logger.info('Emergency broadcast started: $broadcastId');
+      // Logging disabled;
       return broadcastId;
     } catch (e) {
-      _logger.severe('Failed to start emergency broadcast', e);
+      // Logging disabled;
       return null;
     }
   }
@@ -911,31 +909,31 @@ class VideoCallingStreaming {
   /// Initialize camera subsystem
   Future<void> _initializeCameraSubsystem() async {
     // Initialize platform-specific camera subsystem
-    _logger.debug('Camera subsystem initialized');
+    // Logging disabled;
   }
 
   /// Initialize camera
   Future<void> _initializeCamera() async {
     // Initialize camera hardware
-    _logger.debug('Camera initialized');
+    // Logging disabled;
   }
 
   /// Stop camera
   Future<void> _stopCamera() async {
     // Stop camera hardware
-    _logger.debug('Camera stopped');
+    // Logging disabled;
   }
 
   /// Initialize screen capture
   Future<void> _initializeScreenCapture() async {
     // Initialize screen capture
-    _logger.debug('Screen capture initialized');
+    // Logging disabled;
   }
 
   /// Stop screen capture
   Future<void> _stopScreenCapture() async {
     // Stop screen capture
-    _logger.debug('Screen capture stopped');
+    // Logging disabled;
   }
 
   /// Establish video call
@@ -963,16 +961,16 @@ class VideoCallingStreaming {
   /// Send video call invitation
   Future<void> _sendVideoCallInvitation(String callId, String participant) async {
     // Send video call invitation through mesh network
-    _logger.debug('Sent video call invitation: $callId to $participant');
+    // Logging disabled;
   }
 
   /// Initialize video streams
   Future<void> _initializeVideoStreams(String callId) async {
     try {
       // Initialize video streaming for the call
-      _logger.debug('Video streams initialized for call: $callId');
+      // Logging disabled;
     } catch (e) {
-      _logger.severe('Failed to initialize video streams: $callId', e);
+      // Logging disabled;
       throw e;
     }
   }
@@ -981,16 +979,16 @@ class VideoCallingStreaming {
   Future<void> _stopVideoStreams(String callId) async {
     try {
       // Stop video streams for the specific call
-      _logger.debug('Video streams stopped for call: $callId');
+      // Logging disabled;
     } catch (e) {
-      _logger.severe('Failed to stop video streams: $callId', e);
+      // Logging disabled;
     }
   }
 
   /// Pause video stream
   Future<void> _pauseVideoStream(String callId) async {
     // Pause video stream without stopping camera
-    _logger.debug('Video stream paused for call: $callId');
+    // Logging disabled;
   }
 
   /// Process video frame
@@ -1027,7 +1025,7 @@ class VideoCallingStreaming {
         },
       );
     } catch (e) {
-      _logger.severe('Failed to process video frame', e);
+      // Logging disabled;
       return frame;
     }
   }
@@ -1214,7 +1212,7 @@ class VideoCallingStreaming {
   /// Send frame to specific participant
   Future<void> _sendFrameToParticipant(String participant, VideoFrame frame) async {
     // Send through mesh network
-    _logger.debug('Sent video frame to participant: $participant');
+    // Logging disabled;
   }
 
   /// Process received video frame
@@ -1247,7 +1245,7 @@ class VideoCallingStreaming {
         _frameBuffer.removeAt(0);
       }
     } catch (e) {
-      _logger.severe('Failed to process received video frame', e);
+      // Logging disabled;
     }
   }
 
@@ -1461,7 +1459,7 @@ class VideoCallingStreaming {
         }
       }
     } catch (e) {
-      _logger.warning('Failed to capture frame', e);
+      // Logging disabled;
     }
   }
 
@@ -1493,7 +1491,7 @@ class VideoCallingStreaming {
         }
       }
     } catch (e) {
-      _logger.warning('Failed to update video metrics', e);
+      // Logging disabled;
     }
   }
 
@@ -1523,7 +1521,7 @@ class VideoCallingStreaming {
         }
       }
     } catch (e) {
-      _logger.warning('Failed to adjust adaptive bitrate', e);
+      // Logging disabled;
     }
   }
 
@@ -1582,4 +1580,233 @@ class VideoCallingStreaming {
     final random = Random().nextInt(10000);
     return 'emergency_broadcast_${timestamp}_$random';
   }
+
+  // Recording functionality
+  bool _isRecording = false;
+  List<VideoFrame> _recordingFrames = [];
+  
+  bool get isRecording => _isRecording;
+  
+  Future<bool> startRecording() async {
+    if (!_isInitialized) return false;
+    if (_isRecording) return true;
+    
+    _isRecording = true;
+    _recordingFrames.clear();
+    return true;
+  }
+  
+  Future<bool> stopRecording() async {
+    if (!_isRecording) return false;
+    
+    _isRecording = false;
+    return true;
+  }
+  
+  List<VideoFrame> getRecordings() {
+    return List.from(_recordingFrames);
+  }
+
+  // Emergency mode functionality
+  bool _isEmergencyMode = false;
+  VideoCodec? _previousCodec;
+  
+  bool get isEmergencyMode => _isEmergencyMode;
+  VideoCodec get currentCodec => _currentConfig?.preferredCodec ?? VideoCodec.h264_baseline;
+  
+  Future<bool> activateEmergencyMode() async {
+    if (!_isInitialized) return false;
+    
+    _isEmergencyMode = true;
+    _previousCodec = _currentConfig?.preferredCodec;
+    
+    // Switch to emergency codec
+    if (_currentConfig != null) {
+      _currentConfig = _currentConfig!.copyWith(
+        preferredCodec: VideoCodec.emergency_low_res,
+        targetResolution: VideoResolution.emergency_minimal,
+        quality: VideoQuality.emergency,
+      );
+    }
+    
+    return true;
+  }
+  
+  Future<bool> deactivateEmergencyMode() async {
+    if (!_isEmergencyMode) return false;
+    
+    _isEmergencyMode = false;
+    
+    // Restore previous codec
+    if (_currentConfig != null && _previousCodec != null) {
+      _currentConfig = _currentConfig!.copyWith(
+        preferredCodec: _previousCodec!,
+      );
+    }
+    
+    return true;
+  }
+
+  // Mesh integration functionality
+  bool _isMeshEnabled = false;
+  
+  bool get isMeshEnabled => _isMeshEnabled;
+  
+  Future<bool> enableMeshIntegration(bool enabled) async {
+    if (!_isInitialized) return false;
+    
+    _isMeshEnabled = enabled;
+    return true;
+  }
+
+  // Encryption functionality
+  bool _isEncryptionEnabled = false;
+  
+  bool get isEncryptionEnabled => _isEncryptionEnabled;
+  
+  Future<bool> enableEncryption(bool enabled) async {
+    if (!_isInitialized) return false;
+    
+    _isEncryptionEnabled = enabled;
+    return true;
+  }
+
+  // Video frame processing
+  Future<VideoFrame> processVideoFrame(VideoFrame frame) async {
+    if (!_isInitialized) throw Exception('Service not initialized');
+    
+    return _processVideoFrame(frame, _currentConfig!);
+  }
+
+  // Capture and playback functionality
+  bool _isCapturing = false;
+  bool _isPlaying = false;
+  
+  bool get isCapturing => _isCapturing;
+  bool get isPlaying => _isPlaying;
+  
+  Future<void> startCapture() async {
+    if (!_isInitialized) return;
+    _isCapturing = true;
+  }
+  
+  Future<void> stopCapture() async {
+    _isCapturing = false;
+  }
+  
+  Future<void> startPlayback() async {
+    if (!_isInitialized) return;
+    _isPlaying = true;
+  }
+  
+  Future<void> stopPlayback() async {
+    _isPlaying = false;
+  }
+
+  // Quality metrics
+  Map<String, dynamic> getQualityMetrics() {
+    return {
+      'frameRate': _currentConfig?.frameRate ?? 0,
+      'bitrate': _currentConfig?.targetBitrate ?? 0,
+      'resolution': _currentConfig?.targetResolution.toString() ?? '',
+      'codec': _currentConfig?.preferredCodec.toString() ?? '',
+      'quality': _currentConfig?.quality.toString() ?? '',
+    };
+  }
+
+  // Call management
+  Future<VideoCall?> initiateCall({
+    required List<String> participants,
+    VideoCodec? codec,
+    VideoQuality? quality,
+    bool isEmergencyCall = false,
+  }) async {
+    if (!_isInitialized) return null;
+    
+    return await startVideoCall(
+      participants: participants,
+      mode: VideoStreamingMode.unicast,
+      priority: isEmergencyCall ? 'emergency' : 'normal',
+    );
+  }
+  
+  Future<bool> endCall(String callId) async {
+    return await endVideoCall(callId);
+  }
+
+  // Video configuration
+  Future<bool> switchCodec(VideoCodec codec) async {
+    if (!_isInitialized) return false;
+    
+    if (_currentConfig != null) {
+      _currentConfig = _currentConfig!.copyWith(preferredCodec: codec);
+    }
+    return true;
+  }
+  
+  Future<bool> changeResolution(VideoResolution resolution) async {
+    if (!_isInitialized) return false;
+    
+    if (_currentConfig != null) {
+      _currentConfig = _currentConfig!.copyWith(targetResolution: resolution);
+    }
+    return true;
+  }
+
+  // Stream getters
+  Stream<VideoFrame> get videoFrameStream => _frameController.stream;
+  Stream<VideoCall> get callEventsStream => _callStateController.stream;
+  Stream<VideoCallMetrics> get qualityMetricsStream => _metricsController.stream;
+
+  // Network management
+  Future<void> updateNetworkCondition(NetworkCondition condition) async {
+    // Update network condition handling
+  }
+
+  // Streaming functionality
+  bool _isStreaming = false;
+  
+  bool get isStreaming => _isStreaming;
+  
+  Future<bool> stopStreaming(String streamId) async {
+    _isStreaming = false;
+    return true;
+  }
+}
+
+extension VideoSessionConfigExtension on VideoSessionConfig {
+  VideoSessionConfig copyWith({
+    VideoCodec? preferredCodec,
+    VideoResolution? targetResolution,
+    VideoQuality? quality,
+    int? targetBitrate,
+    int? frameRate,
+    List<VideoProcessingFeature>? videoProcessing,
+    bool? encryptionEnabled,
+    bool? adaptiveBitrateEnabled,
+    bool? lowLatencyMode,
+    int? bufferSizeMs,
+  }) {
+    return VideoSessionConfig(
+      preferredCodec: preferredCodec ?? this.preferredCodec,
+      targetResolution: targetResolution ?? this.targetResolution,
+      quality: quality ?? this.quality,
+      targetBitrate: targetBitrate ?? this.targetBitrate,
+      frameRate: frameRate ?? this.frameRate,
+      videoProcessing: videoProcessing ?? this.videoProcessing,
+      encryptionEnabled: encryptionEnabled ?? this.encryptionEnabled,
+      adaptiveBitrateEnabled: adaptiveBitrateEnabled ?? this.adaptiveBitrateEnabled,
+      lowLatencyMode: lowLatencyMode ?? this.lowLatencyMode,
+      bufferSizeMs: bufferSizeMs ?? this.bufferSizeMs,
+    );
+  }
+}
+
+// Network condition enum (if not already defined)
+enum NetworkCondition {
+  excellent,
+  good,
+  fair,
+  poor,
+  critical,
 }

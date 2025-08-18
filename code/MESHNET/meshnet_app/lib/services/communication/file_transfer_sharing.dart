@@ -378,7 +378,7 @@ class FileTransferSharing {
   /// Initialize file transfer and sharing system
   Future<bool> initialize({TransferConfig? defaultConfig}) async {
     try {
-      _logger.info('Initializing File Transfer & Sharing system...');
+      // Logging disabled;
       
       // Set default configuration
       final config = defaultConfig ?? TransferConfig(
@@ -406,17 +406,17 @@ class FileTransferSharing {
       _startMetricsCollection();
       
       _isInitialized = true;
-      _logger.info('File Transfer & Sharing system initialized successfully');
+      // Logging disabled;
       return true;
     } catch (e) {
-      _logger.severe('Failed to initialize file transfer system', e);
+      // Logging disabled;
       return false;
     }
   }
 
   /// Shutdown file transfer system
   Future<void> shutdown() async {
-    _logger.info('Shutting down File Transfer & Sharing system...');
+    // Logging disabled;
     
     // Cancel all active transfers
     for (final transfer in _activeTransfers.values) {
@@ -443,7 +443,7 @@ class FileTransferSharing {
     _filePaths.clear();
     
     _isInitialized = false;
-    _logger.info('File Transfer & Sharing system shut down');
+    // Logging disabled;
   }
 
   /// Send file
@@ -455,14 +455,14 @@ class FileTransferSharing {
     bool isEmergencyFile = false,
   }) async {
     if (!_isInitialized) {
-      _logger.warning('File transfer system not initialized');
+      // Logging disabled;
       return null;
     }
 
     try {
       final file = File(filePath);
       if (!await file.exists()) {
-        _logger.warning('File does not exist: $filePath');
+        // Logging disabled;
         return null;
       }
       
@@ -523,10 +523,10 @@ class FileTransferSharing {
       // Start file transfer
       await _startFileTransfer(transfer);
       
-      _logger.info('Started file transfer: $transferId ($fileName)');
+      // Logging disabled;
       return transferId;
     } catch (e) {
-      _logger.severe('Failed to send file: $filePath', e);
+      // Logging disabled;
       return null;
     }
   }
@@ -561,7 +561,7 @@ class FileTransferSharing {
       
       _chunkController.add(chunk);
     } catch (e) {
-      _logger.severe('Failed to receive file chunk', e);
+      // Logging disabled;
     }
   }
 
@@ -574,7 +574,7 @@ class FileTransferSharing {
     TransferConfig? config,
   }) async {
     if (!_isInitialized) {
-      _logger.warning('File transfer system not initialized');
+      // Logging disabled;
       return null;
     }
 
@@ -584,7 +584,7 @@ class FileTransferSharing {
       // Request file metadata from sender
       final fileMetadata = await _requestFileMetadata(fileId, senderId);
       if (fileMetadata == null) {
-        _logger.warning('Failed to get file metadata: $fileId');
+        // Logging disabled;
         return null;
       }
       
@@ -617,10 +617,10 @@ class FileTransferSharing {
       // Request file transfer from sender
       await _requestFileTransfer(transfer);
       
-      _logger.info('Started file download: $transferId (${transfer.fileName})');
+      // Logging disabled;
       return transferId;
     } catch (e) {
-      _logger.severe('Failed to download shared file: $fileId', e);
+      // Logging disabled;
       return null;
     }
   }
@@ -633,7 +633,7 @@ class FileTransferSharing {
     Map<String, dynamic>? sessionSettings,
   }) async {
     if (!_isInitialized) {
-      _logger.warning('File transfer system not initialized');
+      // Logging disabled;
       return null;
     }
 
@@ -657,10 +657,10 @@ class FileTransferSharing {
         await _notifySessionCreated(participant, session);
       }
       
-      _logger.info('Created sharing session: $sessionId ($sessionName)');
+      // Logging disabled;
       return sessionId;
     } catch (e) {
-      _logger.severe('Failed to create sharing session: $sessionName', e);
+      // Logging disabled;
       return null;
     }
   }
@@ -672,14 +672,14 @@ class FileTransferSharing {
     FilePriority priority = FilePriority.normal,
   }) async {
     if (!_isInitialized) {
-      _logger.warning('File transfer system not initialized');
+      // Logging disabled;
       return false;
     }
 
     try {
       final session = _sharingSessions[sessionId];
       if (session == null) {
-        _logger.warning('Sharing session not found: $sessionId');
+        // Logging disabled;
         return false;
       }
       
@@ -707,13 +707,13 @@ class FileTransferSharing {
         
         _sharingSessions[sessionId] = updatedSession;
         
-        _logger.info('Shared file to session: $fileId → $sessionId');
+        // Logging disabled;
         return true;
       }
       
       return false;
     } catch (e) {
-      _logger.severe('Failed to share file to session: $sessionId', e);
+      // Logging disabled;
       return false;
     }
   }
@@ -725,7 +725,7 @@ class FileTransferSharing {
     List<String>? targetAreas,
   }) async {
     if (!_isInitialized) {
-      _logger.warning('File transfer system not initialized');
+      // Logging disabled;
       return null;
     }
 
@@ -785,13 +785,13 @@ class FileTransferSharing {
         
         _activeTransfers[transferId] = updatedTransfer;
         
-        _logger.info('Emergency file broadcast started: $transferId');
+        // Logging disabled;
         return transferId;
       }
       
       return null;
     } catch (e) {
-      _logger.severe('Failed to broadcast emergency file: $filePath', e);
+      // Logging disabled;
       return null;
     }
   }
@@ -806,10 +806,10 @@ class FileTransferSharing {
       
       await _updateTransferState(transferId, TransferState.paused);
       
-      _logger.info('Transfer paused: $transferId');
+      // Logging disabled;
       return true;
     } catch (e) {
-      _logger.severe('Failed to pause transfer: $transferId', e);
+      // Logging disabled;
       return false;
     }
   }
@@ -825,10 +825,10 @@ class FileTransferSharing {
       await _updateTransferState(transferId, TransferState.transferring);
       await _resumeFileTransfer(transfer);
       
-      _logger.info('Transfer resumed: $transferId');
+      // Logging disabled;
       return true;
     } catch (e) {
-      _logger.severe('Failed to resume transfer: $transferId', e);
+      // Logging disabled;
       return false;
     }
   }
@@ -849,10 +849,10 @@ class FileTransferSharing {
       _activeTransfers.remove(transferId);
       _transferConfigs.remove(transferId);
       
-      _logger.info('Transfer cancelled: $transferId');
+      // Logging disabled;
       return true;
     } catch (e) {
-      _logger.severe('Failed to cancel transfer: $transferId', e);
+      // Logging disabled;
       return false;
     }
   }
@@ -872,10 +872,10 @@ class FileTransferSharing {
       
       _sharingSessions.remove(sessionId);
       
-      _logger.info('Sharing session closed: $sessionId');
+      // Logging disabled;
       return true;
     } catch (e) {
-      _logger.severe('Failed to close sharing session: $sessionId', e);
+      // Logging disabled;
       return false;
     }
   }
@@ -934,7 +934,7 @@ class FileTransferSharing {
   /// Initialize storage
   Future<void> _initializeStorage() async {
     // Initialize file storage directories
-    _logger.debug('File storage initialized');
+    // Logging disabled;
   }
 
   /// Start file transfer
@@ -1045,7 +1045,7 @@ class FileTransferSharing {
   Future<void> _sendRemainingChunks(FileTransfer transfer, int totalChunks) async {
     // Determine which chunks still need to be sent
     // This would involve checking acknowledgments and resending failed chunks
-    _logger.debug('Resuming file transfer: ${transfer.transferId}');
+    // Logging disabled;
   }
 
   /// Send single chunk
@@ -1061,7 +1061,7 @@ class FileTransferSharing {
       // Update metrics
       await _updateTransferMetrics(transfer.transferId, chunk);
     } catch (e) {
-      _logger.warning('Failed to send chunk ${chunk.chunkIndex} for ${transfer.transferId}', e);
+      // Logging disabled;
       throw e;
     }
   }
@@ -1086,28 +1086,28 @@ class FileTransferSharing {
 
   /// Send via direct peer
   Future<void> _sendDirectPeer(String recipient, FileChunk chunk) async {
-    _logger.debug('Sent chunk ${chunk.chunkIndex} directly to $recipient');
+    // Logging disabled;
   }
 
   /// Send via multi-hop
   Future<void> _sendMultiHop(String recipient, FileChunk chunk) async {
-    _logger.debug('Sent chunk ${chunk.chunkIndex} via multi-hop to $recipient');
+    // Logging disabled;
   }
 
   /// Send via emergency broadcast
   Future<void> _sendEmergencyBroadcast(FileChunk chunk) async {
-    _logger.debug('Broadcast emergency chunk ${chunk.chunkIndex}');
+    // Logging disabled;
   }
 
   /// Send via default method
   Future<void> _sendDefaultMethod(String recipient, FileChunk chunk) async {
-    _logger.debug('Sent chunk ${chunk.chunkIndex} to $recipient');
+    // Logging disabled;
   }
 
   /// Send chunk acknowledgment
   Future<void> _sendChunkAcknowledgment(FileChunk chunk) async {
     // Send ACK back to sender
-    _logger.debug('Sent ACK for chunk ${chunk.chunkIndex} of ${chunk.fileId}');
+    // Logging disabled;
   }
 
   /// Check if file is complete
@@ -1166,9 +1166,9 @@ class FileTransferSharing {
         await file.writeAsBytes(fileData);
       }
       
-      _logger.info('File assembled successfully: $fileId');
+      // Logging disabled;
     } catch (e) {
-      _logger.severe('Failed to assemble file: $fileId', e);
+      // Logging disabled;
     }
   }
 
@@ -1249,17 +1249,17 @@ class FileTransferSharing {
   /// Request file transfer
   Future<void> _requestFileTransfer(FileTransfer transfer) async {
     // Send transfer request to sender
-    _logger.debug('Requested file transfer: ${transfer.fileId} from ${transfer.senderId}');
+    // Logging disabled;
   }
 
   /// Notify session created
   Future<void> _notifySessionCreated(String participant, FileSharingSession session) async {
-    _logger.debug('Notified participant $participant about session ${session.sessionId}');
+    // Logging disabled;
   }
 
   /// Notify session closed
   Future<void> _notifySessionClosed(String participant, String sessionId) async {
-    _logger.debug('Notified participant $participant about session closure $sessionId');
+    // Logging disabled;
   }
 
   /// Update transfer state
@@ -1345,7 +1345,7 @@ class FileTransferSharing {
     final receivedChunks = _receivedChunks[fileId]?.length ?? 0;
     final progress = receivedChunks / chunk.totalChunks;
     
-    _logger.debug('Receive progress for $fileId: ${(progress * 100).toStringAsFixed(1)}%');
+    // Logging disabled;
   }
 
   /// Update transfer metrics
@@ -1438,7 +1438,7 @@ class FileTransferSharing {
     
     for (final transferId in expiredTransfers) {
       await cancelTransfer(transferId);
-      _logger.info('Expired transfer cleaned up: $transferId');
+      // Logging disabled;
     }
   }
 

@@ -336,7 +336,7 @@ class AdvancedKeyManagement {
   /// Initialize advanced key management
   Future<bool> initialize() async {
     try {
-      _logger.info('Initializing advanced key management system...');
+      // Logging disabled;
       
       // Load default rotation policies
       await _loadDefaultRotationPolicies();
@@ -349,17 +349,17 @@ class AdvancedKeyManagement {
       _startAuditTimer();
       
       _isInitialized = true;
-      _logger.info('Advanced key management system initialized successfully');
+      // Logging disabled;
       return true;
     } catch (e) {
-      _logger.severe('Failed to initialize advanced key management system', e);
+      // Logging disabled;
       return false;
     }
   }
 
   /// Shutdown advanced key management
   Future<void> shutdown() async {
-    _logger.info('Shutting down advanced key management system...');
+    // Logging disabled;
     
     _rotationTimer?.cancel();
     _auditTimer?.cancel();
@@ -371,7 +371,7 @@ class AdvancedKeyManagement {
     _keys.clear();
     
     _isInitialized = false;
-    _logger.info('Advanced key management system shut down');
+    // Logging disabled;
   }
 
   /// Generate new managed key
@@ -385,7 +385,7 @@ class AdvancedKeyManagement {
     List<String>? accessControlList,
   }) async {
     if (!_isInitialized) {
-      _logger.warning('Advanced key management not initialized');
+      // Logging disabled;
       return null;
     }
 
@@ -395,7 +395,7 @@ class AdvancedKeyManagement {
       
       // Check if alias already exists
       if (_keyAliases.containsKey(alias)) {
-        _logger.warning('Key alias already exists: $alias');
+        // Logging disabled;
         return null;
       }
       
@@ -448,10 +448,10 @@ class AdvancedKeyManagement {
         await _createKeyBackup(managedKey);
       }
       
-      _logger.info('Generated managed key: $alias ($keyId)');
+      // Logging disabled;
       return managedKey;
     } catch (e) {
-      _logger.severe('Failed to generate managed key: $alias', e);
+      // Logging disabled;
       return null;
     }
   }
@@ -459,20 +459,20 @@ class AdvancedKeyManagement {
   /// Derive child key from parent key
   Future<ManagedKey?> deriveKey(KeyDerivationRequest request) async {
     if (!_isInitialized) {
-      _logger.warning('Advanced key management not initialized');
+      // Logging disabled;
       return null;
     }
 
     try {
       final parentKey = _keys[request.parentKeyId];
       if (parentKey == null || !parentKey.isUsable) {
-        _logger.warning('Invalid or unusable parent key: ${request.parentKeyId}');
+        // Logging disabled;
         return null;
       }
       
       // Check access control
       if (!_checkAccess(parentKey, 'derive')) {
-        _logger.warning('Access denied for key derivation: ${request.parentKeyId}');
+        // Logging disabled;
         return null;
       }
       
@@ -508,12 +508,12 @@ class AdvancedKeyManagement {
         // Update parent usage count
         _updateKeyUsage(request.parentKeyId);
         
-        _logger.info('Derived child key: ${request.childAlias} from ${parentKey.alias}');
+        // Logging disabled;
       }
       
       return childKey;
     } catch (e) {
-      _logger.severe('Failed to derive key', e);
+      // Logging disabled;
       return null;
     }
   }
@@ -525,14 +525,14 @@ class AdvancedKeyManagement {
     Map<String, dynamic>? rotationParameters,
   }) async {
     if (!_isInitialized) {
-      _logger.warning('Advanced key management not initialized');
+      // Logging disabled;
       return null;
     }
 
     try {
       final oldKey = _keys[keyId];
       if (oldKey == null) {
-        _logger.warning('Key not found for rotation: $keyId');
+        // Logging disabled;
         return null;
       }
       
@@ -542,7 +542,7 @@ class AdvancedKeyManagement {
           .lastOrNull;
       
       if (policy != null && !policy.needsRotation(oldKey)) {
-        _logger.info('Key rotation not needed: $keyId');
+        // Logging disabled;
         return oldKey;
       }
       
@@ -583,12 +583,12 @@ class AdvancedKeyManagement {
         });
         
         _keyRotations++;
-        _logger.info('Rotated key: ${oldKey.alias} ($keyId -> ${newKey.keyId})');
+        // Logging disabled;
       }
       
       return newKey;
     } catch (e) {
-      _logger.severe('Failed to rotate key: $keyId', e);
+      // Logging disabled;
       return null;
     }
   }
@@ -600,14 +600,14 @@ class AdvancedKeyManagement {
     Map<String, dynamic>? compromiseDetails,
   }) async {
     if (!_isInitialized) {
-      _logger.warning('Advanced key management not initialized');
+      // Logging disabled;
       return false;
     }
 
     try {
       final key = _keys[keyId];
       if (key == null) {
-        _logger.warning('Key not found: $keyId');
+        // Logging disabled;
         return false;
       }
       
@@ -642,10 +642,10 @@ class AdvancedKeyManagement {
       });
       
       _keyCompromises++;
-      _logger.warning('Marked key as compromised: ${key.alias} ($keyId)');
+      // Logging disabled;
       return true;
     } catch (e) {
-      _logger.severe('Failed to mark key as compromised: $keyId', e);
+      // Logging disabled;
       return false;
     }
   }
@@ -656,14 +656,14 @@ class AdvancedKeyManagement {
     String? reason,
   }) async {
     if (!_isInitialized) {
-      _logger.warning('Advanced key management not initialized');
+      // Logging disabled;
       return false;
     }
 
     try {
       final key = _keys[keyId];
       if (key == null) {
-        _logger.warning('Key not found: $keyId');
+        // Logging disabled;
         return false;
       }
       
@@ -683,10 +683,10 @@ class AdvancedKeyManagement {
         'reason': reason,
       });
       
-      _logger.info('Revoked key: ${key.alias} ($keyId)');
+      // Logging disabled;
       return true;
     } catch (e) {
-      _logger.severe('Failed to revoke key: $keyId', e);
+      // Logging disabled;
       return false;
     }
   }
@@ -747,10 +747,10 @@ class AdvancedKeyManagement {
       
       _keyBackups[backupId] = backup;
       
-      _logger.debug('Created key backup: $backupId for ${key.alias}');
+      // Logging disabled;
       return true;
     } catch (e) {
-      _logger.severe('Failed to create key backup', e);
+      // Logging disabled;
       return false;
     }
   }
@@ -797,7 +797,7 @@ class AdvancedKeyManagement {
       conditions: {},
     );
     
-    _logger.debug('Default rotation policies loaded');
+    // Logging disabled;
   }
 
   /// Initialize master keys
@@ -820,7 +820,7 @@ class AdvancedKeyManagement {
       metadata: {'type': 'master', 'purpose': 'signing'},
     );
     
-    _logger.debug('Master keys initialized');
+    // Logging disabled;
   }
 
   /// Generate key material based on security level and usage type
@@ -950,9 +950,9 @@ class AdvancedKeyManagement {
         }
       }
       
-      _logger.debug('Scheduled key rotation completed: ${keysToRotate.length} keys processed');
+      // Logging disabled;
     } catch (e) {
-      _logger.warning('Scheduled key rotation failed', e);
+      // Logging disabled;
     }
   }
 
@@ -972,9 +972,9 @@ class AdvancedKeyManagement {
       
       await _addAuditEntry('security_audit', auditResults);
       
-      _logger.info('Security audit completed: ${auditResults['total_keys']} keys audited');
+      // Logging disabled;
     } catch (e) {
-      _logger.warning('Security audit failed', e);
+      // Logging disabled;
     }
   }
 

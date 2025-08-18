@@ -236,7 +236,7 @@ class EmergencyRouter {
   /// Initialize emergency router
   Future<bool> initialize() async {
     try {
-      _logger.info('Initializing AI-powered emergency router...');
+      // Logging disabled;
       
       // Load routing parameters
       await _loadEmergencyWeights();
@@ -246,23 +246,23 @@ class EmergencyRouter {
       _startRouteOptimizationTimer();
       
       _isInitialized = true;
-      _logger.info('AI-powered emergency router initialized successfully');
+      // Logging disabled;
       return true;
     } catch (e) {
-      _logger.severe('Failed to initialize emergency router', e);
+      // Logging disabled;
       return false;
     }
   }
 
   /// Shutdown emergency router
   Future<void> shutdown() async {
-    _logger.info('Shutting down emergency router...');
+    // Logging disabled;
     
     _routeOptimizationTimer?.cancel();
     await _routingController.close();
     
     _isInitialized = false;
-    _logger.info('Emergency router shut down');
+    // Logging disabled;
   }
 
   /// Route emergency message using AI decision making
@@ -275,7 +275,7 @@ class EmergencyRouter {
     String? preferredDestination,
   }) async {
     if (!_isInitialized) {
-      _logger.warning('Emergency router not initialized');
+      // Logging disabled;
       return null;
     }
 
@@ -305,7 +305,7 @@ class EmergencyRouter {
       );
       
       if (routePath.isEmpty) {
-        _logger.warning('No viable route found for emergency message: $messageId');
+        // Logging disabled;
         return null;
       }
       
@@ -345,10 +345,10 @@ class EmergencyRouter {
       await _addToRoutingHistory(decision);
       _routingController.add(decision);
       
-      _logger.info('Emergency route calculated: ${routePath.length} hops, strategy: $strategy, confidence: $confidence');
+      // Logging disabled;
       return decision;
     } catch (e) {
-      _logger.severe('Failed to route emergency message: $messageId', e);
+      // Logging disabled;
       return null;
     }
   }
@@ -363,7 +363,7 @@ class EmergencyRouter {
     Map<String, dynamic>? context,
   }) async {
     if (!_isInitialized) {
-      _logger.warning('Emergency router not initialized');
+      // Logging disabled;
       return null;
     }
 
@@ -379,7 +379,7 @@ class EmergencyRouter {
       }
       
       if (coordinationRoutes.isEmpty) {
-        _logger.warning('No coordination routes found for message: $messageId');
+        // Logging disabled;
         return null;
       }
       
@@ -400,7 +400,7 @@ class EmergencyRouter {
       
       return decision;
     } catch (e) {
-      _logger.severe('Failed to route coordination message: $messageId', e);
+      // Logging disabled;
       return null;
     }
   }
@@ -431,10 +431,10 @@ class EmergencyRouter {
         specializations: specializations ?? existingProfile?.specializations ?? [],
       );
       
-      _logger.info('Emergency node profile updated: $nodeId ($nodeType)');
+      // Logging disabled;
       return true;
     } catch (e) {
-      _logger.severe('Failed to update emergency node: $nodeId', e);
+      // Logging disabled;
       return false;
     }
   }
@@ -466,12 +466,12 @@ class EmergencyRouter {
         _strategyWeights[decision.strategy] = 
             (_strategyWeights[decision.strategy] ?? 1.0) * 0.98;
         
-        _logger.warning('Routing failed for decision: $decisionId, reason: $failureReason');
+        // Logging disabled;
       }
       
-      _logger.debug('Routing result reported: $decisionId, success: $successful');
+      // Logging disabled;
     } catch (e) {
-      _logger.severe('Failed to report routing result', e);
+      // Logging disabled;
     }
   }
 
@@ -879,7 +879,7 @@ class EmergencyRouter {
     _emergencyWeights[EmergencyType.chemical_hazard] = 1.3;
     _emergencyWeights[EmergencyType.infrastructure_failure] = 0.8;
     
-    _logger.debug('Emergency weights loaded');
+    // Logging disabled;
   }
 
   /// Load routing strategy weights
@@ -894,7 +894,7 @@ class EmergencyRouter {
     _strategyWeights[RoutingStrategy.trust_based] = 1.1;
     _strategyWeights[RoutingStrategy.adaptive_hybrid] = 1.3;
     
-    _logger.debug('Strategy weights loaded');
+    // Logging disabled;
   }
 
   /// Add routing decision to history
@@ -939,9 +939,9 @@ class EmergencyRouter {
         }
       }
       
-      _logger.debug('Route optimization completed');
+      // Logging disabled;
     } catch (e) {
-      _logger.warning('Route optimization failed', e);
+      // Logging disabled;
     }
   }
 }

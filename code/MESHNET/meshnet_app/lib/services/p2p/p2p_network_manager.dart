@@ -36,7 +36,7 @@ class P2PNetworkManager {
   /// Initialize P2P network manager
   Future<bool> initialize() async {
     try {
-      _logger.info('Initializing P2P network manager...');
+      // Logging disabled;
       
       // Get node identity from blockchain manager
       if (!BlockchainManager.instance.isInitialized) {
@@ -53,17 +53,17 @@ class P2PNetworkManager {
       // Set up message listeners
       _setupMessageListeners();
       
-      _logger.info('P2P network manager initialized');
+      // Logging disabled;
       return true;
     } catch (e) {
-      _logger.severe('Failed to initialize P2P network manager', e);
+      // Logging disabled;
       return false;
     }
   }
 
   /// Shutdown P2P network manager
   Future<void> shutdown() async {
-    _logger.info('Shutting down P2P network manager...');
+    // Logging disabled;
     
     await _messageSubscription?.cancel();
     await _nodeSubscription?.cancel();
@@ -75,7 +75,7 @@ class P2PNetworkManager {
     await _chatController.close();
     await _peerController.close();
     
-    _logger.info('P2P network manager shut down');
+    // Logging disabled;
   }
 
   /// Send emergency alert to mesh network
@@ -86,7 +86,7 @@ class P2PNetworkManager {
     bool broadcast = true,
   }) async {
     if (!isInitialized) {
-      _logger.warning('P2P network not initialized');
+      // Logging disabled;
       return false;
     }
 
@@ -119,12 +119,12 @@ class P2PNetworkManager {
           priority: priority,
         );
         
-        _logger.info('Emergency alert sent: ${meshMessage.messageId}');
+        // Logging disabled;
       }
       
       return success;
     } catch (e) {
-      _logger.severe('Failed to send emergency alert', e);
+      // Logging disabled;
       return false;
     }
   }
@@ -136,7 +136,7 @@ class P2PNetworkManager {
     String? replyToId,
   }) async {
     if (!isInitialized) {
-      _logger.warning('P2P network not initialized');
+      // Logging disabled;
       return false;
     }
 
@@ -167,12 +167,12 @@ class P2PNetworkManager {
           replyToId: replyToId,
         );
         
-        _logger.info('Chat message sent to $recipientId: ${meshMessage.messageId}');
+        // Logging disabled;
       }
       
       return success;
     } catch (e) {
-      _logger.severe('Failed to send chat message', e);
+      // Logging disabled;
       return false;
     }
   }
@@ -183,7 +183,7 @@ class P2PNetworkManager {
     required Map<String, dynamic> coordinationData,
   }) async {
     if (!isInitialized) {
-      _logger.warning('P2P network not initialized');
+      // Logging disabled;
       return false;
     }
 
@@ -211,12 +211,12 @@ class P2PNetworkManager {
           coordinationData: coordinationData,
         );
         
-        _logger.info('Coordination message sent: ${meshMessage.messageId}');
+        // Logging disabled;
       }
       
       return success;
     } catch (e) {
-      _logger.severe('Failed to send coordination message', e);
+      // Logging disabled;
       return false;
     }
   }
@@ -227,7 +227,7 @@ class P2PNetworkManager {
     bool shareFullChain = false,
   }) async {
     if (!isInitialized) {
-      _logger.warning('P2P network not initialized');
+      // Logging disabled;
       return false;
     }
 
@@ -265,12 +265,12 @@ class P2PNetworkManager {
       final success = await _meshCore!.sendMessage(meshMessage);
       
       if (success) {
-        _logger.info('Blockchain data shared with $peerId');
+        // Logging disabled;
       }
       
       return success;
     } catch (e) {
-      _logger.severe('Failed to share blockchain data', e);
+      // Logging disabled;
       return false;
     }
   }
@@ -278,7 +278,7 @@ class P2PNetworkManager {
   /// Request blockchain sync from peer
   Future<bool> requestBlockchainSync(String peerId) async {
     if (!isInitialized) {
-      _logger.warning('P2P network not initialized');
+      // Logging disabled;
       return false;
     }
 
@@ -301,12 +301,12 @@ class P2PNetworkManager {
       final success = await _meshCore!.sendMessage(meshMessage);
       
       if (success) {
-        _logger.info('Blockchain sync requested from $peerId');
+        // Logging disabled;
       }
       
       return success;
     } catch (e) {
-      _logger.severe('Failed to request blockchain sync', e);
+      // Logging disabled;
       return false;
     }
   }
@@ -314,7 +314,7 @@ class P2PNetworkManager {
   /// Discover peers in emergency scenarios
   Future<bool> emergencyPeerDiscovery() async {
     if (!isInitialized) {
-      _logger.warning('P2P network not initialized');
+      // Logging disabled;
       return false;
     }
 
@@ -345,12 +345,12 @@ class P2PNetworkManager {
       final success = await _meshCore!.sendMessage(discoveryMessage);
       
       if (success) {
-        _logger.info('Emergency peer discovery initiated');
+        // Logging disabled;
       }
       
       return success;
     } catch (e) {
-      _logger.severe('Failed to initiate emergency peer discovery', e);
+      // Logging disabled;
       return false;
     }
   }
@@ -369,10 +369,10 @@ class P2PNetworkManager {
         reason: reason,
       );
       
-      _logger.info('Trust score updated for $peerId: $scoreChange ($reason)');
+      // Logging disabled;
       return true;
     } catch (e) {
-      _logger.severe('Failed to update trust score for $peerId', e);
+      // Logging disabled;
       return false;
     }
   }
@@ -404,7 +404,7 @@ class P2PNetworkManager {
 
     _nodeSubscription = _meshCore!.nodeStream.listen((node) {
       _peerController.add(node);
-      _logger.info('Peer update: ${node.nodeId} - ${node.status}');
+      // Logging disabled;
     });
   }
 
@@ -428,10 +428,10 @@ class P2PNetworkManager {
           await _handleDiscoveryMessage(message);
           break;
         default:
-          _logger.debug('Unhandled message type: ${message.type}');
+          // Logging disabled;
       }
     } catch (e) {
-      _logger.severe('Failed to handle incoming message: ${message.messageId}', e);
+      // Logging disabled;
     }
   }
 
@@ -457,7 +457,7 @@ class P2PNetworkManager {
       reason: 'emergency_report',
     );
     
-    _logger.info('Emergency alert received from ${message.sourceNodeId}');
+    // Logging disabled;
   }
 
   /// Handle data message (chat)
@@ -473,7 +473,7 @@ class P2PNetworkManager {
         'replyToId': payload['replyToId'],
       });
       
-      _logger.info('Chat message received from ${message.sourceNodeId}');
+      // Logging disabled;
     }
   }
 
@@ -490,7 +490,7 @@ class P2PNetworkManager {
       'coordinatorId': payload['coordinatorId'],
     });
     
-    _logger.info('Coordination message received from ${message.sourceNodeId}');
+    // Logging disabled;
   }
 
   /// Handle blockchain message
@@ -505,10 +505,10 @@ class P2PNetworkManager {
       if (payload['fullChain'] == true) {
         final success = BlockchainManager.instance.blockchain!.import(payload['data']);
         if (success) {
-          _logger.info('Full blockchain imported from ${message.sourceNodeId}');
+          // Logging disabled;
         }
       } else {
-        _logger.info('Partial blockchain data received from ${message.sourceNodeId}');
+        // Logging disabled;
       }
     }
   }
@@ -529,7 +529,7 @@ class P2PNetworkManager {
       );
     }
     
-    _logger.info('Discovery message received from ${message.sourceNodeId}');
+    // Logging disabled;
   }
 
   /// Generate alert ID

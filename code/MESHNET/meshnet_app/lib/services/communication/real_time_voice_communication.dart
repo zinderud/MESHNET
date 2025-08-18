@@ -5,7 +5,6 @@ import 'dart:math';
 import 'dart:convert';
 import 'package:meshnet_app/services/security/quantum_resistant_crypto.dart';
 import 'package:meshnet_app/services/networking/mesh_networking.dart';
-import 'package:meshnet_app/utils/logger.dart';
 
 /// Voice codec types
 enum VoiceCodec {
@@ -260,8 +259,6 @@ class RealTimeVoiceCommunication {
   
   RealTimeVoiceCommunication._internal();
 
-  final Logger _logger = Logger('RealTimeVoiceCommunication');
-  
   bool _isInitialized = false;
   bool _isRecording = false;
   bool _isPlaying = false;
@@ -306,7 +303,7 @@ class RealTimeVoiceCommunication {
   /// Initialize voice communication system
   Future<bool> initialize({VoiceSessionConfig? defaultConfig}) async {
     try {
-      _logger.info('Initializing Real-Time Voice Communication system...');
+      // Logging disabled;
       
       // Set default configuration
       _currentConfig = defaultConfig ?? VoiceSessionConfig(
@@ -334,17 +331,17 @@ class RealTimeVoiceCommunication {
       _startQualityMonitoring();
       
       _isInitialized = true;
-      _logger.info('Real-Time Voice Communication system initialized successfully');
+      // Logging disabled;
       return true;
     } catch (e) {
-      _logger.severe('Failed to initialize voice communication system', e);
+      // Logging disabled;
       return false;
     }
   }
 
   /// Shutdown voice communication system
   Future<void> shutdown() async {
-    _logger.info('Shutting down Real-Time Voice Communication system...');
+    // Logging disabled;
     
     // End all active calls
     for (final call in _activeCalls.values) {
@@ -365,7 +362,7 @@ class RealTimeVoiceCommunication {
     await _metricsController.close();
     
     _isInitialized = false;
-    _logger.info('Real-Time Voice Communication system shut down');
+    // Logging disabled;
   }
 
   /// Start voice call
@@ -377,7 +374,7 @@ class RealTimeVoiceCommunication {
     VoiceSessionConfig? sessionConfig,
   }) async {
     if (!_isInitialized) {
-      _logger.warning('Voice communication system not initialized');
+      // Logging disabled;
       return null;
     }
 
@@ -421,10 +418,10 @@ class RealTimeVoiceCommunication {
       // Start call establishment
       await _establishCall(call);
       
-      _logger.info('Started voice call: $callId with ${participants.length} participants');
+      // Logging disabled;
       return call;
     } catch (e) {
-      _logger.severe('Failed to start voice call', e);
+      // Logging disabled;
       return null;
     }
   }
@@ -432,19 +429,19 @@ class RealTimeVoiceCommunication {
   /// Answer incoming call
   Future<bool> answerCall(String callId) async {
     if (!_isInitialized) {
-      _logger.warning('Voice communication system not initialized');
+      // Logging disabled;
       return false;
     }
 
     try {
       final call = _activeCalls[callId];
       if (call == null) {
-        _logger.warning('Call not found: $callId');
+        // Logging disabled;
         return false;
       }
       
       if (call.state != VoiceCallState.ringing) {
-        _logger.warning('Call not in ringing state: $callId');
+        // Logging disabled;
         return false;
       }
       
@@ -457,10 +454,10 @@ class RealTimeVoiceCommunication {
       // Update to connected state
       await _updateCallState(callId, VoiceCallState.connected);
       
-      _logger.info('Answered call: $callId');
+      // Logging disabled;
       return true;
     } catch (e) {
-      _logger.severe('Failed to answer call: $callId', e);
+      // Logging disabled;
       return false;
     }
   }
@@ -468,14 +465,14 @@ class RealTimeVoiceCommunication {
   /// End voice call
   Future<bool> endCall(String callId) async {
     if (!_isInitialized) {
-      _logger.warning('Voice communication system not initialized');
+      // Logging disabled;
       return false;
     }
 
     try {
       final call = _activeCalls[callId];
       if (call == null) {
-        _logger.warning('Call not found: $callId');
+        // Logging disabled;
         return false;
       }
       
@@ -500,10 +497,10 @@ class RealTimeVoiceCommunication {
         _successfulCalls++;
       }
       
-      _logger.info('Ended call: $callId');
+      // Logging disabled;
       return true;
     } catch (e) {
-      _logger.severe('Failed to end call: $callId', e);
+      // Logging disabled;
       return false;
     }
   }
@@ -511,13 +508,13 @@ class RealTimeVoiceCommunication {
   /// Start recording audio
   Future<bool> startRecording({String? callId}) async {
     if (!_isInitialized) {
-      _logger.warning('Voice communication system not initialized');
+      // Logging disabled;
       return false;
     }
 
     try {
       if (_isRecording) {
-        _logger.warning('Already recording');
+        // Logging disabled;
         return false;
       }
       
@@ -525,10 +522,10 @@ class RealTimeVoiceCommunication {
       await _initializeAudioCapture();
       
       _isRecording = true;
-      _logger.info('Started audio recording');
+      // Logging disabled;
       return true;
     } catch (e) {
-      _logger.severe('Failed to start recording', e);
+      // Logging disabled;
       return false;
     }
   }
@@ -544,10 +541,10 @@ class RealTimeVoiceCommunication {
       await _stopAudioCapture();
       
       _isRecording = false;
-      _logger.info('Stopped audio recording');
+      // Logging disabled;
       return true;
     } catch (e) {
-      _logger.severe('Failed to stop recording', e);
+      // Logging disabled;
       return false;
     }
   }
@@ -555,13 +552,13 @@ class RealTimeVoiceCommunication {
   /// Start audio playback
   Future<bool> startPlayback({String? callId}) async {
     if (!_isInitialized) {
-      _logger.warning('Voice communication system not initialized');
+      // Logging disabled;
       return false;
     }
 
     try {
       if (_isPlaying) {
-        _logger.warning('Already playing');
+        // Logging disabled;
         return false;
       }
       
@@ -569,10 +566,10 @@ class RealTimeVoiceCommunication {
       await _initializeAudioPlayback();
       
       _isPlaying = true;
-      _logger.info('Started audio playback');
+      // Logging disabled;
       return true;
     } catch (e) {
-      _logger.severe('Failed to start playback', e);
+      // Logging disabled;
       return false;
     }
   }
@@ -588,10 +585,10 @@ class RealTimeVoiceCommunication {
       await _stopAudioPlayback();
       
       _isPlaying = false;
-      _logger.info('Stopped audio playback');
+      // Logging disabled;
       return true;
     } catch (e) {
-      _logger.severe('Failed to stop playback', e);
+      // Logging disabled;
       return false;
     }
   }
@@ -601,7 +598,7 @@ class RealTimeVoiceCommunication {
     try {
       final call = _activeCalls[callId];
       if (call == null) {
-        _logger.warning('Call not found: $callId');
+        // Logging disabled;
         return false;
       }
       
@@ -611,10 +608,10 @@ class RealTimeVoiceCommunication {
         await _updateCallState(callId, VoiceCallState.connected);
       }
       
-      _logger.info('${muted ? 'Muted' : 'Unmuted'} microphone for call: $callId');
+      // Logging disabled;
       return true;
     } catch (e) {
-      _logger.severe('Failed to set microphone mute state: $callId', e);
+      // Logging disabled;
       return false;
     }
   }
@@ -627,7 +624,7 @@ class RealTimeVoiceCommunication {
     int? channels,
   }) async {
     if (!_isInitialized) {
-      _logger.warning('Voice communication system not initialized');
+      // Logging disabled;
       return false;
     }
 
@@ -666,7 +663,7 @@ class RealTimeVoiceCommunication {
       
       return true;
     } catch (e) {
-      _logger.severe('Failed to send audio frame: $callId', e);
+      // Logging disabled;
       return false;
     }
   }
@@ -699,7 +696,7 @@ class RealTimeVoiceCommunication {
       
       _audioFrameController.add(frame);
     } catch (e) {
-      _logger.severe('Failed to receive audio frame', e);
+      // Logging disabled;
     }
   }
 
@@ -730,10 +727,10 @@ class RealTimeVoiceCommunication {
       
       _sessionConfigs[callId] = newConfig;
       
-      _logger.info('Adjusted voice quality for call: $callId');
+      // Logging disabled;
       return true;
     } catch (e) {
-      _logger.severe('Failed to adjust voice quality: $callId', e);
+      // Logging disabled;
       return false;
     }
   }
@@ -775,7 +772,7 @@ class RealTimeVoiceCommunication {
   Future<void> _initializeAudioSubsystem() async {
     // Initialize platform-specific audio subsystem
     // This would include microphone and speaker initialization
-    _logger.debug('Audio subsystem initialized');
+    // Logging disabled;
   }
 
   /// Establish call connection
@@ -803,7 +800,7 @@ class RealTimeVoiceCommunication {
   /// Send call invitation
   Future<void> _sendCallInvitation(String callId, String participant) async {
     // In production, send call invitation through mesh network
-    _logger.debug('Sent call invitation: $callId to $participant');
+    // Logging disabled;
   }
 
   /// Initialize audio streams
@@ -813,9 +810,9 @@ class RealTimeVoiceCommunication {
       await startRecording(callId: callId);
       await startPlayback(callId: callId);
       
-      _logger.debug('Audio streams initialized for call: $callId');
+      // Logging disabled;
     } catch (e) {
-      _logger.severe('Failed to initialize audio streams: $callId', e);
+      // Logging disabled;
       throw e;
     }
   }
@@ -824,9 +821,9 @@ class RealTimeVoiceCommunication {
   Future<void> _stopAudioStreams(String callId) async {
     try {
       // Stop audio streams for the specific call
-      _logger.debug('Audio streams stopped for call: $callId');
+      // Logging disabled;
     } catch (e) {
-      _logger.severe('Failed to stop audio streams: $callId', e);
+      // Logging disabled;
     }
   }
 
@@ -834,26 +831,26 @@ class RealTimeVoiceCommunication {
   Future<void> _initializeAudioCapture() async {
     // Initialize microphone capture
     // This would use platform-specific audio APIs
-    _logger.debug('Audio capture initialized');
+    // Logging disabled;
   }
 
   /// Stop audio capture
   Future<void> _stopAudioCapture() async {
     // Stop microphone capture
-    _logger.debug('Audio capture stopped');
+    // Logging disabled;
   }
 
   /// Initialize audio playback
   Future<void> _initializeAudioPlayback() async {
     // Initialize speaker playback
     // This would use platform-specific audio APIs
-    _logger.debug('Audio playback initialized');
+    // Logging disabled;
   }
 
   /// Stop audio playback
   Future<void> _stopAudioPlayback() async {
     // Stop speaker playback
-    _logger.debug('Audio playback stopped');
+    // Logging disabled;
   }
 
   /// Process audio frame
@@ -890,7 +887,7 @@ class RealTimeVoiceCommunication {
         },
       );
     } catch (e) {
-      _logger.severe('Failed to process audio frame', e);
+      // Logging disabled;
       return frame;
     }
   }
@@ -1091,7 +1088,7 @@ class RealTimeVoiceCommunication {
   /// Send frame to specific participant
   Future<void> _sendFrameToParticipant(String participant, AudioFrame frame) async {
     // In production, send through mesh network
-    _logger.debug('Sent audio frame to participant: $participant');
+    // Logging disabled;
   }
 
   /// Add frame to jitter buffer
@@ -1130,7 +1127,7 @@ class RealTimeVoiceCommunication {
         _audioBuffer.removeAt(0);
       }
     } catch (e) {
-      _logger.severe('Failed to process received frame', e);
+      // Logging disabled;
     }
   }
 
@@ -1330,7 +1327,7 @@ class RealTimeVoiceCommunication {
         }
       }
     } catch (e) {
-      _logger.warning('Failed to update metrics', e);
+      // Logging disabled;
     }
   }
 
@@ -1342,20 +1339,20 @@ class RealTimeVoiceCommunication {
         if (metrics != null) {
           // Check for quality issues
           if (metrics.packetLossRate > 0.05) { // 5% packet loss
-            _logger.warning('High packet loss detected in call: $callId (${(metrics.packetLossRate * 100).toStringAsFixed(1)}%)');
+            // Logging disabled;
           }
           
           if (metrics.latency > 150) { // 150ms latency
-            _logger.warning('High latency detected in call: $callId (${metrics.latency.toStringAsFixed(1)}ms)');
+            // Logging disabled;
           }
           
           if (metrics.audioQualityScore < 0.7) { // Quality score below 70%
-            _logger.warning('Low audio quality detected in call: $callId (${(metrics.audioQualityScore * 100).toStringAsFixed(1)}%)');
+            // Logging disabled;
           }
         }
       }
     } catch (e) {
-      _logger.warning('Failed to monitor call quality', e);
+      // Logging disabled;
     }
   }
 

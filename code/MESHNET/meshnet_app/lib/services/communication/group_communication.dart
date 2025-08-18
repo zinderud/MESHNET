@@ -421,7 +421,7 @@ class GroupCommunication {
     FileTransferSharing? fileService,
   }) async {
     try {
-      _logger.info('Initializing Group Communication system...');
+      // Logging disabled;
       
       _currentUserId = userId;
       _currentUserName = userName;
@@ -435,17 +435,17 @@ class GroupCommunication {
       _startCleanupTasks();
       
       _isInitialized = true;
-      _logger.info('Group Communication system initialized successfully');
+      // Logging disabled;
       return true;
     } catch (e) {
-      _logger.severe('Failed to initialize group communication system', e);
+      // Logging disabled;
       return false;
     }
   }
 
   /// Shutdown group communication system
   Future<void> shutdown() async {
-    _logger.info('Shutting down Group Communication system...');
+    // Logging disabled;
     
     // Leave all groups
     for (final groupId in _joinedGroups.toList()) {
@@ -468,7 +468,7 @@ class GroupCommunication {
     await _memberStatusController.close();
     
     _isInitialized = false;
-    _logger.info('Group Communication system shut down');
+    // Logging disabled;
   }
 
   /// Create group
@@ -484,7 +484,7 @@ class GroupCommunication {
     Map<String, dynamic>? settings,
   }) async {
     if (!_isInitialized || _currentUserId == null) {
-      _logger.warning('Group communication system not initialized');
+      // Logging disabled;
       return null;
     }
 
@@ -547,10 +547,10 @@ class GroupCommunication {
       _totalGroupsCreated++;
       _groupStateController.add(group);
       
-      _logger.info('Created group: $groupId ($groupName)');
+      // Logging disabled;
       return groupId;
     } catch (e) {
-      _logger.severe('Failed to create group: $groupName', e);
+      // Logging disabled;
       return null;
     }
   }
@@ -562,31 +562,31 @@ class GroupCommunication {
     GroupRole requestedRole = GroupRole.responder,
   }) async {
     if (!_isInitialized || _currentUserId == null) {
-      _logger.warning('Group communication system not initialized');
+      // Logging disabled;
       return false;
     }
 
     try {
       final group = _groups[groupId];
       if (group == null) {
-        _logger.warning('Group not found: $groupId');
+        // Logging disabled;
         return false;
       }
       
       if (group.isFull) {
-        _logger.warning('Group is full: $groupId');
+        // Logging disabled;
         return false;
       }
       
       // Check if already a member
       if (_joinedGroups.contains(groupId)) {
-        _logger.warning('Already a member of group: $groupId');
+        // Logging disabled;
         return true;
       }
       
       // Validate invite code for private groups
       if (group.isPrivate && !_validateInviteCode(groupId, inviteCode)) {
-        _logger.warning('Invalid invite code for private group: $groupId');
+        // Logging disabled;
         return false;
       }
       
@@ -635,10 +635,10 @@ class GroupCommunication {
       
       _groupStateController.add(updatedGroup);
       
-      _logger.info('Joined group: $groupId as ${requestedRole.toString()}');
+      // Logging disabled;
       return true;
     } catch (e) {
-      _logger.severe('Failed to join group: $groupId', e);
+      // Logging disabled;
       return false;
     }
   }
@@ -703,10 +703,10 @@ class GroupCommunication {
       // Send leave notification
       await _sendLeaveNotification(groupId, _currentUserId!);
       
-      _logger.info('Left group: $groupId');
+      // Logging disabled;
       return true;
     } catch (e) {
-      _logger.severe('Failed to leave group: $groupId', e);
+      // Logging disabled;
       return false;
     }
   }
@@ -722,14 +722,14 @@ class GroupCommunication {
     Map<String, dynamic> attachments = const {},
   }) async {
     if (!_isInitialized || _currentUserId == null) {
-      _logger.warning('Group communication system not initialized');
+      // Logging disabled;
       return false;
     }
 
     try {
       final group = _groups[groupId];
       if (group == null || !_joinedGroups.contains(groupId)) {
-        _logger.warning('Not a member of group: $groupId');
+        // Logging disabled;
         return false;
       }
       
@@ -778,10 +778,10 @@ class GroupCommunication {
       
       _messageController.add(message);
       
-      _logger.info('Sent group message: ${message.messageId} to $groupId');
+      // Logging disabled;
       return true;
     } catch (e) {
-      _logger.severe('Failed to send group message to $groupId', e);
+      // Logging disabled;
       return false;
     }
   }
@@ -795,7 +795,7 @@ class GroupCommunication {
     bool requiresImmedateResponse = true,
   }) async {
     if (!_isInitialized) {
-      _logger.warning('Group communication system not initialized');
+      // Logging disabled;
       return false;
     }
 
@@ -816,7 +816,7 @@ class GroupCommunication {
         attachments: attachments,
       );
     } catch (e) {
-      _logger.severe('Failed to send emergency alert to $groupId', e);
+      // Logging disabled;
       return false;
     }
   }
@@ -861,7 +861,7 @@ class GroupCommunication {
             // Send acknowledgment notification
             await _sendAcknowledgmentNotification(message.senderId, messageId);
             
-            _logger.info('Acknowledged message: $messageId');
+            // Logging disabled;
             return true;
           }
         }
@@ -869,7 +869,7 @@ class GroupCommunication {
       
       return false;
     } catch (e) {
-      _logger.severe('Failed to acknowledge message: $messageId', e);
+      // Logging disabled;
       return false;
     }
   }
@@ -880,7 +880,7 @@ class GroupCommunication {
     String? sessionName,
   }) async {
     if (!_isInitialized || _voiceService == null) {
-      _logger.warning('Voice service not available');
+      // Logging disabled;
       return null;
     }
 
@@ -912,10 +912,10 @@ class GroupCommunication {
       // Notify group members
       await _notifyGroupSession(groupId, session);
       
-      _logger.info('Started group voice session: $sessionId for $groupId');
+      // Logging disabled;
       return sessionId;
     } catch (e) {
-      _logger.severe('Failed to start group voice session for $groupId', e);
+      // Logging disabled;
       return null;
     }
   }
@@ -926,7 +926,7 @@ class GroupCommunication {
     String? sessionName,
   }) async {
     if (!_isInitialized || _videoService == null) {
-      _logger.warning('Video service not available');
+      // Logging disabled;
       return null;
     }
 
@@ -958,10 +958,10 @@ class GroupCommunication {
       // Notify group members
       await _notifyGroupSession(groupId, session);
       
-      _logger.info('Started group video session: $sessionId for $groupId');
+      // Logging disabled;
       return sessionId;
     } catch (e) {
-      _logger.severe('Failed to start group video session for $groupId', e);
+      // Logging disabled;
       return null;
     }
   }
@@ -973,7 +973,7 @@ class GroupCommunication {
     String? description,
   }) async {
     if (!_isInitialized || _fileService == null) {
-      _logger.warning('File service not available');
+      // Logging disabled;
       return false;
     }
 
@@ -1013,7 +1013,7 @@ class GroupCommunication {
       
       return false;
     } catch (e) {
-      _logger.severe('Failed to share file to group $groupId', e);
+      // Logging disabled;
       return false;
     }
   }
@@ -1044,10 +1044,10 @@ class GroupCommunication {
       // Notify participants
       await _notifySessionEnded(endedSession);
       
-      _logger.info('Ended group session: $sessionId');
+      // Logging disabled;
       return true;
     } catch (e) {
-      _logger.severe('Failed to end group session: $sessionId', e);
+      // Logging disabled;
       return false;
     }
   }
@@ -1117,7 +1117,7 @@ class GroupCommunication {
       
       return true;
     } catch (e) {
-      _logger.severe('Failed to update member status for $groupId', e);
+      // Logging disabled;
       return false;
     }
   }
@@ -1236,7 +1236,7 @@ class GroupCommunication {
   }
 
   Future<void> _sendAcknowledgmentNotification(String senderId, String messageId) async {
-    _logger.debug('Sent acknowledgment notification for message $messageId to $senderId');
+    // Logging disabled;
   }
 
   Future<void> _distributeGroupMessage(GroupMessage message) async {
@@ -1253,7 +1253,7 @@ class GroupCommunication {
 
   Future<void> _sendMessageToMember(String memberId, GroupMessage message) async {
     // Send message to specific member through mesh network
-    _logger.debug('Sent message ${message.messageId} to member $memberId');
+    // Logging disabled;
   }
 
   Future<void> _notifyGroupSession(String groupId, GroupSession session) async {
@@ -1433,7 +1433,7 @@ class GroupCommunication {
       _groups.remove(groupId);
       _groupMessages.remove(groupId);
       _groupStatistics.remove(groupId);
-      _logger.info('Cleaned up inactive group: $groupId');
+      // Logging disabled;
     }
   }
 

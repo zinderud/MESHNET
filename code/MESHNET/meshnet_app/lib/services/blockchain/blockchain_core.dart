@@ -318,25 +318,25 @@ class Blockchain {
     );
 
     _chain.add(genesisBlock);
-    _logger.info('Genesis block created: ${genesisBlock.hash}');
+    // Logging disabled;
   }
 
   /// Add a new transaction to pending pool
   bool addTransaction(Transaction transaction) {
     if (!transaction.verify()) {
-      _logger.warning('Invalid transaction rejected: ${transaction.id}');
+      // Logging disabled;
       return false;
     }
 
     _pendingTransactions.add(transaction);
-    _logger.info('Transaction added to pool: ${transaction.id}');
+    // Logging disabled;
     return true;
   }
 
   /// Mine pending transactions into a new block
   Block? minePendingTransactions() {
     if (_pendingTransactions.isEmpty) {
-      _logger.info('No pending transactions to mine');
+      // Logging disabled;
       return null;
     }
 
@@ -363,10 +363,10 @@ class Blockchain {
     if (newBlock.verify()) {
       _chain.add(newBlock);
       _pendingTransactions.clear();
-      _logger.info('Block mined successfully: ${newBlock.hash}');
+      // Logging disabled;
       return newBlock;
     } else {
-      _logger.severe('Failed to verify mined block');
+      // Logging disabled;
       return null;
     }
   }
@@ -379,18 +379,18 @@ class Blockchain {
 
       // Verify current block
       if (!currentBlock.verify()) {
-        _logger.severe('Invalid block at index $i: ${currentBlock.hash}');
+        // Logging disabled;
         return false;
       }
 
       // Verify chain linkage
       if (currentBlock.previousHash != previousBlock.hash) {
-        _logger.severe('Chain broken at index $i');
+        // Logging disabled;
         return false;
       }
     }
 
-    _logger.info('Blockchain validation successful');
+    // Logging disabled;
     return true;
   }
 
@@ -463,7 +463,7 @@ class Blockchain {
       tempBlockchain._chain.addAll(importedChain);
 
       if (!tempBlockchain.isChainValid()) {
-        _logger.severe('Imported blockchain is invalid');
+        // Logging disabled;
         return false;
       }
 
@@ -473,10 +473,10 @@ class Blockchain {
       _pendingTransactions.clear();
       _pendingTransactions.addAll(importedPending);
 
-      _logger.info('Blockchain imported successfully');
+      // Logging disabled;
       return true;
     } catch (e) {
-      _logger.severe('Failed to import blockchain', e);
+      // Logging disabled;
       return false;
     }
   }

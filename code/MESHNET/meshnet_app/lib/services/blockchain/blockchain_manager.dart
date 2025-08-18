@@ -32,7 +32,7 @@ class BlockchainManager {
   /// Initialize blockchain with node identity
   Future<bool> initialize() async {
     try {
-      _logger.info('Initializing blockchain manager...');
+      // Logging disabled;
       
       // Generate or load node public key
       _nodePublicKey = await _getOrCreateNodePublicKey();
@@ -47,17 +47,17 @@ class BlockchainManager {
       _startMiningTimer();
       _startSyncTimer();
       
-      _logger.info('Blockchain manager initialized successfully');
+      // Logging disabled;
       return true;
     } catch (e) {
-      _logger.severe('Failed to initialize blockchain manager', e);
+      // Logging disabled;
       return false;
     }
   }
 
   /// Shutdown blockchain manager
   Future<void> shutdown() async {
-    _logger.info('Shutting down blockchain manager...');
+    // Logging disabled;
     
     _miningTimer?.cancel();
     _syncTimer?.cancel();
@@ -69,7 +69,7 @@ class BlockchainManager {
     _blockchain = null;
     _nodePublicKey = null;
     
-    _logger.info('Blockchain manager shut down');
+    // Logging disabled;
   }
 
   /// Add emergency message transaction
@@ -80,7 +80,7 @@ class BlockchainManager {
     int priority = 1,
   }) async {
     if (!isInitialized) {
-      _logger.warning('Blockchain not initialized');
+      // Logging disabled;
       return false;
     }
 
@@ -100,7 +100,7 @@ class BlockchainManager {
 
       return _blockchain!.addTransaction(transaction);
     } catch (e) {
-      _logger.severe('Failed to add emergency message', e);
+      // Logging disabled;
       return false;
     }
   }
@@ -113,7 +113,7 @@ class BlockchainManager {
     String? replyToId,
   }) async {
     if (!isInitialized) {
-      _logger.warning('Blockchain not initialized');
+      // Logging disabled;
       return false;
     }
 
@@ -132,7 +132,7 @@ class BlockchainManager {
 
       return _blockchain!.addTransaction(transaction);
     } catch (e) {
-      _logger.severe('Failed to add chat message', e);
+      // Logging disabled;
       return false;
     }
   }
@@ -143,7 +143,7 @@ class BlockchainManager {
     required Map<String, dynamic> peerInfo,
   }) async {
     if (!isInitialized) {
-      _logger.warning('Blockchain not initialized');
+      // Logging disabled;
       return false;
     }
 
@@ -162,7 +162,7 @@ class BlockchainManager {
 
       return _blockchain!.addTransaction(transaction);
     } catch (e) {
-      _logger.severe('Failed to add peer discovery', e);
+      // Logging disabled;
       return false;
     }
   }
@@ -174,7 +174,7 @@ class BlockchainManager {
     required String reason,
   }) async {
     if (!isInitialized) {
-      _logger.warning('Blockchain not initialized');
+      // Logging disabled;
       return false;
     }
 
@@ -193,7 +193,7 @@ class BlockchainManager {
 
       return _blockchain!.addTransaction(transaction);
     } catch (e) {
-      _logger.severe('Failed to update trust score', e);
+      // Logging disabled;
       return false;
     }
   }
@@ -205,7 +205,7 @@ class BlockchainManager {
     required String recipientAddress,
   }) async {
     if (!isInitialized) {
-      _logger.warning('Blockchain not initialized');
+      // Logging disabled;
       return false;
     }
 
@@ -224,7 +224,7 @@ class BlockchainManager {
 
       return _blockchain!.addTransaction(transaction);
     } catch (e) {
-      _logger.severe('Failed to share resource', e);
+      // Logging disabled;
       return false;
     }
   }
@@ -235,7 +235,7 @@ class BlockchainManager {
     required Map<String, dynamic> coordinationData,
   }) async {
     if (!isInitialized) {
-      _logger.warning('Blockchain not initialized');
+      // Logging disabled;
       return false;
     }
 
@@ -254,7 +254,7 @@ class BlockchainManager {
 
       return _blockchain!.addTransaction(transaction);
     } catch (e) {
-      _logger.severe('Failed to coordinate response', e);
+      // Logging disabled;
       return false;
     }
   }
@@ -386,12 +386,12 @@ class BlockchainManager {
       final block = _blockchain!.minePendingTransactions();
       if (block != null) {
         await _saveBlockchain();
-        _logger.info('Forced mining completed: ${block.hash}');
+        // Logging disabled;
         return true;
       }
       return false;
     } catch (e) {
-      _logger.severe('Failed to force mine', e);
+      // Logging disabled;
       return false;
     }
   }
@@ -411,11 +411,11 @@ class BlockchainManager {
         final nodeKey = base64.encode(bytes);
         
         await file.writeAsString(nodeKey);
-        _logger.info('New node key generated');
+        // Logging disabled;
         return nodeKey;
       }
     } catch (e) {
-      _logger.severe('Failed to get/create node key', e);
+      // Logging disabled;
       // Fallback to random key
       final random = Random.secure();
       final bytes = List<int>.generate(32, (i) => random.nextInt(256));
@@ -434,15 +434,15 @@ class BlockchainManager {
         final data = jsonDecode(content);
         
         if (_blockchain!.import(data)) {
-          _logger.info('Blockchain loaded from storage');
+          // Logging disabled;
         } else {
-          _logger.warning('Failed to load blockchain, using fresh chain');
+          // Logging disabled;
         }
       } else {
-        _logger.info('No existing blockchain found, using fresh chain');
+        // Logging disabled;
       }
     } catch (e) {
-      _logger.severe('Failed to load blockchain', e);
+      // Logging disabled;
     }
   }
 
@@ -457,9 +457,9 @@ class BlockchainManager {
       final data = _blockchain!.export();
       await file.writeAsString(jsonEncode(data));
       
-      _logger.info('Blockchain saved to storage');
+      // Logging disabled;
     } catch (e) {
-      _logger.severe('Failed to save blockchain', e);
+      // Logging disabled;
     }
   }
 
@@ -467,7 +467,7 @@ class BlockchainManager {
   void _startMiningTimer() {
     _miningTimer = Timer.periodic(_miningInterval, (timer) async {
       if (_blockchain!.pendingTransactions.isNotEmpty) {
-        _logger.info('Auto-mining ${_blockchain!.pendingTransactions.length} pending transactions');
+        // Logging disabled;
         final block = _blockchain!.minePendingTransactions();
         if (block != null) {
           await _saveBlockchain();
@@ -484,7 +484,7 @@ class BlockchainManager {
       if (_blockchain!.isChainValid()) {
         await _saveBlockchain();
       } else {
-        _logger.severe('Blockchain validation failed during sync');
+        // Logging disabled;
       }
     });
   }

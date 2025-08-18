@@ -131,33 +131,34 @@ class UIConstants {
   static const String defaultLanguage = 'en';
   static const Duration defaultAnimationDuration = Duration(milliseconds: 300);
   static const int defaultPrimaryColor = 0xFF2196F3;
-}
-  static const double PADDING_EXTRA_LARGE = 32.0;
+  
+  // Padding
+  static const double paddingExtraLarge = 32.0;
   
   // Border Radius
-  static const double BORDER_RADIUS_SMALL = 4.0;
-  static const double BORDER_RADIUS_MEDIUM = 8.0;
-  static const double BORDER_RADIUS_LARGE = 16.0;
-  static const double BORDER_RADIUS_EXTRA_LARGE = 24.0;
+  static const double borderRadiusSmall = 4.0;
+  static const double borderRadiusMedium = 8.0;
+  static const double borderRadiusLarge = 16.0;
+  static const double borderRadiusExtraLarge = 24.0;
   
   // Font Sizes
-  static const double FONT_SIZE_SMALL = 12.0;
-  static const double FONT_SIZE_MEDIUM = 14.0;
-  static const double FONT_SIZE_LARGE = 16.0;
-  static const double FONT_SIZE_EXTRA_LARGE = 18.0;
-  static const double FONT_SIZE_TITLE = 20.0;
-  static const double FONT_SIZE_HEADING = 24.0;
+  static const double fontSizeSmall = 12.0;
+  static const double fontSizeMedium = 14.0;
+  static const double fontSizeLarge = 16.0;
+  static const double fontSizeExtraLarge = 18.0;
+  static const double fontSizeTitle = 20.0;
+  static const double fontSizeHeading = 24.0;
   
   // Icon Sizes
-  static const double ICON_SIZE_SMALL = 16.0;
-  static const double ICON_SIZE_MEDIUM = 24.0;
-  static const double ICON_SIZE_LARGE = 32.0;
-  static const double ICON_SIZE_EXTRA_LARGE = 48.0;
+  static const double iconSizeSmall = 16.0;
+  static const double iconSizeMedium = 24.0;
+  static const double iconSizeLarge = 32.0;
+  static const double iconSizeExtraLarge = 48.0;
   
   // Screen Breakpoints
-  static const double MOBILE_BREAKPOINT = 600.0;
-  static const double TABLET_BREAKPOINT = 1024.0;
-  static const double DESKTOP_BREAKPOINT = 1440.0;
+  static const double mobileBreakpoint = 600.0;
+  static const double tabletBreakpoint = 1024.0;
+  static const double desktopBreakpoint = 1440.0;
 }
 
 /// Security Constants

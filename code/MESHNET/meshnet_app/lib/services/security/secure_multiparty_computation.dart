@@ -270,7 +270,7 @@ class SecureMultiPartyComputation {
   /// Initialize SMPC system
   Future<bool> initialize() async {
     try {
-      _logger.info('Initializing Secure Multi-Party Computation system...');
+      // Logging disabled;
       
       // Initialize protocol implementations
       await _initializeProtocolImplementations();
@@ -280,17 +280,17 @@ class SecureMultiPartyComputation {
       _startPartyMonitoring();
       
       _isInitialized = true;
-      _logger.info('Secure Multi-Party Computation system initialized successfully');
+      // Logging disabled;
       return true;
     } catch (e) {
-      _logger.severe('Failed to initialize SMPC system', e);
+      // Logging disabled;
       return false;
     }
   }
 
   /// Shutdown SMPC system
   Future<void> shutdown() async {
-    _logger.info('Shutting down Secure Multi-Party Computation system...');
+    // Logging disabled;
     
     _sessionCleanupTimer?.cancel();
     _partyMonitoringTimer?.cancel();
@@ -304,7 +304,7 @@ class SecureMultiPartyComputation {
     await _resultController.close();
     
     _isInitialized = false;
-    _logger.info('Secure Multi-Party Computation system shut down');
+    // Logging disabled;
   }
 
   /// Register SMPC party
@@ -318,7 +318,7 @@ class SecureMultiPartyComputation {
     Map<String, dynamic>? metadata,
   }) async {
     if (!_isInitialized) {
-      _logger.warning('SMPC system not initialized');
+      // Logging disabled;
       return false;
     }
 
@@ -337,10 +337,10 @@ class SecureMultiPartyComputation {
       
       _registeredParties[partyId] = party;
       
-      _logger.info('Registered SMPC party: $partyId');
+      // Logging disabled;
       return true;
     } catch (e) {
-      _logger.severe('Failed to register SMPC party: $partyId', e);
+      // Logging disabled;
       return false;
     }
   }
@@ -355,7 +355,7 @@ class SecureMultiPartyComputation {
     Duration? sessionTimeout,
   }) async {
     if (!_isInitialized) {
-      _logger.warning('SMPC system not initialized');
+      // Logging disabled;
       return null;
     }
 
@@ -364,12 +364,12 @@ class SecureMultiPartyComputation {
       for (final partyId in partyIds) {
         final party = _registeredParties[partyId];
         if (party == null || !party.isOnline) {
-          _logger.warning('Party not available: $partyId');
+          // Logging disabled;
           return null;
         }
         
         if (!party.supportedProtocols.contains(protocolType)) {
-          _logger.warning('Party does not support protocol: $partyId, $protocolType');
+          // Logging disabled;
           return null;
         }
       }
@@ -392,10 +392,10 @@ class SecureMultiPartyComputation {
       _activeSessions[sessionId] = session;
       _sessionController.add(session);
       
-      _logger.info('Created SMPC session: $sessionId with ${partyIds.length} parties');
+      // Logging disabled;
       return session;
     } catch (e) {
-      _logger.severe('Failed to create SMPC session', e);
+      // Logging disabled;
       return null;
     }
   }
@@ -407,14 +407,14 @@ class SecureMultiPartyComputation {
     Map<String, dynamic>? computationParameters,
   }) async {
     if (!_isInitialized) {
-      _logger.warning('SMPC system not initialized');
+      // Logging disabled;
       return null;
     }
 
     try {
       final session = _activeSessions[sessionId];
       if (session == null || !session.isActive) {
-        _logger.warning('Invalid or inactive SMPC session: $sessionId');
+        // Logging disabled;
         return null;
       }
       
@@ -453,10 +453,10 @@ class SecureMultiPartyComputation {
         await _updateSessionStatus(sessionId, SMPCSessionStatus.failed);
       }
       
-      _logger.info('Executed SMPC computation: $sessionId (${result.successful ? 'success' : 'failed'})');
+      // Logging disabled;
       return result;
     } catch (e) {
-      _logger.severe('Failed to execute SMPC computation: $sessionId', e);
+      // Logging disabled;
       return null;
     }
   }
@@ -469,17 +469,17 @@ class SecureMultiPartyComputation {
     BigInt? prime,
   }) async {
     if (!_isInitialized) {
-      _logger.warning('SMPC system not initialized');
+      // Logging disabled;
       return null;
     }
 
     try {
       final shares = await _shamirSecretSharing(secret, threshold, totalShares, prime);
       
-      _logger.info('Created Shamir secret shares: $totalShares shares, threshold: $threshold');
+      // Logging disabled;
       return shares;
     } catch (e) {
-      _logger.severe('Failed to share secret', e);
+      // Logging disabled;
       return null;
     }
   }
@@ -490,28 +490,28 @@ class SecureMultiPartyComputation {
     BigInt? prime,
   }) async {
     if (!_isInitialized) {
-      _logger.warning('SMPC system not initialized');
+      // Logging disabled;
       return null;
     }
 
     try {
       if (shares.isEmpty) {
-        _logger.warning('No shares provided for reconstruction');
+        // Logging disabled;
         return null;
       }
       
       final threshold = shares.first.threshold;
       if (shares.length < threshold) {
-        _logger.warning('Insufficient shares for reconstruction: ${shares.length} < $threshold');
+        // Logging disabled;
         return null;
       }
       
       final secret = await _reconstructSecretFromShares(shares.take(threshold).toList(), prime);
       
-      _logger.info('Reconstructed secret from ${shares.length} shares');
+      // Logging disabled;
       return secret;
     } catch (e) {
-      _logger.severe('Failed to reconstruct secret', e);
+      // Logging disabled;
       return null;
     }
   }
@@ -553,14 +553,14 @@ class SecureMultiPartyComputation {
     Map<String, dynamic>? parameters,
   }) async {
     if (!_isInitialized) {
-      _logger.warning('SMPC system not initialized');
+      // Logging disabled;
       return null;
     }
 
     try {
       final session = _activeSessions[sessionId];
       if (session == null || !session.isActive) {
-        _logger.warning('Invalid or inactive SMPC session: $sessionId');
+        // Logging disabled;
         return null;
       }
       
@@ -572,10 +572,10 @@ class SecureMultiPartyComputation {
         parameters ?? {},
       );
       
-      _logger.info('Performed secure comparison: $sessionId ($comparisonType)');
+      // Logging disabled;
       return comparisonResult;
     } catch (e) {
-      _logger.severe('Failed to perform secure comparison: $sessionId', e);
+      // Logging disabled;
       return null;
     }
   }
@@ -588,14 +588,14 @@ class SecureMultiPartyComputation {
     Map<String, dynamic>? parameters,
   }) async {
     if (!_isInitialized) {
-      _logger.warning('SMPC system not initialized');
+      // Logging disabled;
       return null;
     }
 
     try {
       final session = _activeSessions[sessionId];
       if (session == null || !session.isActive) {
-        _logger.warning('Invalid or inactive SMPC session: $sessionId');
+        // Logging disabled;
         return null;
       }
       
@@ -605,10 +605,10 @@ class SecureMultiPartyComputation {
         parameters ?? {},
       );
       
-      _logger.info('Computed privacy-preserving statistics: $sessionId (${statisticTypes.join(', ')})');
+      // Logging disabled;
       return statisticsResult;
     } catch (e) {
-      _logger.severe('Failed to compute privacy-preserving statistics: $sessionId', e);
+      // Logging disabled;
       return null;
     }
   }
@@ -621,14 +621,14 @@ class SecureMultiPartyComputation {
     Map<String, dynamic>? parameters,
   }) async {
     if (!_isInitialized) {
-      _logger.warning('SMPC system not initialized');
+      // Logging disabled;
       return null;
     }
 
     try {
       final session = _activeSessions[sessionId];
       if (session == null || !session.isActive) {
-        _logger.warning('Invalid or inactive SMPC session: $sessionId');
+        // Logging disabled;
         return null;
       }
       
@@ -638,10 +638,10 @@ class SecureMultiPartyComputation {
         parameters ?? {},
       );
       
-      _logger.info('Performed emergency coordination: $sessionId');
+      // Logging disabled;
       return coordinationResult;
     } catch (e) {
-      _logger.severe('Failed to perform emergency coordination: $sessionId', e);
+      // Logging disabled;
       return null;
     }
   }
@@ -651,17 +651,17 @@ class SecureMultiPartyComputation {
     try {
       final session = _activeSessions[sessionId];
       if (session == null) {
-        _logger.warning('SMPC session not found: $sessionId');
+        // Logging disabled;
         return false;
       }
       
       await _updateSessionStatus(sessionId, SMPCSessionStatus.cancelled);
       _activeSessions.remove(sessionId);
       
-      _logger.info('Cancelled SMPC session: $sessionId');
+      // Logging disabled;
       return true;
     } catch (e) {
-      _logger.severe('Failed to cancel SMPC session: $sessionId', e);
+      // Logging disabled;
       return false;
     }
   }
@@ -709,7 +709,7 @@ class SecureMultiPartyComputation {
     _protocolImplementations[SMPCProtocolType.secure_aggregation] = 
         (session, inputs, params) => _executeSecureAggregationProtocol(session, inputs, params);
     
-    _logger.debug('Protocol implementations initialized');
+    // Logging disabled;
   }
 
   /// Execute protocol computation
@@ -960,7 +960,7 @@ class SecureMultiPartyComputation {
         'valueCount': values.length,
       };
     } catch (e) {
-      _logger.severe('Failed to perform secure arithmetic: $operation', e);
+      // Logging disabled;
       return null;
     }
   }
@@ -1241,9 +1241,9 @@ class SecureMultiPartyComputation {
         await cancelSession(session.sessionId);
       }
       
-      _logger.debug('Session cleanup completed: ${expiredSessions.length} expired sessions removed');
+      // Logging disabled;
     } catch (e) {
-      _logger.warning('Session cleanup failed', e);
+      // Logging disabled;
     }
   }
 
@@ -1271,9 +1271,9 @@ class SecureMultiPartyComputation {
         }
       }
       
-      _logger.debug('Party status monitoring completed');
+      // Logging disabled;
     } catch (e) {
-      _logger.warning('Party status monitoring failed', e);
+      // Logging disabled;
     }
   }
 

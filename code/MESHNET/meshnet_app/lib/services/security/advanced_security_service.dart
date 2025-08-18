@@ -187,7 +187,7 @@ class AdvancedSecurityService {
   /// Initialize security service
   Future<bool> initialize({SecurityLevel securityLevel = SecurityLevel.standard}) async {
     try {
-      _logger.info('Initializing advanced security service...');
+      // Logging disabled;
       
       _currentSecurityLevel = securityLevel;
       
@@ -200,17 +200,17 @@ class AdvancedSecurityService {
       // Start background security tasks
       _startSecurityTasks();
       
-      _logger.info('Advanced security service initialized with ${securityLevel.toString()} level');
+      // Logging disabled;
       return true;
     } catch (e) {
-      _logger.severe('Failed to initialize security service', e);
+      // Logging disabled;
       return false;
     }
   }
 
   /// Shutdown security service
   Future<void> shutdown() async {
-    _logger.info('Shutting down security service...');
+    // Logging disabled;
     
     // Clear sensitive data
     _sharedSecrets.clear();
@@ -221,7 +221,7 @@ class AdvancedSecurityService {
     
     _nodeKeyPair = null;
     
-    _logger.info('Security service shut down');
+    // Logging disabled;
   }
 
   /// Encrypt message with end-to-end encryption
@@ -232,7 +232,7 @@ class AdvancedSecurityService {
     Map<String, dynamic>? metadata,
   }) async {
     if (!isInitialized) {
-      _logger.warning('Security service not initialized');
+      // Logging disabled;
       return null;
     }
 
@@ -242,7 +242,7 @@ class AdvancedSecurityService {
       // Get or derive shared secret
       final sharedSecret = await _getSharedSecret(recipientPublicKeyFingerprint);
       if (sharedSecret == null) {
-        _logger.warning('Failed to derive shared secret for $recipientPublicKeyFingerprint');
+        // Logging disabled;
         return null;
       }
       
@@ -258,7 +258,7 @@ class AdvancedSecurityService {
       );
       
       if (encryptedData == null) {
-        _logger.warning('Encryption failed');
+        // Logging disabled;
         return null;
       }
       
@@ -272,7 +272,7 @@ class AdvancedSecurityService {
         metadata: metadata ?? {},
       );
     } catch (e) {
-      _logger.severe('Failed to encrypt message', e);
+      // Logging disabled;
       return null;
     }
   }
@@ -283,7 +283,7 @@ class AdvancedSecurityService {
     required String senderPublicKeyFingerprint,
   }) async {
     if (!isInitialized) {
-      _logger.warning('Security service not initialized');
+      // Logging disabled;
       return null;
     }
 
@@ -291,7 +291,7 @@ class AdvancedSecurityService {
       // Get shared secret
       final sharedSecret = await _getSharedSecret(senderPublicKeyFingerprint);
       if (sharedSecret == null) {
-        _logger.warning('Failed to derive shared secret for $senderPublicKeyFingerprint');
+        // Logging disabled;
         return null;
       }
       
@@ -306,7 +306,7 @@ class AdvancedSecurityService {
       
       return plaintext;
     } catch (e) {
-      _logger.severe('Failed to decrypt message', e);
+      // Logging disabled;
       return null;
     }
   }
@@ -318,7 +318,7 @@ class AdvancedSecurityService {
     Map<String, dynamic>? metadata,
   }) async {
     if (!isInitialized) {
-      _logger.warning('Security service not initialized');
+      // Logging disabled;
       return null;
     }
 
@@ -336,7 +336,7 @@ class AdvancedSecurityService {
         metadata: metadata ?? {},
       );
     } catch (e) {
-      _logger.severe('Failed to create signature', e);
+      // Logging disabled;
       return null;
     }
   }
@@ -348,7 +348,7 @@ class AdvancedSecurityService {
     required String publicKeyFingerprint,
   }) async {
     if (!isInitialized) {
-      _logger.warning('Security service not initialized');
+      // Logging disabled;
       return false;
     }
 
@@ -363,7 +363,7 @@ class AdvancedSecurityService {
       
       return isValid;
     } catch (e) {
-      _logger.severe('Failed to verify signature', e);
+      // Logging disabled;
       return false;
     }
   }
@@ -374,7 +374,7 @@ class AdvancedSecurityService {
     Map<String, dynamic>? sessionParams,
   }) async {
     if (!isInitialized) {
-      _logger.warning('Security service not initialized');
+      // Logging disabled;
       return false;
     }
 
@@ -395,13 +395,13 @@ class AdvancedSecurityService {
         // Schedule key rotation
         _scheduleKeyRotation(peerPublicKeyFingerprint);
         
-        _logger.info('Secure session established with $peerPublicKeyFingerprint');
+        // Logging disabled;
         return true;
       }
       
       return false;
     } catch (e) {
-      _logger.severe('Failed to establish secure session', e);
+      // Logging disabled;
       return false;
     }
   }
@@ -409,7 +409,7 @@ class AdvancedSecurityService {
   /// Rotate encryption keys
   Future<bool> rotateKeys({String? specificPeer}) async {
     if (!isInitialized) {
-      _logger.warning('Security service not initialized');
+      // Logging disabled;
       return false;
     }
 
@@ -430,10 +430,10 @@ class AdvancedSecurityService {
         }
       }
       
-      _logger.info('Key rotation completed');
+      // Logging disabled;
       return true;
     } catch (e) {
-      _logger.severe('Failed to rotate keys', e);
+      // Logging disabled;
       return false;
     }
   }
@@ -460,7 +460,7 @@ class AdvancedSecurityService {
         break;
     }
     
-    _logger.info('Security level set to: ${level.toString()}');
+    // Logging disabled;
   }
 
   /// Generate secure random data
@@ -493,7 +493,7 @@ class AdvancedSecurityService {
     // Initialize key rotation schedule
     _keyRotationSchedule.clear();
     
-    _logger.debug('Security components initialized');
+    // Logging disabled;
   }
 
   /// Start background security tasks
@@ -564,7 +564,7 @@ class AdvancedSecurityService {
         'tag': tag,
       };
     } catch (e) {
-      _logger.severe('Encryption failed', e);
+      // Logging disabled;
       return null;
     }
   }
@@ -588,7 +588,7 @@ class AdvancedSecurityService {
       
       return utf8.decode(plaintextBytes);
     } catch (e) {
-      _logger.severe('Decryption failed', e);
+      // Logging disabled;
       return null;
     }
   }
@@ -657,7 +657,7 @@ class AdvancedSecurityService {
     // Schedule next rotation
     _scheduleKeyRotation(peerFingerprint);
     
-    _logger.debug('Keys rotated for peer: $peerFingerprint');
+    // Logging disabled;
   }
 
   /// Schedule frequent key rotation for high security
@@ -704,7 +704,7 @@ class AdvancedSecurityService {
     }
     
     if (expiredKeys.isNotEmpty) {
-      _logger.info('Security audit: removed ${expiredKeys.length} expired keys');
+      // Logging disabled;
     }
   }
 }

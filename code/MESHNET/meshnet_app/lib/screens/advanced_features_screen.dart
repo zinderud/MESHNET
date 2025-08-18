@@ -381,7 +381,7 @@ class _AdvancedFeaturesScreenState extends State<AdvancedFeaturesScreen> {
         );
       }
     } catch (e) {
-      _logger.severe('Failed to initialize blockchain', e);
+      // Logging disabled;
     }
   }
 
@@ -399,7 +399,7 @@ class _AdvancedFeaturesScreenState extends State<AdvancedFeaturesScreen> {
         );
       }
     } catch (e) {
-      _logger.severe('Failed to initialize P2P network', e);
+      // Logging disabled;
     }
   }
 
@@ -417,7 +417,7 @@ class _AdvancedFeaturesScreenState extends State<AdvancedFeaturesScreen> {
         );
       }
     } catch (e) {
-      _logger.severe('Failed to initialize security service', e);
+      // Logging disabled;
     }
   }
 
@@ -435,7 +435,7 @@ class _AdvancedFeaturesScreenState extends State<AdvancedFeaturesScreen> {
         );
       }
     } catch (e) {
-      _logger.severe('Failed to force mining', e);
+      // Logging disabled;
     }
   }
 
@@ -452,7 +452,7 @@ class _AdvancedFeaturesScreenState extends State<AdvancedFeaturesScreen> {
         );
       }
     } catch (e) {
-      _logger.severe('Failed emergency discovery', e);
+      // Logging disabled;
     }
   }
 
@@ -477,7 +477,7 @@ class _AdvancedFeaturesScreenState extends State<AdvancedFeaturesScreen> {
         );
       }
     } catch (e) {
-      _logger.severe('Failed to sync blockchain', e);
+      // Logging disabled;
     }
   }
 
@@ -495,7 +495,7 @@ class _AdvancedFeaturesScreenState extends State<AdvancedFeaturesScreen> {
         );
       }
     } catch (e) {
-      _logger.severe('Failed to rotate keys', e);
+      // Logging disabled;
     }
   }
 
@@ -507,7 +507,7 @@ class _AdvancedFeaturesScreenState extends State<AdvancedFeaturesScreen> {
       );
       _loadStatistics();
     } catch (e) {
-      _logger.severe('Failed to set emergency security', e);
+      // Logging disabled;
     }
   }
 
@@ -519,7 +519,7 @@ class _AdvancedFeaturesScreenState extends State<AdvancedFeaturesScreen> {
       );
       _loadStatistics();
     } catch (e) {
-      _logger.severe('Failed to optimize performance', e);
+      // Logging disabled;
     }
   }
 
@@ -535,7 +535,7 @@ class _AdvancedFeaturesScreenState extends State<AdvancedFeaturesScreen> {
       );
       _loadStatistics();
     } catch (e) {
-      _logger.severe('Failed to initialize all services', e);
+      // Logging disabled;
     }
   }
 
@@ -551,7 +551,7 @@ class _AdvancedFeaturesScreenState extends State<AdvancedFeaturesScreen> {
       );
       _loadStatistics();
     } catch (e) {
-      _logger.severe('Failed to shutdown all services', e);
+      // Logging disabled;
     }
   }
 
@@ -579,7 +579,7 @@ class _AdvancedFeaturesScreenState extends State<AdvancedFeaturesScreen> {
         );
       }
     } catch (e) {
-      _logger.severe('Failed to send test emergency', e);
+      // Logging disabled;
     }
   }
 }

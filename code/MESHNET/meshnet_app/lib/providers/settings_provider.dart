@@ -54,16 +54,16 @@ class SettingsProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _logger.info('Loading settings from storage');
+      // Logging disabled;
       
       // TODO: Implement actual storage loading
       // For now, use defaults
       _settings = AppSettings.defaults();
       
-      _logger.info('Settings loaded successfully');
+      // Logging disabled;
     } catch (e) {
       _error = 'Failed to load settings: $e';
-      _logger.severe('Failed to load settings', error: e);
+      // Logging disabled;
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -77,16 +77,16 @@ class SettingsProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _logger.info('Saving settings to storage');
+      // Logging disabled;
       
       // TODO: Implement actual storage saving
       final json = _settings.toJson();
-      _logger.fine('Settings JSON: $json');
+      // Logging disabled;
       
-      _logger.info('Settings saved successfully');
+      // Logging disabled;
     } catch (e) {
       _error = 'Failed to save settings: $e';
-      _logger.severe('Failed to save settings', error: e);
+      // Logging disabled;
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -95,7 +95,7 @@ class SettingsProvider extends ChangeNotifier {
 
   /// Update network settings
   Future<void> updateNetworkSettings(NetworkSettings newNetwork) async {
-    _logger.info('Updating network settings');
+    // Logging disabled;
     
     _settings = _settings.copyWith(network: newNetwork);
     notifyListeners();
@@ -105,7 +105,7 @@ class SettingsProvider extends ChangeNotifier {
 
   /// Update emergency settings
   Future<void> updateEmergencySettings(EmergencySettings newEmergency) async {
-    _logger.info('Updating emergency settings');
+    // Logging disabled;
     
     _settings = _settings.copyWith(emergency: newEmergency);
     notifyListeners();
@@ -115,7 +115,7 @@ class SettingsProvider extends ChangeNotifier {
 
   /// Update UI settings
   Future<void> updateUISettings(UISettings newUI) async {
-    _logger.info('Updating UI settings');
+    // Logging disabled;
     
     _settings = _settings.copyWith(ui: newUI);
     notifyListeners();
@@ -125,7 +125,7 @@ class SettingsProvider extends ChangeNotifier {
 
   /// Update security settings
   Future<void> updateSecuritySettings(SecuritySettings newSecurity) async {
-    _logger.info('Updating security settings');
+    // Logging disabled;
     
     _settings = _settings.copyWith(security: newSecurity);
     notifyListeners();
@@ -135,7 +135,7 @@ class SettingsProvider extends ChangeNotifier {
 
   /// Update system settings
   Future<void> updateSystemSettings(SystemSettings newSystem) async {
-    _logger.info('Updating system settings');
+    // Logging disabled;
     
     _settings = _settings.copyWith(system: newSystem);
     notifyListeners();
@@ -145,7 +145,7 @@ class SettingsProvider extends ChangeNotifier {
 
   /// Reset settings to defaults
   Future<void> resetToDefaults() async {
-    _logger.info('Resetting settings to defaults');
+    // Logging disabled;
     
     _settings = AppSettings.defaults();
     notifyListeners();

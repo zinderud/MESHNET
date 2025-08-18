@@ -181,7 +181,7 @@ class SmartMessageClassifier {
   /// Initialize smart message classifier
   Future<bool> initialize() async {
     try {
-      _logger.info('Initializing smart message classifier...');
+      // Logging disabled;
       
       // Load classification models
       await _loadCategoryKeywords();
@@ -192,23 +192,23 @@ class SmartMessageClassifier {
       _startModelUpdateTimer();
       
       _isInitialized = true;
-      _logger.info('Smart message classifier initialized successfully');
+      // Logging disabled;
       return true;
     } catch (e) {
-      _logger.severe('Failed to initialize smart message classifier', e);
+      // Logging disabled;
       return false;
     }
   }
 
   /// Shutdown classifier
   Future<void> shutdown() async {
-    _logger.info('Shutting down smart message classifier...');
+    // Logging disabled;
     
     _modelUpdateTimer?.cancel();
     await _classificationController.close();
     
     _isInitialized = false;
-    _logger.info('Smart message classifier shut down');
+    // Logging disabled;
   }
 
   /// Classify a message
@@ -220,7 +220,7 @@ class SmartMessageClassifier {
     DateTime? timestamp,
   }) async {
     if (!_isInitialized) {
-      _logger.warning('Classifier not initialized');
+      // Logging disabled;
       return null;
     }
 
@@ -266,12 +266,12 @@ class SmartMessageClassifier {
       
       // Log significant classifications
       if (result.isEmergencyRelated || result.requiresImmediateAction) {
-        _logger.info('Emergency message classified: ${result.category} (confidence: ${result.confidence})');
+        // Logging disabled;
       }
       
       return result;
     } catch (e) {
-      _logger.severe('Failed to classify message: $messageId', e);
+      // Logging disabled;
       return null;
     }
   }
@@ -282,7 +282,7 @@ class SmartMessageClassifier {
     Map<String, dynamic>? globalContext,
   }) async {
     if (!_isInitialized) {
-      _logger.warning('Classifier not initialized');
+      // Logging disabled;
       return [];
     }
 
@@ -304,7 +304,7 @@ class SmartMessageClassifier {
       }
     }
     
-    _logger.info('Batch classification completed: ${results.length}/${messages.length} messages');
+    // Logging disabled;
     return results;
   }
 
@@ -324,7 +324,7 @@ class SmartMessageClassifier {
           .lastOrNull;
       
       if (originalResult == null) {
-        _logger.warning('Original classification not found for message: $messageId');
+        // Logging disabled;
         return false;
       }
       
@@ -339,10 +339,10 @@ class SmartMessageClassifier {
       // Update model weights based on feedback
       await _updateModelWeights(originalResult, correctCategory, correctPriority, correctSentiment);
       
-      _logger.info('Model updated with feedback for message: $messageId');
+      // Logging disabled;
       return true;
     } catch (e) {
-      _logger.severe('Failed to process feedback for message: $messageId', e);
+      // Logging disabled;
       return false;
     }
   }
@@ -711,7 +711,7 @@ class SmartMessageClassifier {
       'win', 'free', 'offer', 'deal', 'promotion', 'click', 'buy', 'sale'
     ];
     
-    _logger.debug('Category keywords loaded');
+    // Logging disabled;
   }
 
   /// Load sentiment keywords
@@ -742,7 +742,7 @@ class SmartMessageClassifier {
       'angry', 'frustrated', 'annoyed', 'mad', 'upset', 'irritated'
     ];
     
-    _logger.debug('Sentiment keywords loaded');
+    // Logging disabled;
   }
 
   /// Load feature weights
@@ -761,7 +761,7 @@ class SmartMessageClassifier {
       _featureWeights[word] = 2.0;
     }
     
-    _logger.debug('Feature weights loaded: ${_featureWeights.length} words');
+    // Logging disabled;
   }
 
   /// Add classification to history
@@ -823,9 +823,9 @@ class SmartMessageClassifier {
         }
       }
       
-      _logger.debug('Model weights updated based on usage patterns');
+      // Logging disabled;
     } catch (e) {
-      _logger.warning('Model update failed', e);
+      // Logging disabled;
     }
   }
 }

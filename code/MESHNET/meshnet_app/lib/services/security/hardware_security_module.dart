@@ -235,7 +235,7 @@ class HardwareSecurityModule {
   /// Initialize HSM system
   Future<bool> initialize() async {
     try {
-      _logger.info('Initializing Hardware Security Module system...');
+      // Logging disabled;
       
       // Load device configurations
       await _loadDeviceConfigurations();
@@ -248,17 +248,17 @@ class HardwareSecurityModule {
       _startSessionCleanup();
       
       _isInitialized = true;
-      _logger.info('Hardware Security Module system initialized successfully');
+      // Logging disabled;
       return true;
     } catch (e) {
-      _logger.severe('Failed to initialize HSM system', e);
+      // Logging disabled;
       return false;
     }
   }
 
   /// Shutdown HSM system
   Future<void> shutdown() async {
-    _logger.info('Shutting down Hardware Security Module system...');
+    // Logging disabled;
     
     _deviceMonitoringTimer?.cancel();
     _sessionCleanupTimer?.cancel();
@@ -272,13 +272,13 @@ class HardwareSecurityModule {
     await _operationController.close();
     
     _isInitialized = false;
-    _logger.info('Hardware Security Module system shut down');
+    // Logging disabled;
   }
 
   /// Discover available HSM devices
   Future<List<HSMDeviceInfo>> discoverDevices() async {
     if (!_isInitialized) {
-      _logger.warning('HSM system not initialized');
+      // Logging disabled;
       return [];
     }
 
@@ -286,7 +286,7 @@ class HardwareSecurityModule {
       await _discoverHSMDevices();
       return _devices.values.toList();
     } catch (e) {
-      _logger.severe('Failed to discover HSM devices', e);
+      // Logging disabled;
       return [];
     }
   }
@@ -300,21 +300,21 @@ class HardwareSecurityModule {
     List<String>? requiredPermissions,
   }) async {
     if (!_isInitialized) {
-      _logger.warning('HSM system not initialized');
+      // Logging disabled;
       return null;
     }
 
     try {
       final device = _devices[deviceId];
       if (device == null || !device.isAvailable) {
-        _logger.warning('HSM device not available: $deviceId');
+        // Logging disabled;
         return null;
       }
       
       // Authenticate user (simplified implementation)
       final authResult = await _authenticateUser(deviceId, userId, pin);
       if (!authResult['authenticated']) {
-        _logger.warning('HSM authentication failed for user: $userId');
+        // Logging disabled;
         return null;
       }
       
@@ -334,10 +334,10 @@ class HardwareSecurityModule {
       
       _activeSessions[sessionId] = session;
       
-      _logger.info('Established HSM session: $sessionId for device: $deviceId');
+      // Logging disabled;
       return session;
     } catch (e) {
-      _logger.severe('Failed to establish HSM session for device: $deviceId', e);
+      // Logging disabled;
       return null;
     }
   }
@@ -347,7 +347,7 @@ class HardwareSecurityModule {
     try {
       final session = _activeSessions[sessionId];
       if (session == null) {
-        _logger.warning('HSM session not found: $sessionId');
+        // Logging disabled;
         return false;
       }
       
@@ -356,10 +356,10 @@ class HardwareSecurityModule {
       
       _activeSessions.remove(sessionId);
       
-      _logger.info('Closed HSM session: $sessionId');
+      // Logging disabled;
       return true;
     } catch (e) {
-      _logger.severe('Failed to close HSM session: $sessionId', e);
+      // Logging disabled;
       return false;
     }
   }
@@ -374,19 +374,19 @@ class HardwareSecurityModule {
     bool extractable = false,
   }) async {
     if (!_isInitialized) {
-      _logger.warning('HSM system not initialized');
+      // Logging disabled;
       return null;
     }
 
     try {
       final session = _activeSessions[sessionId];
       if (session == null || !session.isValid) {
-        _logger.warning('Invalid HSM session: $sessionId');
+        // Logging disabled;
         return null;
       }
       
       if (!session.permissions.contains('key_generation')) {
-        _logger.warning('Insufficient permissions for key generation');
+        // Logging disabled;
         return null;
       }
       
@@ -426,10 +426,10 @@ class HardwareSecurityModule {
       
       await _recordOperation(result);
       
-      _logger.info('Generated key in HSM: $operationId ($keyAlgorithm-$keySize)');
+      // Logging disabled;
       return result;
     } catch (e) {
-      _logger.severe('Failed to generate key in HSM', e);
+      // Logging disabled;
       return null;
     }
   }
@@ -443,19 +443,19 @@ class HardwareSecurityModule {
     Map<String, dynamic>? parameters,
   }) async {
     if (!_isInitialized) {
-      _logger.warning('HSM system not initialized');
+      // Logging disabled;
       return null;
     }
 
     try {
       final session = _activeSessions[sessionId];
       if (session == null || !session.isValid) {
-        _logger.warning('Invalid HSM session: $sessionId');
+        // Logging disabled;
         return null;
       }
       
       if (!session.permissions.contains('encryption')) {
-        _logger.warning('Insufficient permissions for encryption');
+        // Logging disabled;
         return null;
       }
       
@@ -495,10 +495,10 @@ class HardwareSecurityModule {
       
       await _recordOperation(result);
       
-      _logger.info('Encrypted data in HSM: $operationId (${plaintext.length} bytes)');
+      // Logging disabled;
       return result;
     } catch (e) {
-      _logger.severe('Failed to encrypt data in HSM', e);
+      // Logging disabled;
       return null;
     }
   }
@@ -512,19 +512,19 @@ class HardwareSecurityModule {
     Map<String, dynamic>? parameters,
   }) async {
     if (!_isInitialized) {
-      _logger.warning('HSM system not initialized');
+      // Logging disabled;
       return null;
     }
 
     try {
       final session = _activeSessions[sessionId];
       if (session == null || !session.isValid) {
-        _logger.warning('Invalid HSM session: $sessionId');
+        // Logging disabled;
         return null;
       }
       
       if (!session.permissions.contains('decryption')) {
-        _logger.warning('Insufficient permissions for decryption');
+        // Logging disabled;
         return null;
       }
       
@@ -562,10 +562,10 @@ class HardwareSecurityModule {
       
       await _recordOperation(result);
       
-      _logger.info('Decrypted data in HSM: $operationId (${ciphertext.length} bytes)');
+      // Logging disabled;
       return result;
     } catch (e) {
-      _logger.severe('Failed to decrypt data in HSM', e);
+      // Logging disabled;
       return null;
     }
   }
@@ -579,19 +579,19 @@ class HardwareSecurityModule {
     Map<String, dynamic>? parameters,
   }) async {
     if (!_isInitialized) {
-      _logger.warning('HSM system not initialized');
+      // Logging disabled;
       return null;
     }
 
     try {
       final session = _activeSessions[sessionId];
       if (session == null || !session.isValid) {
-        _logger.warning('Invalid HSM session: $sessionId');
+        // Logging disabled;
         return null;
       }
       
       if (!session.permissions.contains('digital_signing')) {
-        _logger.warning('Insufficient permissions for digital signing');
+        // Logging disabled;
         return null;
       }
       
@@ -629,10 +629,10 @@ class HardwareSecurityModule {
       
       await _recordOperation(result);
       
-      _logger.info('Created signature in HSM: $operationId (${data.length} bytes)');
+      // Logging disabled;
       return result;
     } catch (e) {
-      _logger.severe('Failed to create signature in HSM', e);
+      // Logging disabled;
       return null;
     }
   }
@@ -644,14 +644,14 @@ class HardwareSecurityModule {
     String? entropySource,
   }) async {
     if (!_isInitialized) {
-      _logger.warning('HSM system not initialized');
+      // Logging disabled;
       return null;
     }
 
     try {
       final session = _activeSessions[sessionId];
       if (session == null || !session.isValid) {
-        _logger.warning('Invalid HSM session: $sessionId');
+        // Logging disabled;
         return null;
       }
       
@@ -686,10 +686,10 @@ class HardwareSecurityModule {
       
       await _recordOperation(result);
       
-      _logger.info('Generated random data in HSM: $operationId ($length bytes)');
+      // Logging disabled;
       return result;
     } catch (e) {
-      _logger.severe('Failed to generate random data in HSM', e);
+      // Logging disabled;
       return null;
     }
   }
@@ -697,24 +697,24 @@ class HardwareSecurityModule {
   /// Get device attestation
   Future<Map<String, dynamic>?> getDeviceAttestation(String deviceId) async {
     if (!_isInitialized) {
-      _logger.warning('HSM system not initialized');
+      // Logging disabled;
       return null;
     }
 
     try {
       final device = _devices[deviceId];
       if (device == null) {
-        _logger.warning('HSM device not found: $deviceId');
+        // Logging disabled;
         return null;
       }
       
       // Generate device attestation
       final attestation = await _generateDeviceAttestation(device);
       
-      _logger.info('Generated device attestation for: $deviceId');
+      // Logging disabled;
       return attestation;
     } catch (e) {
-      _logger.severe('Failed to get device attestation: $deviceId', e);
+      // Logging disabled;
       return null;
     }
   }
@@ -779,7 +779,7 @@ class HardwareSecurityModule {
       'session_timeout': 3600, // 1 hour
     };
     
-    _logger.debug('Device configurations loaded');
+    // Logging disabled;
   }
 
   /// Discover HSM devices
@@ -877,9 +877,9 @@ class HardwareSecurityModule {
       }
       
       _activeDevices = _devices.length;
-      _logger.info('Discovered ${_devices.length} HSM devices');
+      // Logging disabled;
     } catch (e) {
-      _logger.severe('Failed to discover HSM devices', e);
+      // Logging disabled;
     }
   }
 
@@ -1126,9 +1126,9 @@ class HardwareSecurityModule {
       // Clear session-specific keys and data
       // In real implementation, securely clear HSM session state
       
-      _logger.debug('Session cleanup completed for: ${session.sessionId}');
+      // Logging disabled;
     } catch (e) {
-      _logger.warning('Session cleanup failed: ${session.sessionId}', e);
+      // Logging disabled;
     }
   }
 
@@ -1173,9 +1173,9 @@ class HardwareSecurityModule {
         }
       }
       
-      _logger.debug('Device status monitoring completed');
+      // Logging disabled;
     } catch (e) {
-      _logger.warning('Device status monitoring failed', e);
+      // Logging disabled;
     }
   }
 
@@ -1190,9 +1190,9 @@ class HardwareSecurityModule {
         await closeSession(session.sessionId);
       }
       
-      _logger.debug('Session cleanup completed: ${expiredSessions.length} expired sessions removed');
+      // Logging disabled;
     } catch (e) {
-      _logger.warning('Session cleanup failed', e);
+      // Logging disabled;
     }
   }
 

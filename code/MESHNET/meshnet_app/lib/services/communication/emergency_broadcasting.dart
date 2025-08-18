@@ -365,7 +365,7 @@ class EmergencyBroadcasting {
     GroupCommunication? groupService,
   }) async {
     try {
-      _logger.info('Initializing Emergency Broadcasting system...');
+      // Logging disabled;
       
       _currentUserId = userId;
       _currentUserName = userName;
@@ -399,17 +399,17 @@ class EmergencyBroadcasting {
       _startCleanupTasks();
       
       _isInitialized = true;
-      _logger.info('Emergency Broadcasting system initialized successfully');
+      // Logging disabled;
       return true;
     } catch (e) {
-      _logger.severe('Failed to initialize emergency broadcasting system', e);
+      // Logging disabled;
       return false;
     }
   }
 
   /// Shutdown emergency broadcasting system
   Future<void> shutdown() async {
-    _logger.info('Shutting down Emergency Broadcasting system...');
+    // Logging disabled;
     
     // Stop all active broadcasts
     for (final broadcastId in _activeBroadcasts.keys.toList()) {
@@ -431,7 +431,7 @@ class EmergencyBroadcasting {
     await _acknowledgmentController.close();
     
     _isInitialized = false;
-    _logger.info('Emergency Broadcasting system shut down');
+    // Logging disabled;
   }
 
   /// Send emergency alert
@@ -454,14 +454,14 @@ class EmergencyBroadcasting {
     bool requiresAcknowledgment = true,
   }) async {
     if (!_isInitialized || _currentUserId == null) {
-      _logger.warning('Emergency broadcasting system not initialized');
+      // Logging disabled;
       return null;
     }
 
     try {
       // Validate authorization
       if (!_isAuthorized(_currentUserId!)) {
-        _logger.warning('User not authorized to send emergency alerts: $_currentUserId');
+        // Logging disabled;
         return null;
       }
       
@@ -536,10 +536,10 @@ class EmergencyBroadcasting {
       
       _broadcastController.add(broadcast);
       
-      _logger.info('Emergency alert sent: $broadcastId ($title)');
+      // Logging disabled;
       return broadcastId;
     } catch (e) {
-      _logger.severe('Failed to send emergency alert', e);
+      // Logging disabled;
       return null;
     }
   }
@@ -706,13 +706,13 @@ class EmergencyBroadcasting {
         
         _acknowledgmentController.add(broadcastId);
         
-        _logger.info('Acknowledged broadcast: $broadcastId');
+        // Logging disabled;
         return true;
       }
       
       return true; // Already acknowledged
     } catch (e) {
-      _logger.severe('Failed to acknowledge broadcast: $broadcastId', e);
+      // Logging disabled;
       return false;
     }
   }
@@ -731,7 +731,7 @@ class EmergencyBroadcasting {
       
       // Validate authorization
       if (broadcast.issuerId != _currentUserId && !_isAuthorized(_currentUserId!)) {
-        _logger.warning('Not authorized to stop broadcast: $broadcastId');
+        // Logging disabled;
         return false;
       }
       
@@ -746,10 +746,10 @@ class EmergencyBroadcasting {
       // Remove from active broadcasts
       _activeBroadcasts.remove(broadcastId);
       
-      _logger.info('Stopped broadcast: $broadcastId');
+      // Logging disabled;
       return true;
     } catch (e) {
-      _logger.severe('Failed to stop broadcast: $broadcastId', e);
+      // Logging disabled;
       return false;
     }
   }
@@ -832,7 +832,7 @@ class EmergencyBroadcasting {
       // Update delivery statistics
       await _updateDeliveryStatistics(broadcast.broadcastId);
     } catch (e) {
-      _logger.severe('Failed to start broadcasting: ${broadcast.broadcastId}', e);
+      // Logging disabled;
     }
   }
 
@@ -862,9 +862,9 @@ class EmergencyBroadcasting {
           await _broadcastThroughDefaultChannel(broadcast, channel);
       }
       
-      _logger.debug('Broadcast sent through ${channel.toString()}: ${broadcast.broadcastId}');
+      // Logging disabled;
     } catch (e) {
-      _logger.warning('Failed to broadcast through ${channel.toString()}: ${broadcast.broadcastId}', e);
+      // Logging disabled;
     }
   }
 
@@ -907,7 +907,7 @@ class EmergencyBroadcasting {
   /// Broadcast through default channel
   Future<void> _broadcastThroughDefaultChannel(EmergencyBroadcast broadcast, BroadcastChannel channel) async {
     // Default broadcast mechanism
-    _logger.debug('Broadcasting through default channel: ${channel.toString()}');
+    // Logging disabled;
   }
 
   /// Trigger multimedia broadcast
@@ -928,20 +928,20 @@ class EmergencyBroadcasting {
         await _sendToEmergencyGroups(broadcast);
       }
     } catch (e) {
-      _logger.warning('Failed to trigger multimedia broadcast: ${broadcast.broadcastId}', e);
+      // Logging disabled;
     }
   }
 
   /// Trigger voice announcement
   Future<void> _triggerVoiceAnnouncement(EmergencyBroadcast broadcast) async {
     // Convert text to speech and broadcast
-    _logger.debug('Triggered voice announcement for: ${broadcast.broadcastId}');
+    // Logging disabled;
   }
 
   /// Trigger video alert
   Future<void> _triggerVideoAlert(EmergencyBroadcast broadcast) async {
     // Create video alert broadcast
-    _logger.debug('Triggered video alert for: ${broadcast.broadcastId}');
+    // Logging disabled;
   }
 
   /// Send to emergency groups
@@ -962,7 +962,7 @@ class EmergencyBroadcasting {
         }
       }
     } catch (e) {
-      _logger.warning('Failed to send to emergency groups: ${broadcast.broadcastId}', e);
+      // Logging disabled;
     }
   }
 
@@ -984,50 +984,50 @@ class EmergencyBroadcasting {
       await _startBroadcasting(broadcast);
       _repeatCounts[broadcast.broadcastId] = repeatCount + 1;
       
-      _logger.debug('Repeated broadcast: ${broadcast.broadcastId} (${repeatCount + 1}/${_config!.maxRepeats})');
+      // Logging disabled;
     });
   }
 
   /// Send to mesh nodes
   Future<void> _sendToMeshNodes(EmergencyBroadcast broadcast) async {
     // Send broadcast message to all mesh network nodes
-    _logger.debug('Sent to mesh nodes: ${broadcast.broadcastId}');
+    // Logging disabled;
   }
 
   /// Send to emergency frequency
   Future<void> _sendToEmergencyFrequency(EmergencyBroadcast broadcast) async {
     // Send through emergency radio frequency
-    _logger.debug('Sent to emergency frequency: ${broadcast.broadcastId}');
+    // Logging disabled;
   }
 
   /// Send to WiFi networks
   Future<void> _sendToWiFiNetworks(EmergencyBroadcast broadcast) async {
     // Send through WiFi networks
-    _logger.debug('Sent to WiFi networks: ${broadcast.broadcastId}');
+    // Logging disabled;
   }
 
   /// Send to Bluetooth devices
   Future<void> _sendToBluetoothDevices(EmergencyBroadcast broadcast) async {
     // Send through Bluetooth beacon
-    _logger.debug('Sent to Bluetooth devices: ${broadcast.broadcastId}');
+    // Logging disabled;
   }
 
   /// Send to Ham radio
   Future<void> _sendToHamRadio(EmergencyBroadcast broadcast) async {
     // Send through Ham radio
-    _logger.debug('Sent to Ham radio: ${broadcast.broadcastId}');
+    // Logging disabled;
   }
 
   /// Send to public address
   Future<void> _sendToPublicAddress(EmergencyBroadcast broadcast) async {
     // Send through public address systems
-    _logger.debug('Sent to public address: ${broadcast.broadcastId}');
+    // Logging disabled;
   }
 
   /// Send acknowledgment confirmation
   Future<void> _sendAcknowledgmentConfirmation(String issuerId, String broadcastId) async {
     // Send acknowledgment confirmation to issuer
-    _logger.debug('Sent acknowledgment confirmation for $broadcastId to $issuerId');
+    // Logging disabled;
   }
 
   /// Update delivery statistics
@@ -1135,7 +1135,7 @@ class EmergencyBroadcasting {
     
     for (final broadcastId in expiredBroadcasts) {
       await stopBroadcast(broadcastId);
-      _logger.debug('Automatically stopped expired broadcast: $broadcastId');
+      // Logging disabled;
     }
   }
 

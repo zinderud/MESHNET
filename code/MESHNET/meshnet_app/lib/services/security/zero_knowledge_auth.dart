@@ -276,7 +276,7 @@ class ZeroKnowledgeAuth {
   /// Initialize zero-knowledge authentication
   Future<bool> initialize() async {
     try {
-      _logger.info('Initializing zero-knowledge authentication system...');
+      // Logging disabled;
       
       // Initialize cryptographic parameters
       await _initializeProofParameters();
@@ -288,17 +288,17 @@ class ZeroKnowledgeAuth {
       _startProofCleanupTimer();
       
       _isInitialized = true;
-      _logger.info('Zero-knowledge authentication system initialized successfully');
+      // Logging disabled;
       return true;
     } catch (e) {
-      _logger.severe('Failed to initialize zero-knowledge authentication system', e);
+      // Logging disabled;
       return false;
     }
   }
 
   /// Shutdown zero-knowledge authentication
   Future<void> shutdown() async {
-    _logger.info('Shutting down zero-knowledge authentication system...');
+    // Logging disabled;
     
     _proofCleanupTimer?.cancel();
     
@@ -308,7 +308,7 @@ class ZeroKnowledgeAuth {
     _commitmentKeys.clear();
     
     _isInitialized = false;
-    _logger.info('Zero-knowledge authentication system shut down');
+    // Logging disabled;
   }
 
   /// Issue authentication challenge
@@ -320,7 +320,7 @@ class ZeroKnowledgeAuth {
     String? verifierIdentifier,
   }) async {
     if (!_isInitialized) {
-      _logger.warning('Zero-knowledge authentication not initialized');
+      // Logging disabled;
       return null;
     }
 
@@ -349,10 +349,10 @@ class ZeroKnowledgeAuth {
       _activeChallenges[challengeId] = challenge;
       _totalChallengesIssued++;
       
-      _logger.info('Issued authentication challenge: $challengeId (${challengeType.toString()})');
+      // Logging disabled;
       return challenge;
     } catch (e) {
-      _logger.severe('Failed to issue authentication challenge', e);
+      // Logging disabled;
       return null;
     }
   }
@@ -365,19 +365,19 @@ class ZeroKnowledgeAuth {
     Map<String, dynamic>? metadata,
   }) async {
     if (!_isInitialized) {
-      _logger.warning('Zero-knowledge authentication not initialized');
+      // Logging disabled;
       return null;
     }
 
     try {
       final challenge = _activeChallenges[challengeId];
       if (challenge == null) {
-        _logger.warning('Challenge not found: $challengeId');
+        // Logging disabled;
         return null;
       }
       
       if (challenge.isExpired) {
-        _logger.warning('Challenge expired: $challengeId');
+        // Logging disabled;
         return null;
       }
       
@@ -414,10 +414,10 @@ class ZeroKnowledgeAuth {
       _validProofs[proofId] = proof;
       _totalProofsGenerated++;
       
-      _logger.info('Generated ZK proof: $proofId for challenge: $challengeId');
+      // Logging disabled;
       return proof;
     } catch (e) {
-      _logger.severe('Failed to generate ZK proof for challenge: $challengeId', e);
+      // Logging disabled;
       return null;
     }
   }
@@ -430,14 +430,14 @@ class ZeroKnowledgeAuth {
     Map<String, dynamic>? verificationContext,
   }) async {
     if (!_isInitialized) {
-      _logger.warning('Zero-knowledge authentication not initialized');
+      // Logging disabled;
       return null;
     }
 
     try {
       final proof = _validProofs[proofId];
       if (proof == null) {
-        _logger.warning('Proof not found: $proofId');
+        // Logging disabled;
         return _createFailedVerificationResult(
           proofId, 
           challengeId ?? 'unknown', 
@@ -447,7 +447,7 @@ class ZeroKnowledgeAuth {
       }
       
       if (proof.isExpired) {
-        _logger.warning('Proof expired: $proofId');
+        // Logging disabled;
         return _createFailedVerificationResult(
           proofId, 
           challengeId ?? 'unknown', 
@@ -494,10 +494,10 @@ class ZeroKnowledgeAuth {
         _successfulVerifications++;
       }
       
-      _logger.info('Verified ZK proof: $proofId, valid: ${result.isValid}, confidence: ${result.confidence}');
+      // Logging disabled;
       return result;
     } catch (e) {
-      _logger.severe('Failed to verify ZK proof: $proofId', e);
+      // Logging disabled;
       return _createFailedVerificationResult(
         proofId, 
         challengeId ?? 'unknown', 
@@ -516,7 +516,7 @@ class ZeroKnowledgeAuth {
     List<String>? validUsages,
   }) async {
     if (!_isInitialized) {
-      _logger.warning('Zero-knowledge authentication not initialized');
+      // Logging disabled;
       return null;
     }
 
@@ -543,10 +543,10 @@ class ZeroKnowledgeAuth {
       
       _credentials[credentialId] = credential;
       
-      _logger.info('Generated anonymous credential: $credentialId ($credentialType)');
+      // Logging disabled;
       return credential;
     } catch (e) {
-      _logger.severe('Failed to generate anonymous credential', e);
+      // Logging disabled;
       return null;
     }
   }
@@ -559,14 +559,14 @@ class ZeroKnowledgeAuth {
     Map<String, dynamic>? constraints,
   }) async {
     if (!_isInitialized) {
-      _logger.warning('Zero-knowledge authentication not initialized');
+      // Logging disabled;
       return null;
     }
 
     try {
       final credential = _credentials[credentialId];
       if (credential == null || !credential.isValid) {
-        _logger.warning('Invalid or expired credential: $credentialId');
+        // Logging disabled;
         return null;
       }
       
@@ -615,10 +615,10 @@ class ZeroKnowledgeAuth {
       
       _validProofs[proofId] = proof;
       
-      _logger.info('Generated credential possession proof: $proofId');
+      // Logging disabled;
       return proof;
     } catch (e) {
-      _logger.severe('Failed to prove credential possession: $credentialId', e);
+      // Logging disabled;
       return null;
     }
   }
@@ -630,7 +630,7 @@ class ZeroKnowledgeAuth {
     List<String>? groupMembership,
   }) async {
     if (!_isInitialized) {
-      _logger.warning('Zero-knowledge authentication not initialized');
+      // Logging disabled;
       return null;
     }
 
@@ -661,10 +661,10 @@ class ZeroKnowledgeAuth {
       
       _validProofs[proofId] = proof;
       
-      _logger.info('Generated anonymous authentication proof: $proofId');
+      // Logging disabled;
       return proof;
     } catch (e) {
-      _logger.severe('Failed to perform anonymous authentication', e);
+      // Logging disabled;
       return null;
     }
   }
@@ -735,7 +735,7 @@ class ZeroKnowledgeAuth {
       'signature_size': 64,
     };
     
-    _logger.debug('Proof parameters initialized');
+    // Logging disabled;
   }
 
   /// Generate commitment keys
@@ -754,7 +754,7 @@ class ZeroKnowledgeAuth {
       List.generate(32, (_) => random.nextInt(256))
     );
     
-    _logger.debug('Commitment keys generated');
+    // Logging disabled;
   }
 
   /// Get default proof type for challenge type
@@ -1257,9 +1257,9 @@ class ZeroKnowledgeAuth {
       // Remove expired credentials
       _credentials.removeWhere((id, credential) => credential.isExpired);
       
-      _logger.debug('Cleanup completed: expired proofs and challenges removed');
+      // Logging disabled;
     } catch (e) {
-      _logger.warning('Proof cleanup failed', e);
+      // Logging disabled;
     }
   }
 

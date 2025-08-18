@@ -262,7 +262,7 @@ class ContextAwareResponseSystem {
   /// Initialize context-aware response system
   Future<bool> initialize() async {
     try {
-      _logger.info('Initializing context-aware response system...');
+      // Logging disabled;
       
       // Load response templates and profiles
       await _loadResponseTemplates();
@@ -273,24 +273,24 @@ class ContextAwareResponseSystem {
       _startContextAnalysisTimer();
       
       _isInitialized = true;
-      _logger.info('Context-aware response system initialized successfully');
+      // Logging disabled;
       return true;
     } catch (e) {
-      _logger.severe('Failed to initialize context-aware response system', e);
+      // Logging disabled;
       return false;
     }
   }
 
   /// Shutdown context-aware response system
   Future<void> shutdown() async {
-    _logger.info('Shutting down context-aware response system...');
+    // Logging disabled;
     
     _contextAnalysisTimer?.cancel();
     await _recommendationController.close();
     await _executionController.close();
     
     _isInitialized = false;
-    _logger.info('Context-aware response system shut down');
+    // Logging disabled;
   }
 
   /// Generate context-aware emergency response recommendations
@@ -302,7 +302,7 @@ class ContextAwareResponseSystem {
     ResponseContextType? contextType,
   }) async {
     if (!_isInitialized) {
-      _logger.warning('Context-aware response system not initialized');
+      // Logging disabled;
       return [];
     }
 
@@ -330,10 +330,10 @@ class ContextAwareResponseSystem {
         _recommendationController.add(recommendation);
       }
       
-      _logger.info('Generated ${recommendations.length} emergency response recommendations for ${emergencyData.type}');
+      // Logging disabled;
       return recommendations;
     } catch (e) {
-      _logger.severe('Failed to generate emergency response', e);
+      // Logging disabled;
       return [];
     }
   }
@@ -345,7 +345,7 @@ class ContextAwareResponseSystem {
     Function(String)? progressCallback,
   }) async {
     if (!_isInitialized) {
-      _logger.warning('Context-aware response system not initialized');
+      // Logging disabled;
       return null;
     }
 
@@ -355,7 +355,7 @@ class ContextAwareResponseSystem {
           .lastOrNull;
       
       if (recommendation == null) {
-        _logger.warning('Recommendation not found: $recommendationId');
+        // Logging disabled;
         return null;
       }
       
@@ -396,10 +396,10 @@ class ContextAwareResponseSystem {
         _successfulResponses++;
       }
       
-      _logger.info('Response execution completed: $executionId, successful: ${executionResult.successful}');
+      // Logging disabled;
       return executionResult;
     } catch (e) {
-      _logger.severe('Failed to execute response: $recommendationId', e);
+      // Logging disabled;
       return null;
     }
   }
@@ -435,7 +435,7 @@ class ContextAwareResponseSystem {
       
       return contextInfo;
     } catch (e) {
-      _logger.severe('Failed to get contextual information', e);
+      // Logging disabled;
       return {};
     }
   }
@@ -470,9 +470,9 @@ class ContextAwareResponseSystem {
         _responseSuccessRates[actionKey] = effectiveness;
       }
       
-      _logger.debug('Response effectiveness reported: $executionId, effectiveness: $effectiveness');
+      // Logging disabled;
     } catch (e) {
-      _logger.severe('Failed to report response effectiveness', e);
+      // Logging disabled;
     }
   }
 
@@ -918,7 +918,7 @@ class ContextAwareResponseSystem {
       'information_actions': ['building_plans', 'hazardous_materials'],
     };
     
-    _logger.debug('Response templates loaded');
+    // Logging disabled;
   }
 
   /// Load context profiles
@@ -935,7 +935,7 @@ class ContextAwareResponseSystem {
       'constraints': ['protocol_compliance', 'jurisdiction'],
     };
     
-    _logger.debug('Context profiles loaded');
+    // Logging disabled;
   }
 
   /// Load action weights
@@ -951,7 +951,7 @@ class ContextAwareResponseSystem {
     _actionWeights[ResponseActionType.send_assistance] = 1.0;
     _actionWeights[ResponseActionType.update_status] = 0.6;
     
-    _logger.debug('Action weights loaded');
+    // Logging disabled;
   }
 
   /// Add recommendation to history
@@ -991,9 +991,9 @@ class ContextAwareResponseSystem {
         }
       }
       
-      _logger.debug('Context analysis completed');
+      // Logging disabled;
     } catch (e) {
-      _logger.warning('Context analysis failed', e);
+      // Logging disabled;
     }
   }
 

@@ -90,7 +90,7 @@ class _MainScreenState extends State<MainScreen> {
   @override
   void initState() {
     super.initState();
-    _logger.info('Main screen initialized');
+    // Logging disabled;
     _checkServiceStatus();
   }
 
@@ -101,7 +101,7 @@ class _MainScreenState extends State<MainScreen> {
     final blockchainStatus = BlockchainManager.instance.isInitialized;
     final p2pStatus = P2PNetworkManager.instance.isInitialized;
     
-    _logger.info('Service Status - Optimization: $optimizationStatus, Security: $securityStatus, Blockchain: $blockchainStatus, P2P: $p2pStatus');
+    // Logging disabled;
     
     if (!optimizationStatus || !securityStatus || !blockchainStatus || !p2pStatus) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -186,7 +186,7 @@ class _MainScreenState extends State<MainScreen> {
         );
       }
     } catch (e) {
-      _logger.severe('Failed to send quick emergency alert', e);
+      // Logging disabled;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Error sending emergency alert'),

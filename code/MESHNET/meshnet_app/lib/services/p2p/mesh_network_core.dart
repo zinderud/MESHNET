@@ -416,7 +416,7 @@ class MeshNetworkCore {
   /// Initialize mesh network
   Future<bool> initialize() async {
     try {
-      _logger.info('Initializing mesh network core...');
+      // Logging disabled;
       
       // Start discovery and cleanup timers
       _startDiscoveryTimer();
@@ -425,17 +425,17 @@ class MeshNetworkCore {
       // Send initial discovery message
       await _sendDiscoveryMessage();
       
-      _logger.info('Mesh network core initialized');
+      // Logging disabled;
       return true;
     } catch (e) {
-      _logger.severe('Failed to initialize mesh network core', e);
+      // Logging disabled;
       return false;
     }
   }
 
   /// Shutdown mesh network
   Future<void> shutdown() async {
-    _logger.info('Shutting down mesh network core...');
+    // Logging disabled;
     
     _discoveryTimer?.cancel();
     _cleanupTimer?.cancel();
@@ -448,7 +448,7 @@ class MeshNetworkCore {
     await _messageController.close();
     await _nodeController.close();
     
-    _logger.info('Mesh network core shut down');
+    // Logging disabled;
   }
 
   /// Add a discovered node
@@ -469,7 +469,7 @@ class MeshNetworkCore {
         );
       } else {
         _nodes[node.nodeId] = node;
-        _logger.info('New node added: ${node.nodeId}');
+        // Logging disabled;
       }
 
       // Update routing table
@@ -483,7 +483,7 @@ class MeshNetworkCore {
       
       return true;
     } catch (e) {
-      _logger.severe('Failed to add node: ${node.nodeId}', e);
+      // Logging disabled;
       return false;
     }
   }
@@ -501,12 +501,12 @@ class MeshNetworkCore {
         _routingTable.removeWhere((key, route) => 
           route.destinationNodeId == nodeId || route.nextHopNodeId == nodeId);
         
-        _logger.info('Node removed: $nodeId');
+        // Logging disabled;
         return true;
       }
       return false;
     } catch (e) {
-      _logger.severe('Failed to remove node: $nodeId', e);
+      // Logging disabled;
       return false;
     }
   }
@@ -520,7 +520,7 @@ class MeshNetworkCore {
       // Find route to destination
       final route = _findRoute(message.destinationNodeId);
       if (route == null && !message.isBroadcast) {
-        _logger.warning('No route found to ${message.destinationNodeId}');
+        // Logging disabled;
         return false;
       }
 
@@ -531,7 +531,7 @@ class MeshNetworkCore {
         return await _unicastMessage(message, route!);
       }
     } catch (e) {
-      _logger.severe('Failed to send message: ${message.messageId}', e);
+      // Logging disabled;
       return false;
     }
   }
@@ -541,13 +541,13 @@ class MeshNetworkCore {
     try {
       // Check if message is valid
       if (!message.isValid) {
-        _logger.warning('Invalid message received: ${message.messageId}');
+        // Logging disabled;
         return;
       }
 
       // Check if already processed
       if (_messageHistory.any((m) => m.messageId == message.messageId)) {
-        _logger.debug('Duplicate message ignored: ${message.messageId}');
+        // Logging disabled;
         return;
       }
 
@@ -594,7 +594,7 @@ class MeshNetworkCore {
       _messageController.add(message);
       
     } catch (e) {
-      _logger.severe('Failed to process message: ${message.messageId}', e);
+      // Logging disabled;
     }
   }
 
@@ -658,9 +658,9 @@ class MeshNetworkCore {
     for (final node in connectedNodes) {
       try {
         // In real implementation, use actual network protocols
-        _logger.debug('Broadcasting to ${node.nodeId}: ${message.messageId}');
+        // Logging disabled;
       } catch (e) {
-        _logger.warning('Failed to broadcast to ${node.nodeId}', e);
+        // Logging disabled;
         success = false;
       }
     }
@@ -672,10 +672,10 @@ class MeshNetworkCore {
   Future<bool> _unicastMessage(MeshMessage message, RouteEntry route) async {
     try {
       // In real implementation, use actual network protocols
-      _logger.debug('Unicasting to ${route.nextHopNodeId}: ${message.messageId}');
+      // Logging disabled;
       return true;
     } catch (e) {
-      _logger.warning('Failed to unicast to ${route.nextHopNodeId}', e);
+      // Logging disabled;
       return false;
     }
   }
@@ -699,7 +699,7 @@ class MeshNetworkCore {
   /// Process data/emergency message
   Future<void> _processDataMessage(MeshMessage message) async {
     // Message delivered to application layer
-    _logger.info('Data message received: ${message.messageId}');
+    // Logging disabled;
   }
 
   /// Process keep alive message
@@ -724,17 +724,17 @@ class MeshNetworkCore {
 
   /// Process acknowledgment message
   Future<void> _processAckMessage(MeshMessage message) async {
-    _logger.debug('Acknowledgment received: ${message.payload['originalMessageId']}');
+    // Logging disabled;
   }
 
   /// Process blockchain message
   Future<void> _processBlockchainMessage(MeshMessage message) async {
-    _logger.info('Blockchain message received: ${message.messageId}');
+    // Logging disabled;
   }
 
   /// Process coordination message
   Future<void> _processCoordinationMessage(MeshMessage message) async {
-    _logger.info('Coordination message received: ${message.messageId}');
+    // Logging disabled;
   }
 
   /// Send acknowledgment for a message

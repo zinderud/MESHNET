@@ -430,7 +430,7 @@ class MeshRoutingOptimization {
     RoutingConfig? config,
   }) async {
     try {
-      _logger.info('Initializing Mesh Routing Optimization...');
+      // Logging disabled;
       
       _currentNodeId = nodeId;
       
@@ -466,17 +466,17 @@ class MeshRoutingOptimization {
       _startMaintenance();
       
       _isInitialized = true;
-      _logger.info('Mesh Routing Optimization initialized successfully');
+      // Logging disabled;
       return true;
     } catch (e) {
-      _logger.severe('Failed to initialize mesh routing optimization', e);
+      // Logging disabled;
       return false;
     }
   }
 
   /// Shutdown routing optimization
   Future<void> shutdown() async {
-    _logger.info('Shutting down Mesh Routing Optimization...');
+    // Logging disabled;
     
     // Cancel timers
     _topologyUpdateTimer?.cancel();
@@ -494,7 +494,7 @@ class MeshRoutingOptimization {
     _routeCache.clear();
     
     _isInitialized = false;
-    _logger.info('Mesh Routing Optimization shut down');
+    // Logging disabled;
   }
 
   /// Find optimal route
@@ -506,7 +506,7 @@ class MeshRoutingOptimization {
     bool forceRecalculation = false,
   }) async {
     if (!_isInitialized || _currentNodeId == null) {
-      _logger.warning('Routing optimization not initialized');
+      // Logging disabled;
       return null;
     }
 
@@ -578,12 +578,12 @@ class MeshRoutingOptimization {
         
         _routeController.add(route);
         
-        _logger.info('Found optimal route: ${route.routeId} to $destination (${route.hopCount} hops, quality: ${route.routeQuality.toStringAsFixed(2)})');
+        // Logging disabled;
       }
       
       return route;
     } catch (e) {
-      _logger.severe('Failed to find optimal route to $destination', e);
+      // Logging disabled;
       return null;
     }
   }
@@ -627,10 +627,10 @@ class MeshRoutingOptimization {
         }
       }
       
-      _logger.info('Found ${routes.length} routes to $destination');
+      // Logging disabled;
       return routes;
     } catch (e) {
-      _logger.severe('Failed to find multiple routes to $destination', e);
+      // Logging disabled;
       return [];
     }
   }
@@ -664,13 +664,13 @@ class MeshRoutingOptimization {
         // Replace existing route
         await invalidateRoute(routeId);
         
-        _logger.info('Optimized route $routeId: quality improved from ${existingRoute.routeQuality.toStringAsFixed(2)} to ${optimizedRoute.routeQuality.toStringAsFixed(2)}');
+        // Logging disabled;
         return optimizedRoute;
       }
       
       return existingRoute;
     } catch (e) {
-      _logger.severe('Failed to optimize route: $routeId', e);
+      // Logging disabled;
       return null;
     }
   }
@@ -688,12 +688,12 @@ class MeshRoutingOptimization {
         // Remove from cache
         _routeCache.remove(route.destinationNode);
         
-        _logger.info('Invalidated route: $routeId');
+        // Logging disabled;
         return true;
       }
       return false;
     } catch (e) {
-      _logger.severe('Failed to invalidate route: $routeId', e);
+      // Logging disabled;
       return false;
     }
   }
@@ -724,12 +724,12 @@ class MeshRoutingOptimization {
         
         _topologyController.add(_currentTopology!);
         
-        _logger.debug('Updated node info: ${node.nodeId}');
+        // Logging disabled;
         return true;
       }
       return false;
     } catch (e) {
-      _logger.warning('Failed to update node info: ${node.nodeId}', e);
+      // Logging disabled;
       return false;
     }
   }
@@ -887,7 +887,7 @@ class MeshRoutingOptimization {
       final stats = getNetworkStatistics();
       _statisticsController.add(stats);
     } catch (e) {
-      _logger.warning('Failed to update topology', e);
+      // Logging disabled;
     }
   }
 

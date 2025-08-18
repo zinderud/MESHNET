@@ -196,7 +196,7 @@ class EmergencyDetectionEngine {
   /// Initialize AI Emergency Detection Engine
   Future<bool> initialize() async {
     try {
-      _logger.info('Initializing AI Emergency Detection Engine...');
+      // Logging disabled;
       
       // Load pre-trained models and keywords
       await _loadEmergencyKeywords();
@@ -207,23 +207,23 @@ class EmergencyDetectionEngine {
       _startBackgroundTraining();
       
       _isInitialized = true;
-      _logger.info('AI Emergency Detection Engine initialized successfully');
+      // Logging disabled;
       return true;
     } catch (e) {
-      _logger.severe('Failed to initialize AI Emergency Detection Engine', e);
+      // Logging disabled;
       return false;
     }
   }
 
   /// Shutdown AI engine
   Future<void> shutdown() async {
-    _logger.info('Shutting down AI Emergency Detection Engine...');
+    // Logging disabled;
     
     _trainingTimer?.cancel();
     await _detectionController.close();
     
     _isInitialized = false;
-    _logger.info('AI Emergency Detection Engine shut down');
+    // Logging disabled;
   }
 
   /// Analyze text message for emergency content
@@ -233,7 +233,7 @@ class EmergencyDetectionEngine {
     Map<String, dynamic>? location,
   }) async {
     if (!_isInitialized) {
-      _logger.warning('AI engine not initialized');
+      // Logging disabled;
       return null;
     }
 
@@ -245,13 +245,13 @@ class EmergencyDetectionEngine {
         _detectionController.add(analysisResult);
         
         if (analysisResult.isActionable) {
-          _logger.info('Emergency detected in text: ${analysisResult.type} (${analysisResult.confidence})');
+          // Logging disabled;
         }
       }
       
       return analysisResult;
     } catch (e) {
-      _logger.severe('Failed to analyze text message', e);
+      // Logging disabled;
       return null;
     }
   }
@@ -263,7 +263,7 @@ class EmergencyDetectionEngine {
     Map<String, dynamic>? location,
   }) async {
     if (!_isInitialized) {
-      _logger.warning('AI engine not initialized');
+      // Logging disabled;
       return null;
     }
 
@@ -275,13 +275,13 @@ class EmergencyDetectionEngine {
         _detectionController.add(analysisResult);
         
         if (analysisResult.isActionable) {
-          _logger.info('Emergency detected in sensors: ${analysisResult.type} (${analysisResult.confidence})');
+          // Logging disabled;
         }
       }
       
       return analysisResult;
     } catch (e) {
-      _logger.severe('Failed to analyze sensor data', e);
+      // Logging disabled;
       return null;
     }
   }
@@ -293,7 +293,7 @@ class EmergencyDetectionEngine {
     Map<String, dynamic>? location,
   }) async {
     if (!_isInitialized) {
-      _logger.warning('AI engine not initialized');
+      // Logging disabled;
       return null;
     }
 
@@ -305,13 +305,13 @@ class EmergencyDetectionEngine {
         _detectionController.add(analysisResult);
         
         if (analysisResult.isActionable) {
-          _logger.info('Emergency detected in behavior: ${analysisResult.type} (${analysisResult.confidence})');
+          // Logging disabled;
         }
       }
       
       return analysisResult;
     } catch (e) {
-      _logger.severe('Failed to analyze behavioral pattern', e);
+      // Logging disabled;
       return null;
     }
   }
@@ -325,7 +325,7 @@ class EmergencyDetectionEngine {
     Map<String, dynamic>? location,
   }) async {
     if (!_isInitialized) {
-      _logger.warning('AI engine not initialized');
+      // Logging disabled;
       return null;
     }
 
@@ -367,7 +367,7 @@ class EmergencyDetectionEngine {
       
       return null;
     } catch (e) {
-      _logger.severe('Failed to analyze multi-modal data', e);
+      // Logging disabled;
       return null;
     }
   }
@@ -810,7 +810,7 @@ class EmergencyDetectionEngine {
       'chemical', 'toxic', 'gas', 'leak', 'hazard', 'poison', 'contamination', 'exposure'
     ];
     
-    _logger.debug('Emergency keywords loaded');
+    // Logging disabled;
   }
 
   /// Load AI model weights
@@ -837,7 +837,7 @@ class EmergencyDetectionEngine {
       _modelWeights[keyword] = mediumWeight;
     }
     
-    _logger.debug('Model weights loaded: ${_modelWeights.length} keywords');
+    // Logging disabled;
   }
 
   /// Load contextual weights for different emergency types
@@ -852,7 +852,7 @@ class EmergencyDetectionEngine {
     _contextualWeights['search_rescue'] = 1.0;
     _contextualWeights['chemical_hazard'] = 1.3;
     
-    _logger.debug('Contextual weights loaded');
+    // Logging disabled;
   }
 
   /// Add detection to history
@@ -889,9 +889,9 @@ class EmergencyDetectionEngine {
         }
       }
       
-      _logger.debug('Background training completed');
+      // Logging disabled;
     } catch (e) {
-      _logger.warning('Background training failed', e);
+      // Logging disabled;
     }
   }
 }

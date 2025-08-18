@@ -4,7 +4,6 @@ import 'dart:math';
 import 'dart:typed_data';
 import 'dart:convert';
 import 'package:crypto/crypto.dart';
-import 'package:meshnet_app/utils/logger.dart';
 
 /// Post-Quantum Cryptography Algorithm Types
 enum PostQuantumAlgorithm {
@@ -199,8 +198,6 @@ class QuantumResistantCrypto {
   
   QuantumResistantCrypto._internal();
 
-  final Logger _logger = Logger('QuantumResistantCrypto');
-  
   bool _isInitialized = false;
   Timer? _threatAssessmentTimer;
   
@@ -228,7 +225,7 @@ class QuantumResistantCrypto {
   /// Initialize quantum-resistant cryptography
   Future<bool> initialize() async {
     try {
-      _logger.info('Initializing quantum-resistant cryptography...');
+      // Logging disabled;
       
       // Initialize algorithm parameters
       await _initializeAlgorithmParameters();
@@ -243,17 +240,17 @@ class QuantumResistantCrypto {
       _startThreatAssessment();
       
       _isInitialized = true;
-      _logger.info('Quantum-resistant cryptography initialized successfully');
+      // Logging disabled;
       return true;
     } catch (e) {
-      _logger.severe('Failed to initialize quantum-resistant cryptography', e);
+      // Logging disabled;
       return false;
     }
   }
 
   /// Shutdown quantum-resistant cryptography
   Future<void> shutdown() async {
-    _logger.info('Shutting down quantum-resistant cryptography...');
+    // Logging disabled;
     
     _threatAssessmentTimer?.cancel();
     
@@ -264,7 +261,7 @@ class QuantumResistantCrypto {
     _keyPairs.clear();
     
     _isInitialized = false;
-    _logger.info('Quantum-resistant cryptography shut down');
+    // Logging disabled;
   }
 
   /// Generate quantum-resistant key pair
@@ -274,7 +271,7 @@ class QuantumResistantCrypto {
     Map<String, dynamic>? metadata,
   }) async {
     if (!_isInitialized) {
-      _logger.warning('Quantum-resistant cryptography not initialized');
+      // Logging disabled;
       return null;
     }
 
@@ -288,8 +285,8 @@ class QuantumResistantCrypto {
       
       final keyPair = QuantumKeyPair(
         keyId: keyId,
-        publicKey: keyData['publicKey'],
-        privateKey: keyData['privateKey'],
+        publicKey: keyData['publicKey'] ?? Uint8List(0),
+        privateKey: keyData['privateKey'] ?? Uint8List(0),
         algorithm: algorithm,
         createdAt: now,
         expiresAt: expiresAt,
@@ -298,10 +295,10 @@ class QuantumResistantCrypto {
       
       _keyPairs[keyId] = keyPair;
       
-      _logger.info('Generated quantum-resistant key pair: $keyId (${algorithm.toString()})');
+      // Logging disabled;
       return keyPair;
     } catch (e) {
-      _logger.severe('Failed to generate quantum-resistant key pair', e);
+      // Logging disabled;
       return null;
     }
   }
@@ -313,14 +310,14 @@ class QuantumResistantCrypto {
     Map<String, dynamic>? metadata,
   }) async {
     if (!_isInitialized) {
-      _logger.warning('Quantum-resistant cryptography not initialized');
+      // Logging disabled;
       return null;
     }
 
     try {
       final keyPair = _keyPairs[publicKeyId];
       if (keyPair == null || !keyPair.isValid) {
-        _logger.warning('Invalid or expired key pair: $publicKeyId');
+        // Logging disabled;
         return null;
       }
       
@@ -336,8 +333,8 @@ class QuantumResistantCrypto {
       _updateEncryptionMetrics(encapsulationTime.inMicroseconds / 1000.0);
       
       final encapsulationResult = KeyEncapsulationResult(
-        ciphertext: result['ciphertext'],
-        sharedSecret: result['sharedSecret'],
+        ciphertext: result['ciphertext'] ?? Uint8List(0),
+        sharedSecret: result['sharedSecret'] ?? Uint8List(0),
         algorithm: algorithm ?? keyPair.algorithm,
         timestamp: DateTime.now(),
         metadata: {
@@ -347,10 +344,10 @@ class QuantumResistantCrypto {
         },
       );
       
-      _logger.debug('Key encapsulation completed: ${encapsulationResult.sharedSecret.length} bytes');
+      // Logging disabled;
       return encapsulationResult;
     } catch (e) {
-      _logger.severe('Failed to perform key encapsulation', e);
+      // Logging disabled;
       return null;
     }
   }
@@ -362,14 +359,14 @@ class QuantumResistantCrypto {
     PostQuantumAlgorithm? algorithm,
   }) async {
     if (!_isInitialized) {
-      _logger.warning('Quantum-resistant cryptography not initialized');
+      // Logging disabled;
       return null;
     }
 
     try {
       final keyPair = _keyPairs[privateKeyId];
       if (keyPair == null || !keyPair.isValid) {
-        _logger.warning('Invalid or expired key pair: $privateKeyId');
+        // Logging disabled;
         return null;
       }
       
@@ -385,10 +382,10 @@ class QuantumResistantCrypto {
       final decapsulationTime = DateTime.now().difference(startTime);
       _updateDecryptionMetrics(decapsulationTime.inMicroseconds / 1000.0);
       
-      _logger.debug('Key decapsulation completed: ${sharedSecret.length} bytes');
+      // Logging disabled;
       return sharedSecret;
     } catch (e) {
-      _logger.severe('Failed to perform key decapsulation', e);
+      // Logging disabled;
       return null;
     }
   }
@@ -401,14 +398,14 @@ class QuantumResistantCrypto {
     Map<String, dynamic>? metadata,
   }) async {
     if (!_isInitialized) {
-      _logger.warning('Quantum-resistant cryptography not initialized');
+      // Logging disabled;
       return null;
     }
 
     try {
       final keyPair = _keyPairs[privateKeyId];
       if (keyPair == null || !keyPair.isValid) {
-        _logger.warning('Invalid or expired key pair: $privateKeyId');
+        // Logging disabled;
         return null;
       }
       
@@ -437,10 +434,10 @@ class QuantumResistantCrypto {
         },
       );
       
-      _logger.debug('Digital signature created: ${signature.length} bytes');
+      // Logging disabled;
       return digitalSignature;
     } catch (e) {
-      _logger.severe('Failed to create digital signature', e);
+      // Logging disabled;
       return null;
     }
   }
@@ -451,14 +448,14 @@ class QuantumResistantCrypto {
     required QuantumDigitalSignature signature,
   }) async {
     if (!_isInitialized) {
-      _logger.warning('Quantum-resistant cryptography not initialized');
+      // Logging disabled;
       return false;
     }
 
     try {
       final keyPair = _keyPairs[publicKeyId];
       if (keyPair == null || !keyPair.isValid) {
-        _logger.warning('Invalid or expired key pair: $publicKeyId');
+        // Logging disabled;
         return false;
       }
       
@@ -475,10 +472,10 @@ class QuantumResistantCrypto {
       final verificationTime = DateTime.now().difference(startTime);
       _totalVerifications++;
       
-      _logger.debug('Signature verification completed: $isValid (${verificationTime.inMilliseconds}ms)');
+      // Logging disabled;
       return isValid;
     } catch (e) {
-      _logger.severe('Failed to verify digital signature', e);
+      // Logging disabled;
       return false;
     }
   }
@@ -491,7 +488,7 @@ class QuantumResistantCrypto {
     Map<String, dynamic>? metadata,
   }) async {
     if (!_isInitialized) {
-      _logger.warning('Quantum-resistant cryptography not initialized');
+      // Logging disabled;
       return null;
     }
 
@@ -500,7 +497,7 @@ class QuantumResistantCrypto {
                     _hybridSchemes.firstOrNull;
       
       if (scheme == null) {
-        _logger.warning('No hybrid encryption scheme available');
+        // Logging disabled;
         return null;
       }
       
@@ -512,7 +509,7 @@ class QuantumResistantCrypto {
       );
       
       if (kemResult == null) {
-        _logger.warning('Failed to perform key encapsulation');
+        // Logging disabled;
         return null;
       }
       
@@ -527,16 +524,16 @@ class QuantumResistantCrypto {
       return {
         'scheme': scheme.schemeId,
         'kemCiphertext': base64Encode(kemResult.ciphertext),
-        'encryptedData': base64Encode(classicalResult['ciphertext']),
-        'iv': base64Encode(classicalResult['iv']),
-        'tag': base64Encode(classicalResult['tag']),
+        'encryptedData': base64Encode(classicalResult['ciphertext'] ?? Uint8List(0)),
+        'iv': base64Encode(classicalResult['iv'] ?? Uint8List(0)),
+        'tag': base64Encode(classicalResult['tag'] ?? Uint8List(0)),
         'algorithm': scheme.postQuantumAlgorithm.toString(),
         'classicalAlgorithm': scheme.classicalAlgorithm,
         'timestamp': DateTime.now().toIso8601String(),
         'metadata': metadata ?? {},
       };
     } catch (e) {
-      _logger.severe('Failed to perform hybrid encryption', e);
+      // Logging disabled;
       return null;
     }
   }
@@ -547,7 +544,7 @@ class QuantumResistantCrypto {
     required String privateKeyId,
   }) async {
     if (!_isInitialized) {
-      _logger.warning('Quantum-resistant cryptography not initialized');
+      // Logging disabled;
       return null;
     }
 
@@ -566,7 +563,7 @@ class QuantumResistantCrypto {
       );
       
       if (symmetricKey == null) {
-        _logger.warning('Failed to decapsulate symmetric key');
+        // Logging disabled;
         return null;
       }
       
@@ -585,7 +582,7 @@ class QuantumResistantCrypto {
       
       return plaintext;
     } catch (e) {
-      _logger.severe('Failed to perform hybrid decryption', e);
+      // Logging disabled;
       return null;
     }
   }
@@ -611,10 +608,10 @@ class QuantumResistantCrypto {
       
       _lastThreatAssessment = now;
       
-      _logger.info('Quantum threat level assessed: $_currentThreatLevel');
+      // Logging disabled;
       return _currentThreatLevel;
     } catch (e) {
-      _logger.severe('Failed to assess quantum threat level', e);
+      // Logging disabled;
       return QuantumThreatLevel.moderate;
     }
   }
@@ -695,7 +692,7 @@ class QuantumResistantCrypto {
       'signature_size': 4595,
     };
     
-    _logger.debug('Algorithm parameters initialized');
+    // Logging disabled;
   }
 
   /// Initialize default key pairs
@@ -715,7 +712,7 @@ class QuantumResistantCrypto {
       );
     }
     
-    _logger.debug('Default key pairs initialized');
+    // Logging disabled;
   }
 
   /// Initialize hybrid encryption schemes
@@ -750,7 +747,7 @@ class QuantumResistantCrypto {
       },
     ));
     
-    _logger.debug('Hybrid encryption schemes initialized');
+    // Logging disabled;
   }
 
   /// Generate algorithm-specific key pair
